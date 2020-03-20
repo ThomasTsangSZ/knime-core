@@ -18,13 +18,17 @@ try {
         'Tycho Build': {
 	        knimetools.defaultTychoBuild('org.knime.update.core')
         },
-        'Integrated Workflow tests': {
-            // TODO add other platforms
-            // runIntegratedWorkflowTests('ubuntu18.04')
-        },
-        'Integrated Workflow tests Windows': {
+        // 'Integrated Workflow tests': {
+        //     // TODO add other platforms
+        //     runIntegratedWorkflowTests('ubuntu18.04 && workflow-tests')
+        // },
+        'Integrated Workflow tests: Windows': {
             runIntegratedWorkflowTests('windows')
-     })
+        },
+        'Integrated Workflow tests: MacOs': {
+            runIntegratedWorkflowTests('macosx')
+        },
+     )
 
     workflowTests.runTests(
         dependencies: [
@@ -46,8 +50,8 @@ try {
 }
 
 def runIntegratedWorkflowTests(String image){
-    node('workflow-tests && ' + image){ 
-        stage('Integrated Workflow Tests:' + image){
+    node(image){ 
+        stage('Integrated Workflow Tests:'){
             env.lastStage = env.STAGE_NAME
             checkout scm
             withMavenJarsignerCredentials(options: [artifactsPublisher(disabled: true)]) {
