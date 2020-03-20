@@ -20,7 +20,10 @@ try {
         },
         'Integrated Workflow tests': {
             // TODO add other platforms
-            runIntegratedWorkflowTests('ubuntu18.04')
+            // runIntegratedWorkflowTests('ubuntu18.04')
+        },
+        'Integrated Workflow tests Windows': {
+            runIntegratedWorkflowTests('windows')
      })
 
     workflowTests.runTests(
