@@ -23,7 +23,7 @@ try {
         //     runIntegratedWorkflowTests('ubuntu18.04 && workflow-tests')
         // },
         'Integrated Workflow tests: Windows': {
-            runIntegratedWorkflowTests('windows')
+            runIntegratedWorkflowTests('windows && p2-director')
         },
         'Integrated Workflow tests: MacOs': {
             runIntegratedWorkflowTests('macosx')
