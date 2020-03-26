@@ -18,14 +18,13 @@ try {
         'Tycho Build': {
 	        knimetools.defaultTychoBuild('org.knime.update.core')
         },
-        // 'Integrated Workflow tests': {
-        //     // TODO add other platforms
-        //     runIntegratedWorkflowTests('ubuntu18.04 && workflow-tests')
-        // },
-        'Integrated Workflow tests: Windows': {
+        'Testing: Linux': {
+             runIntegratedWorkflowTests('ubuntu18.04 && workflow-tests')
+         },
+        'Testing: Windows': {
             runIntegratedWorkflowTests('windows && p2-director')
         },
-        'Integrated Workflow tests: MacOs': {
+        'Testing: MacOs': {
             runIntegratedWorkflowTests('macosx')
         },
      )
