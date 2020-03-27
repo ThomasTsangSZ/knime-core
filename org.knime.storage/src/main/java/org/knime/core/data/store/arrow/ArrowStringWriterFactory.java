@@ -53,15 +53,6 @@ import org.knime.core.data.store.PrimitiveRow;
 
 public final class ArrowStringWriterFactory implements ArrowWriterFactory<VarCharVector> {
 
-    @Override
-    @SuppressWarnings("resource") // Vector will be closed by writer.
-    public ArrowStringWriter create(final String name, final BufferAllocator allocator, final int numRows,
-        final int colIdx) {
-        final VarCharVector vector = new VarCharVector(name, allocator);
-        // TODO more flexible configuration of "bytes per cell assumption". E.g. rowIds might be smaller
-        vector.allocateNew(64l * numRows, numRows);
-        return new ArrowStringWriter(vector, colIdx);
-    }
 
     public static final class ArrowStringWriter extends AbstractArrowWriter<VarCharVector> {
 
@@ -84,5 +75,14 @@ public final class ArrowStringWriterFactory implements ArrowWriterFactory<VarCha
             m_vector.set(index, bytes);
         }
 
+    }
+
+    @Override
+    public ArrowStringWriter create(final String name, final BufferAllocator allocator, final int numRows,
+        final int colIdx) {
+        final VarCharVector vector = new VarCharVector(name, allocator);
+        // TODO more flexible configuration of "bytes per cell assumption". E.g. rowIds might be smaller
+        vector.allocateNew(64l * numRows, numRows);
+        return new ArrowStringWriter(vector, colIdx);
     }
 }

@@ -57,6 +57,7 @@ public abstract class AbstractArrowReader<I extends ValueVector, O> implements A
     public AbstractArrowReader(final I vector) {
         m_vector = vector;
     }
+    
 
     @Override
     public boolean isNull(final int index) {

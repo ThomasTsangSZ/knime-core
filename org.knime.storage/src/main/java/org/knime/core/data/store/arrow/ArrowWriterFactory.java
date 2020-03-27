@@ -57,5 +57,5 @@ import org.apache.arrow.vector.FieldVector;
  */
 public interface ArrowWriterFactory<O extends FieldVector> {
 
-    ArrowWriter create(final String name, final BufferAllocator allocator, final int size, final int colIdx);
+	ArrowWriter create(final String name, final BufferAllocator allocator, final int size, final int colIdx);
 }
