@@ -46,37 +46,13 @@
  * History
  *   Mar 26, 2020 (marcel): created
  */
-package org.knime.core.data.container.newapi.readers;
+package org.knime.core.data.container.newapi.store.arrow;
 
-import org.apache.arrow.vector.BitVector;
-import org.knime.core.data.container.newapi.AbstractArrowReader;
-import org.knime.core.data.container.newapi.ArrowReaderFactory;
+import org.apache.arrow.vector.ValueVector;
 
-public final class ArrowBooleanReaderFactory implements ArrowReaderFactory<BitVector, Boolean> {
+public interface ArrowReaderFactory<I extends ValueVector, O> {
 
-    @Override
-    public Class<BitVector> getSourceType() {
-        return BitVector.class;
-    }
+    Class<I> getSourceType();
 
-    @Override
-    public ArrowBooleanReader create(final BitVector vector) {
-        return new ArrowBooleanReader(vector);
-    }
-
-    public static final class ArrowBooleanReader extends AbstractArrowReader<BitVector, Boolean> {
-
-        public ArrowBooleanReader(final BitVector vector) {
-            super(vector);
-        }
-
-        public boolean readBoolean(final int index) {
-            return m_vector.get(index) > 0;
-        }
-
-        @Override
-        public Boolean readNonNull(final int index) {
-            return readBoolean(index);
-        }
-    }
+    ArrowReader<O> create(I vector);
 }

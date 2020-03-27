@@ -1,5 +1,6 @@
 /*
  * ------------------------------------------------------------------------
+ *
  *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
@@ -40,43 +41,40 @@
  *  propagated with or for interoperation with KNIME.  The owner of a Node
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
- * ------------------------------------------------------------------------
+ * ---------------------------------------------------------------------
+ *
+ * History
+ *   Mar 26, 2020 (marcel): created
  */
+package org.knime.core.data.container.newapi.store.arrow;
 
-package org.knime.core.data.container.newapi.writers;
-
-import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.BitVector;
-import org.knime.core.data.container.newapi.ArrowWriterFactory;
 
-public final class ArrowBooleanWriterFactory implements ArrowWriterFactory<Boolean, BitVector> {
+public final class ArrowBooleanReaderFactory implements ArrowReaderFactory<BitVector, Boolean> {
 
     @Override
-    @SuppressWarnings("resource") // Vector will be closed by writer.
-    public ArrowBooleanWriter create(final String name, final BufferAllocator allocator, final int size) {
-        final BitVector vector = new BitVector(name, allocator);
-        vector.allocateNew(size);
-        return new ArrowBooleanWriter(vector);
+    public Class<BitVector> getSourceType() {
+        return BitVector.class;
     }
 
-    public static final class ArrowBooleanWriter extends AbstractArrowWriter<Boolean, BitVector> {
+    @Override
+    public ArrowBooleanReader create(final BitVector vector) {
+        return new ArrowBooleanReader(vector);
+    }
 
-        public ArrowBooleanWriter(final BitVector vector) {
+    public static final class ArrowBooleanReader extends AbstractArrowReader<BitVector, Boolean> {
+
+        public ArrowBooleanReader(final BitVector vector) {
             super(vector);
         }
 
-        public void writeBoolean(final int index, final boolean value) {
-            writeBooleanInternal(index, value);
-            incrementValueCounter();
+        public boolean readBoolean(final int index) {
+            return m_vector.get(index) > 0;
         }
 
         @Override
-        public void writeNonNull(final int index, final Boolean value) {
-            writeBooleanInternal(index, value);
-        }
-
-        private void writeBooleanInternal(final int index, final boolean value) {
-            m_vector.set(index, value ? 1 : 0);
+        public Boolean readNonNull(final int index) {
+            return readBoolean(index);
         }
     }
 }

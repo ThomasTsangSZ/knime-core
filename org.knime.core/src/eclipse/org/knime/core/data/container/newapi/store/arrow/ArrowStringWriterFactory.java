@@ -1,6 +1,5 @@
 /*
  * ------------------------------------------------------------------------
- *
  *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
@@ -41,29 +40,46 @@
  *  propagated with or for interoperation with KNIME.  The owner of a Node
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
- * ---------------------------------------------------------------------
- *
- * History
- *   Mar 26, 2020 (dietzc): created
+ * ------------------------------------------------------------------------
  */
-package org.knime.core.data.container.newapi;
 
-import org.knime.core.data.DataTable;
+package org.knime.core.data.container.newapi.store.arrow;
 
-/**
- *
- * @author dietzc
- */
-public interface ReadableTable extends DataTable {
+import java.nio.charset.StandardCharsets;
 
-    // corresponds to "clear" in KNIME code
-    // KILL 'em all. All questions below should have been already adressed in existing buffer code...
-    // TODO also previously persited content?
-    // TODO what if others have still iterators open?
-    // TODO what if other table references to same content exist?
-    public void destroy();
+import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.vector.VarCharVector;
 
-    // TODO maybe introduce bounded table.
-    // TODO unbounded tables might be use-ful for streaming later on and an infinte store (later...)
-    public long size();
+public final class ArrowStringWriterFactory implements ArrowWriterFactory<String, VarCharVector> {
+
+    @Override
+    @SuppressWarnings("resource") // Vector will be closed by writer.
+    public ArrowStringWriter create(final String name, final BufferAllocator allocator, final int numRows) {
+        final VarCharVector vector = new VarCharVector(name, allocator);
+        // TODO more flexible configuration of "bytes per cell assumption". E.g. rowIds might be smaller
+        vector.allocateNew(64l * numRows, numRows);
+        return new ArrowStringWriter(vector);
+    }
+
+    public static final class ArrowStringWriter extends AbstractArrowWriter<String, VarCharVector> {
+
+        private int m_byteCount = 0;
+
+        public ArrowStringWriter(final VarCharVector vector) {
+            super(vector);
+        }
+
+        @Override
+        protected void writeNonNull(final int index, final String value) {
+            if (index >= m_vector.getValueCapacity()) {
+                m_vector.reallocValidityAndOffsetBuffers();
+            }
+            final byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
+            m_byteCount += bytes.length;
+            while (m_byteCount > m_vector.getByteCapacity()) {
+                m_vector.reallocDataBuffer();
+            }
+            m_vector.set(index, bytes);
+        }
+    }
 }

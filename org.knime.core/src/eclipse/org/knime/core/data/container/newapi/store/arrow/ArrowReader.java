@@ -44,16 +44,13 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Mar 26, 2020 (dietzc): created
+ *   Mar 26, 2020 (marcel): created
  */
-package org.knime.core.data.container.newapi;
+package org.knime.core.data.container.newapi.store.arrow;
 
-import java.io.Flushable;
+public interface ArrowReader<T> extends AutoCloseable {
 
-/**
- *
- * @author dietzc
- */
-public interface DataStore extends Flushable, AutoCloseable {
+    boolean isNull(int index);
 
+    T read(int index);
 }

@@ -46,19 +46,31 @@
  * History
  *   Mar 26, 2020 (marcel): created
  */
-package org.knime.core.data.container.newapi;
+package org.knime.core.data.container.newapi.store.arrow;
 
-public interface TableStoreWriteAccess extends AutoCloseable {
+import org.apache.arrow.vector.VarCharVector;
 
-    long getCapacity();
+public final class ArrowStringReaderFactory implements ArrowReaderFactory<VarCharVector, String> {
 
-    void forward();
+    @Override
+    public Class<VarCharVector> getSourceType() {
+        return VarCharVector.class;
+    }
 
-    long getNumColumns();
+    @Override
+    public ArrowStringReader create(final VarCharVector vector) {
+        return new ArrowStringReader(vector);
+    }
 
-    void setBoolean(long index, boolean value);
+    public static final class ArrowStringReader extends AbstractArrowReader<VarCharVector, String> {
 
-    void setDouble(long index, double value);
+        public ArrowStringReader(final VarCharVector vector) {
+            super(vector);
+        }
 
-    void setString(long index, String value);
+        @Override
+        public String readNonNull(final int index) {
+            return m_vector.getObject(index).toString();
+        }
+    }
 }

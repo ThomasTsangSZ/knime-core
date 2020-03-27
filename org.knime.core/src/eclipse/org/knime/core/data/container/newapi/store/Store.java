@@ -44,63 +44,18 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Mar 26, 2020 (dietzc): created
+ *   Mar 26, 2020 (marcel): created
  */
-package org.knime.core.data.container.newapi;
+package org.knime.core.data.container.newapi.store;
 
-import org.knime.core.data.DataTableSpec;
-import org.knime.core.data.container.CloseableRowIterator;
-import org.knime.core.data.container.filter.TableFilter;
-import org.knime.core.node.ExecutionMonitor;
+public interface Store {
 
-/**
- *
- * @author dietzc
- */
-public class ArrowReadableTable implements ReadableTable {
+    StoreWriteAccess createWriteAccess();
 
-    // a table without spec is not super useful
-    private DataTableSpec m_spec;
-
-    public ArrowReadableTable(final DataTableSpec spec) {
-        m_spec = spec;
-    }
+    StoreReadAccess createReadAccess(StoreReadAccessConfig config);
 
     /**
-     * {@inheritDoc}
+     * Deletes all files/resources created by this store instance. Invalidates this instance.
      */
-    @Override
-    public DataTableSpec getDataTableSpec() {
-        return m_spec;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void destroy() {
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public long size() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public CloseableRowIterator iterator() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    public CloseableRowIterator iteratorWithFilter(final TableFilter filter, final ExecutionMonitor exec) {
-        // TODO Auto-generated method stub
-        return null;
-    }
+    void destroy();
 }

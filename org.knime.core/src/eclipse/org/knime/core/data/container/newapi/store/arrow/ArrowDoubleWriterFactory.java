@@ -1,6 +1,5 @@
 /*
  * ------------------------------------------------------------------------
- *
  *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
@@ -41,22 +40,42 @@
  *  propagated with or for interoperation with KNIME.  The owner of a Node
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
- * ---------------------------------------------------------------------
- *
- * History
- *   Mar 26, 2020 (dietzc): created
+ * ------------------------------------------------------------------------
  */
-package org.knime.core.data.container.newapi;
 
-import org.apache.arrow.vector.FieldVector;
+package org.knime.core.data.container.newapi.store.arrow;
 
-/**
- *
- * @author dietzc
- */
-public interface ArrowWriter<T> extends AutoCloseable {
+import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.vector.Float8Vector;
 
-    FieldVector getVector();
+public final class ArrowDoubleWriterFactory implements ArrowWriterFactory<Double, Float8Vector> {
 
-    void write(int index, T value);
+    @Override
+    @SuppressWarnings("resource") // Vector will be closed by writer.
+    public ArrowDoubleWriter create(final String name, final BufferAllocator allocator, final int numRows) {
+        final Float8Vector vector = new Float8Vector(name, allocator);
+        vector.allocateNew(numRows);
+        return new ArrowDoubleWriter(vector);
+    }
+
+    public static final class ArrowDoubleWriter extends AbstractArrowWriter<Double, Float8Vector> {
+
+        public ArrowDoubleWriter(final Float8Vector vector) {
+            super(vector);
+        }
+
+        public void writeDouble(final int index, final double value) {
+            writeDoubleInternal(index, value);
+            incrementValueCounter();
+        }
+
+        @Override
+        protected void writeNonNull(final int index, final Double value) {
+            writeDoubleInternal(index, value);
+        }
+
+        private void writeDoubleInternal(final int index, final double value) {
+            m_vector.set(index, value);
+        }
+    }
 }

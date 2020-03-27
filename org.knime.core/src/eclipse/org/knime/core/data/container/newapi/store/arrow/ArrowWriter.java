@@ -46,18 +46,17 @@
  * History
  *   Mar 26, 2020 (dietzc): created
  */
-package org.knime.core.data.container.newapi;
+package org.knime.core.data.container.newapi.store.arrow;
 
-import org.knime.core.data.DataTableSpec;
+import org.apache.arrow.vector.FieldVector;
 
 /**
  *
  * @author dietzc
  */
-public class ArrowWritableTableFactory implements WritableTableFactory {
+public interface ArrowWriter<T> extends AutoCloseable {
 
-    @Override
-    public TableAccessible create(final DataTableSpec spec) {
-        return new DefaultTableAccessible(spec);
-    }
+    FieldVector getVector();
+
+    void write(int index, T value);
 }

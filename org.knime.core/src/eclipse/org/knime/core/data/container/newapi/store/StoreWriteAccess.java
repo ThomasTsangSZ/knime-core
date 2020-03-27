@@ -46,13 +46,19 @@
  * History
  *   Mar 26, 2020 (marcel): created
  */
-package org.knime.core.data.container.newapi;
+package org.knime.core.data.container.newapi.store;
 
-import org.apache.arrow.vector.ValueVector;
+public interface StoreWriteAccess extends AutoCloseable {
 
-public interface ArrowReaderFactory<I extends ValueVector, O> {
+    long getCapacity();
 
-    Class<I> getSourceType();
+    void forward();
 
-    ArrowReader<O> create(I vector);
+    long getNumColumns();
+
+    void setBoolean(long index, boolean value);
+
+    void setDouble(long index, double value);
+
+    void setString(long index, String value);
 }

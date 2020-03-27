@@ -46,32 +46,35 @@
  * History
  *   Mar 26, 2020 (marcel): created
  */
-package org.knime.core.data.container.newapi;
+package org.knime.core.data.container.newapi.store.arrow;
 
-import org.apache.arrow.vector.ValueVector;
+import org.apache.arrow.vector.IntVector;
 
-public abstract class AbstractArrowReader<I extends ValueVector, O> implements ArrowReader<O> {
+public final class ArrowIntReaderFactory implements ArrowReaderFactory<IntVector, Integer> {
 
-    protected final I m_vector;
-
-    public AbstractArrowReader(final I vector) {
-        m_vector = vector;
+    @Override
+    public Class<IntVector> getSourceType() {
+        return IntVector.class;
     }
 
     @Override
-    public boolean isNull(final int index) {
-        return m_vector.isNull(index);
+    public ArrowIntReader create(final IntVector vector) {
+        return new ArrowIntReader(vector);
     }
 
-    @Override
-    public O read(final int index) {
-        return isNull(index) ? null : readNonNull(index);
-    }
+    public static final class ArrowIntReader extends AbstractArrowReader<IntVector, Integer> {
 
-    protected abstract O readNonNull(int index);
+        public ArrowIntReader(final IntVector vector) {
+            super(vector);
+        }
 
-    @Override
-    public void close() throws Exception {
-        m_vector.close();
+        public int readInt(final int index) {
+            return m_vector.get(index);
+        }
+
+        @Override
+        public Integer readNonNull(final int index) {
+            return readInt(index);
+        }
     }
 }

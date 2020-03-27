@@ -4,8 +4,12 @@ Bundle-Name: KNIME Core API
 Bundle-SymbolicName: org.knime.core;singleton:=true
 Bundle-Version: 4.2.0.qualifier
 Bundle-ClassPath: knime-core.jar,
-  lib/saxon-he-9.2.0.5.jar,
-  lib/schemas.jar
+ lib/saxon-he-9.2.0.5.jar,
+ lib/schemas.jar,
+ lib/arrow-algorithm-0.16.0.jar,
+ lib/arrow-format-0.16.0.jar,
+ lib/arrow-memory-0.16.0.jar,
+ lib/arrow-vector-0.16.0.jar
 Bundle-Activator: org.knime.core.internal.CorePlugin
 Bundle-Vendor: KNIME AG, Zurich, Switzerland
 Export-Package: log4j,

@@ -50,6 +50,8 @@ package org.knime.core.data.container.newapi;
 
 import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
+import org.knime.core.data.container.newapi.store.StoreReadAccess;
+import org.knime.core.data.container.newapi.store.StoreWriteAccess;
 
 /*
  * - Abstracts caching and life-cycle management (closing, iterators, data-row) from store implementor (Arrow, Parquet, etc.)
@@ -59,22 +61,19 @@ public class DefaultTableAccessible implements TableAccessible {
 
     private final DataTableSpec m_spec;
 
-    private final TableStoreWriteAccess m_storeWriteAccess = null;
-
-    private final TableStoreReadAccess m_storeReadAccess = null;
-
     public DefaultTableAccessible(final DataTableSpec spec) {
         m_spec = spec;
     }
 
     @Override
     public TableWriteAccess createWriteAccess() {
+        final StoreWriteAccess m_storeWriteAccess = null;
         return new TableWriteAccess() {
 
             @Override
             public void add(final DataRow row) {
                 m_storeWriteAccess.forward();
-                for (int c = 0; c < m_storeReadAccess.getNumColumns(); c++) {
+                for (int c = 0; c < m_storeWriteAccess.getNumColumns(); c++) {
                     // TODO: type mapping
                 }
             }
@@ -88,6 +87,7 @@ public class DefaultTableAccessible implements TableAccessible {
 
     @Override
     public TableReadAccess createReadAccess() {
+        final StoreReadAccess m_storeReadAccess = null;
         return new TableReadAccess() {
 
             @Override

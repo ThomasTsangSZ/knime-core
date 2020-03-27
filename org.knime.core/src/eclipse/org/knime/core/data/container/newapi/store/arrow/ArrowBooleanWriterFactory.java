@@ -1,6 +1,5 @@
 /*
  * ------------------------------------------------------------------------
- *
  *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
@@ -41,32 +40,42 @@
  *  propagated with or for interoperation with KNIME.  The owner of a Node
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
- * ---------------------------------------------------------------------
- *
- * History
- *   Mar 26, 2020 (marcel): created
+ * ------------------------------------------------------------------------
  */
-package org.knime.core.data.container.newapi;
 
-public interface TableStore {
+package org.knime.core.data.container.newapi.store.arrow;
 
-    TableStoreWriteAccess createWriteAccess();
+import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.vector.BitVector;
 
-    TableStoreReadAccess createReadAccess(TableStoreAccessConfig config);
+public final class ArrowBooleanWriterFactory implements ArrowWriterFactory<Boolean, BitVector> {
 
-    /**
-     * Deletes all files/resources created by this store instance. Invalidates this instance.
-     */
-    void destroy();
+    @Override
+    @SuppressWarnings("resource") // Vector will be closed by writer.
+    public ArrowBooleanWriter create(final String name, final BufferAllocator allocator, final int size) {
+        final BitVector vector = new BitVector(name, allocator);
+        vector.allocateNew(size);
+        return new ArrowBooleanWriter(vector);
+    }
 
-    public interface TableStoreAccessConfig {
+    public static final class ArrowBooleanWriter extends AbstractArrowWriter<Boolean, BitVector> {
 
-        // TODO: Add predicates?
+        public ArrowBooleanWriter(final BitVector vector) {
+            super(vector);
+        }
 
-        long getStartIndex();
+        public void writeBoolean(final int index, final boolean value) {
+            writeBooleanInternal(index, value);
+            incrementValueCounter();
+        }
 
-        long getEndIndex();
+        @Override
+        public void writeNonNull(final int index, final Boolean value) {
+            writeBooleanInternal(index, value);
+        }
 
-        long[] getColumnIndices();
+        private void writeBooleanInternal(final int index, final boolean value) {
+            m_vector.set(index, value ? 1 : 0);
+        }
     }
 }

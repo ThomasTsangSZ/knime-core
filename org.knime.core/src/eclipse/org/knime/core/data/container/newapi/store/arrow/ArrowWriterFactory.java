@@ -46,14 +46,16 @@
  * History
  *   Mar 26, 2020 (dietzc): created
  */
-package org.knime.core.data.container.newapi;
+package org.knime.core.data.container.newapi.store.arrow;
 
-import org.knime.core.data.DataTableSpec;
+import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.vector.FieldVector;
 
 /**
  *
  * @author dietzc
  */
-public interface WritableTableFactory {
-    TableAccessible create(DataTableSpec spec);
+public interface ArrowWriterFactory<I, O extends FieldVector> {
+
+    ArrowWriter<I> create(final String name, final BufferAllocator allocator, final int size);
 }

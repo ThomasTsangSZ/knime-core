@@ -1,5 +1,6 @@
 /*
  * ------------------------------------------------------------------------
+ *
  *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
@@ -40,43 +41,37 @@
  *  propagated with or for interoperation with KNIME.  The owner of a Node
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
- * ------------------------------------------------------------------------
+ * ---------------------------------------------------------------------
+ *
+ * History
+ *   Mar 26, 2020 (marcel): created
  */
+package org.knime.core.data.container.newapi.store.arrow;
 
-package org.knime.core.data.container.newapi.writers;
+import org.apache.arrow.vector.ValueVector;
 
-import org.apache.arrow.memory.BufferAllocator;
-import org.apache.arrow.vector.Float8Vector;
-import org.knime.core.data.container.newapi.ArrowWriterFactory;
+public abstract class AbstractArrowReader<I extends ValueVector, O> implements ArrowReader<O> {
 
-public final class ArrowDoubleWriterFactory implements ArrowWriterFactory<Double, Float8Vector> {
+    protected final I m_vector;
 
-    @Override
-    @SuppressWarnings("resource") // Vector will be closed by writer.
-    public ArrowDoubleWriter create(final String name, final BufferAllocator allocator, final int numRows) {
-        final Float8Vector vector = new Float8Vector(name, allocator);
-        vector.allocateNew(numRows);
-        return new ArrowDoubleWriter(vector);
+    public AbstractArrowReader(final I vector) {
+        m_vector = vector;
     }
 
-    public static final class ArrowDoubleWriter extends AbstractArrowWriter<Double, Float8Vector> {
+    @Override
+    public boolean isNull(final int index) {
+        return m_vector.isNull(index);
+    }
 
-        public ArrowDoubleWriter(final Float8Vector vector) {
-            super(vector);
-        }
+    @Override
+    public O read(final int index) {
+        return isNull(index) ? null : readNonNull(index);
+    }
 
-        public void writeDouble(final int index, final double value) {
-            writeDoubleInternal(index, value);
-            incrementValueCounter();
-        }
+    protected abstract O readNonNull(int index);
 
-        @Override
-        protected void writeNonNull(final int index, final Double value) {
-            writeDoubleInternal(index, value);
-        }
-
-        private void writeDoubleInternal(final int index, final double value) {
-            m_vector.set(index, value);
-        }
+    @Override
+    public void close() throws Exception {
+        m_vector.close();
     }
 }

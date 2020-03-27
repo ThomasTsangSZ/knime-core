@@ -44,13 +44,58 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Mar 26, 2020 (marcel): created
+ *   Mar 26, 2020 (dietzc): created
  */
 package org.knime.core.data.container.newapi;
 
-public interface ArrowReader<T> extends AutoCloseable {
-
-    boolean isNull(int index);
-
-    T read(int index);
+/**
+ *
+ * @author dietzc
+ */
+public interface _README {
+    /**
+     * DESIGN REQUIREMENTS (besides interface-driven, composition over inheritence, modularity)
+     *  -> Enable (extensible) shared memory for python / java
+     *  -> Allow API for proxy-types
+     *  -> wide-table support
+     *  -> backwards-compatibility
+     *  -> ultra-lightweight processing. Any processing on KNIME side should be much faster than any TableIO.
+     *  -> Predicate push-down and Filter-API
+     *
+     *  Nice to haves for later
+     *  -> Chunking (for parallel read / write of data & distributed computing "KNIMETable layer with map/reduce like operations on-top")
+     *  -> Expose columnar API to end-user
+     */
 }
+
+
+//
+///**
+//* Overridden to narrow return type to closeable iterator. {@inheritDoc}
+//*/
+//@Override
+//public CloseableRowIterator iterator();
+//
+///**
+//* Provides a {@link CloseableRowIterator} that is filtered according to a given {@link TableFilter}. The filtering
+//* won't change this KnowsRowCountTable or impact subsequent calls of this method with other filters.
+//*
+//* @param filter the filter to be applied
+//* @return a filtered iterator
+//* @since 4.0
+//*/
+//default CloseableRowIterator iteratorWithFilter(final TableFilter filter) {
+//  return iteratorWithFilter(filter, null);
+//}
+//
+///**
+//* Provides a {@link CloseableRowIterator} that is filtered according to a given {@link TableFilter}. During
+//* iteration, a given {@link ExecutionMonitor} will update its progress. The filtering won't change this
+//* KnowsRowCountTable or impact subsequent calls of this method with other filters.
+//*
+//* @param filter the filter to be applied
+//* @param exec the execution monitor that shall be updated with progress or null if no progress updates are desired
+//* @return a filtered iterator
+//* @since 4.0
+//*/
+//CloseableRowIterator iteratorWithFilter(TableFilter filter, ExecutionMonitor exec);

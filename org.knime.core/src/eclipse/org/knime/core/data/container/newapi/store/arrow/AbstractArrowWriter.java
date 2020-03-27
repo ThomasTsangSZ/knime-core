@@ -44,39 +44,41 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Mar 26, 2020 (marcel): created
+ *   Mar 27, 2020 (marcel): created
  */
-package org.knime.core.data.container.newapi.readers;
+package org.knime.core.data.container.newapi.store.arrow;
 
-import org.apache.arrow.vector.IntVector;
-import org.knime.core.data.container.newapi.AbstractArrowReader;
-import org.knime.core.data.container.newapi.ArrowReaderFactory;
+import org.apache.arrow.vector.FieldVector;
 
-public final class ArrowIntReaderFactory implements ArrowReaderFactory<IntVector, Integer> {
+public abstract class AbstractArrowWriter<I, O extends FieldVector> implements ArrowWriter<I> {
 
-    @Override
-    public Class<IntVector> getSourceType() {
-        return IntVector.class;
+    protected final O m_vector;
+
+    public AbstractArrowWriter(final O vector) {
+        m_vector = vector;
     }
 
     @Override
-    public ArrowIntReader create(final IntVector vector) {
-        return new ArrowIntReader(vector);
+    public O getVector() {
+        return m_vector;
     }
 
-    public static final class ArrowIntReader extends AbstractArrowReader<IntVector, Integer> {
-
-        public ArrowIntReader(final IntVector vector) {
-            super(vector);
+    @Override
+    public void write(final int index, final I value) {
+        if (value != null) {
+            writeNonNull(index, value);
         }
+        incrementValueCounter();
+    }
 
-        public int readInt(final int index) {
-            return m_vector.get(index);
-        }
+    protected abstract void writeNonNull(int index, I value);
 
-        @Override
-        public Integer readNonNull(final int index) {
-            return readInt(index);
-        }
+    protected void incrementValueCounter() {
+        m_vector.setValueCount(m_vector.getValueCount() + 1);
+    }
+
+    @Override
+    public void close() throws Exception {
+        m_vector.close();
     }
 }

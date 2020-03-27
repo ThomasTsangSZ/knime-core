@@ -46,7 +46,7 @@
  * History
  *   Mar 26, 2020 (dietzc): created
  */
-package org.knime.core.data.container.newapi;
+package org.knime.core.data.container.newapi.store.arrow;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -68,16 +68,14 @@ import org.apache.arrow.vector.ipc.ArrowStreamReader;
 import org.apache.arrow.vector.ipc.ArrowStreamWriter;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.DataType;
-import org.knime.core.data.container.newapi.readers.ArrowBooleanReaderFactory;
-import org.knime.core.data.container.newapi.readers.ArrowBooleanReaderFactory.ArrowBooleanReader;
-import org.knime.core.data.container.newapi.readers.ArrowIntReaderFactory;
-import org.knime.core.data.container.newapi.readers.ArrowIntReaderFactory.ArrowIntReader;
-import org.knime.core.data.container.newapi.readers.ArrowStringReaderFactory;
-import org.knime.core.data.container.newapi.writers.ArrowBooleanWriterFactory;
-import org.knime.core.data.container.newapi.writers.ArrowBooleanWriterFactory.ArrowBooleanWriter;
-import org.knime.core.data.container.newapi.writers.ArrowDoubleWriterFactory;
-import org.knime.core.data.container.newapi.writers.ArrowDoubleWriterFactory.ArrowDoubleWriter;
-import org.knime.core.data.container.newapi.writers.ArrowStringWriterFactory;
+import org.knime.core.data.container.newapi.store.Store;
+import org.knime.core.data.container.newapi.store.StoreReadAccess;
+import org.knime.core.data.container.newapi.store.StoreReadAccessConfig;
+import org.knime.core.data.container.newapi.store.StoreWriteAccess;
+import org.knime.core.data.container.newapi.store.arrow.ArrowBooleanReaderFactory.ArrowBooleanReader;
+import org.knime.core.data.container.newapi.store.arrow.ArrowBooleanWriterFactory.ArrowBooleanWriter;
+import org.knime.core.data.container.newapi.store.arrow.ArrowDoubleWriterFactory.ArrowDoubleWriter;
+import org.knime.core.data.container.newapi.store.arrow.ArrowIntReaderFactory.ArrowIntReader;
 import org.knime.core.data.def.BooleanCell;
 import org.knime.core.data.def.DoubleCell;
 import org.knime.core.data.def.StringCell;
@@ -87,7 +85,7 @@ import org.knime.core.util.FileUtil;
  *
  * @author dietzc
  */
-public class ArrowTableStore implements TableStore {
+public class ArrowTableStore implements Store {
 
     // TODO configurable?
     // TODO memory dependent?
@@ -136,7 +134,7 @@ public class ArrowTableStore implements TableStore {
     }
 
     @Override
-    public TableStoreWriteAccess createWriteAccess() {
+    public StoreWriteAccess createWriteAccess() {
         // yey, not synchronized. only tmp anyways.
         if (m_isWriting) {
             throw new IllegalStateException("only single writer supported");
@@ -151,7 +149,7 @@ public class ArrowTableStore implements TableStore {
     }
 
     @Override
-    public TableStoreReadAccess createReadAccess(final TableStoreAccessConfig config) {
+    public StoreReadAccess createReadAccess(final StoreReadAccessConfig config) {
         if (m_isWriting) {
             // TODO implement synchrouniosuosuosu read/write
             throw new IllegalStateException("Not allowed atm");
@@ -170,7 +168,7 @@ public class ArrowTableStore implements TableStore {
         m_destFile.delete();
     }
 
-    private final class ArrowTableStoreWriteAccess implements TableStoreWriteAccess {
+    private final class ArrowTableStoreWriteAccess implements StoreWriteAccess {
 
         private final ArrowWriter<?>[] m_writers;
 
@@ -265,7 +263,7 @@ public class ArrowTableStore implements TableStore {
         }
     }
 
-    private final class ArrowTableStoreReadAccess implements TableStoreReadAccess {
+    private final class ArrowTableStoreReadAccess implements StoreReadAccess {
 
         private final ArrowStreamReader m_streamReader;
 
