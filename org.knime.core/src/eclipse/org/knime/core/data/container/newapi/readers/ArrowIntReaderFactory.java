@@ -44,63 +44,39 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Mar 26, 2020 (dietzc): created
+ *   Mar 26, 2020 (marcel): created
  */
-package org.knime.core.data.container.newapi;
+package org.knime.core.data.container.newapi.readers;
 
-import org.knime.core.data.DataTableSpec;
-import org.knime.core.data.container.CloseableRowIterator;
-import org.knime.core.data.container.filter.TableFilter;
-import org.knime.core.node.ExecutionMonitor;
+import org.apache.arrow.vector.IntVector;
+import org.knime.core.data.container.newapi.AbstractArrowReader;
+import org.knime.core.data.container.newapi.ArrowReaderFactory;
 
-/**
- *
- * @author dietzc
- */
-public class ArrowReadableTable implements ReadableTable {
+public final class ArrowIntReaderFactory implements ArrowReaderFactory<IntVector, Integer> {
 
-    // a table without spec is not super useful
-    private DataTableSpec m_spec;
-
-    public ArrowReadableTable(final DataTableSpec spec) {
-        m_spec = spec;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public DataTableSpec getDataTableSpec() {
-        return m_spec;
+    public Class<IntVector> getSourceType() {
+        return IntVector.class;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public void destroy() {
+    public ArrowIntReader create(final IntVector vector) {
+        return new ArrowIntReader(vector);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public long size() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
+    public static final class ArrowIntReader extends AbstractArrowReader<IntVector, Integer> {
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public CloseableRowIterator iterator() {
-        // TODO Auto-generated method stub
-        return null;
-    }
+        public ArrowIntReader(final IntVector vector) {
+            super(vector);
+        }
 
-    public CloseableRowIterator iteratorWithFilter(final TableFilter filter, final ExecutionMonitor exec) {
-        // TODO Auto-generated method stub
-        return null;
+        public int readInt(final int index) {
+            return m_vector.get(index);
+        }
+
+        @Override
+        public Integer readNonNull(final int index) {
+            return readInt(index);
+        }
     }
 }

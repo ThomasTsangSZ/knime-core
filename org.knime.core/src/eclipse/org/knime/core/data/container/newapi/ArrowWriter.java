@@ -48,17 +48,15 @@
  */
 package org.knime.core.data.container.newapi;
 
-import java.util.function.Consumer;
-
 import org.apache.arrow.vector.FieldVector;
-import org.knime.core.data.DataCell;
 
 /**
  *
  * @author dietzc
  */
-public interface ArrowWriter extends AutoCloseable, Consumer<DataCell> {
+public interface ArrowWriter<T> extends AutoCloseable {
 
-    FieldVector retrieveVector();
+    FieldVector getVector();
 
+    void write(int index, T value);
 }

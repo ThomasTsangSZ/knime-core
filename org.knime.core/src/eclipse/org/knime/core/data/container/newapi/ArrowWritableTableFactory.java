@@ -48,19 +48,16 @@
  */
 package org.knime.core.data.container.newapi;
 
+import org.knime.core.data.DataTableSpec;
+
 /**
  *
  * @author dietzc
  */
 public class ArrowWritableTableFactory implements WritableTableFactory {
 
-
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public TableAccessible create() {
-        return new ArrowWritableTable();
+    public TableAccessible create(final DataTableSpec spec) {
+        return new DefaultTableAccessible(spec);
     }
-
 }

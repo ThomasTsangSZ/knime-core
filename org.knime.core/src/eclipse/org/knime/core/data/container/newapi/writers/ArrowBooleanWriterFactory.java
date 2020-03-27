@@ -47,51 +47,36 @@ package org.knime.core.data.container.newapi.writers;
 
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.BitVector;
-import org.apache.arrow.vector.FieldVector;
-import org.knime.core.data.BooleanValue;
-import org.knime.core.data.DataCell;
-import org.knime.core.data.container.newapi.ArrowWriter;
 import org.knime.core.data.container.newapi.ArrowWriterFactory;
 
-public class BooleanArrowWriterFactory implements ArrowWriterFactory {
+public final class ArrowBooleanWriterFactory implements ArrowWriterFactory<Boolean, BitVector> {
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public ArrowWriter create(final String name, final BufferAllocator allocator, final int size) {
-        return new ArrowWriter() {
-
-            private final BitVector m_vec;
-
-            private int m_ctr;
-
-            {
-                m_vec = new BitVector(name, allocator);
-                m_vec.allocateNew(size);
-                m_ctr = 0;
-            }
-
-            @Override
-            public void close() throws Exception {
-                m_vec.close();
-            }
-
-            @Override
-            public void accept(final DataCell t) {
-                // missing is implicitly assumed
-                if (!t.isMissing()) {
-                    m_vec.set(m_ctr, ((BooleanValue)t).getBooleanValue() ? 1 : 0);
-                }
-                m_vec.setValueCount(++m_ctr);
-            }
-
-            @Override
-            public FieldVector retrieveVector() {
-                return m_vec;
-            }
-
-        };
+    @SuppressWarnings("resource") // Vector will be closed by writer.
+    public ArrowBooleanWriter create(final String name, final BufferAllocator allocator, final int size) {
+        final BitVector vector = new BitVector(name, allocator);
+        vector.allocateNew(size);
+        return new ArrowBooleanWriter(vector);
     }
 
+    public static final class ArrowBooleanWriter extends AbstractArrowWriter<Boolean, BitVector> {
+
+        public ArrowBooleanWriter(final BitVector vector) {
+            super(vector);
+        }
+
+        public void writeBoolean(final int index, final boolean value) {
+            writeBooleanInternal(index, value);
+            incrementValueCounter();
+        }
+
+        @Override
+        public void writeNonNull(final int index, final Boolean value) {
+            writeBooleanInternal(index, value);
+        }
+
+        private void writeBooleanInternal(final int index, final boolean value) {
+            m_vector.set(index, value ? 1 : 0);
+        }
+    }
 }

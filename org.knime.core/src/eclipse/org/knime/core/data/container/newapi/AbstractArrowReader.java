@@ -46,43 +46,32 @@
  * History
  *   Mar 26, 2020 (marcel): created
  */
-package org.knime.core.data.container.newapi.readers;
+package org.knime.core.data.container.newapi;
 
-import org.apache.arrow.vector.BitVector;
-import org.knime.core.data.DataCell;
-import org.knime.core.data.MissingCell;
-import org.knime.core.data.container.newapi.ArrowReader;
-import org.knime.core.data.container.newapi.ArrowReaderFactory;
-import org.knime.core.data.def.BooleanCell.BooleanCellFactory;
+import org.apache.arrow.vector.ValueVector;
 
-/**
- *
- * @author marcel
- */
-public class BooleanArrowReaderFactory implements ArrowReaderFactory<BitVector> {
+public abstract class AbstractArrowReader<I extends ValueVector, O> implements ArrowReader<O> {
+
+    protected final I m_vector;
+
+    public AbstractArrowReader(final I vector) {
+        m_vector = vector;
+    }
 
     @Override
-    public ArrowReader create(final BitVector vector) {
-        return new ArrowReader() {
+    public boolean isNull(final int index) {
+        return m_vector.isNull(index);
+    }
 
-            private int m_ctr;
+    @Override
+    public O read(final int index) {
+        return isNull(index) ? null : readNonNull(index);
+    }
 
-            @Override
-            public DataCell get() {
-                final DataCell c;
-                if (vector.isNull(m_ctr)) {
-                    c = new MissingCell(null);
-                } else {
-                    c = BooleanCellFactory.create(vector.get(m_ctr) > 0);
-                }
-                m_ctr++;
-                return c;
-            }
+    protected abstract O readNonNull(int index);
 
-            @Override
-            public void close() throws Exception {
-                vector.close();
-            }
-        };
+    @Override
+    public void close() throws Exception {
+        m_vector.close();
     }
 }

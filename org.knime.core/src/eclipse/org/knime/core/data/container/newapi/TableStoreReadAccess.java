@@ -58,6 +58,8 @@ public interface TableStoreReadAccess extends AutoCloseable {
 
     long getNumColumns();
 
+    boolean getBoolean(long index);
+
     int getInt(long index);
 
     String getString(long index);

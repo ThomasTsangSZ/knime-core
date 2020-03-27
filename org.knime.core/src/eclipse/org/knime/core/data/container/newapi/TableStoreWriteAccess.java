@@ -56,7 +56,9 @@ public interface TableStoreWriteAccess extends AutoCloseable {
 
     long getNumColumns();
 
-    void setInt(long index, int value);
+    void setBoolean(long index, boolean value);
+
+    void setDouble(long index, double value);
 
     void setString(long index, String value);
 }

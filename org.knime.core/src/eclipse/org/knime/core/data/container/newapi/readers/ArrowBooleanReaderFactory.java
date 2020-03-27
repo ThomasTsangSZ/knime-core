@@ -1,5 +1,6 @@
 /*
  * ------------------------------------------------------------------------
+ *
  *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
@@ -40,56 +41,42 @@
  *  propagated with or for interoperation with KNIME.  The owner of a Node
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
- * ------------------------------------------------------------------------
+ * ---------------------------------------------------------------------
+ *
+ * History
+ *   Mar 26, 2020 (marcel): created
  */
+package org.knime.core.data.container.newapi.readers;
 
-package org.knime.core.data.container.newapi.writers;
+import org.apache.arrow.vector.BitVector;
+import org.knime.core.data.container.newapi.AbstractArrowReader;
+import org.knime.core.data.container.newapi.ArrowReaderFactory;
 
-import org.apache.arrow.memory.BufferAllocator;
-import org.apache.arrow.vector.FieldVector;
-import org.apache.arrow.vector.Float8Vector;
-import org.knime.core.data.DataCell;
-import org.knime.core.data.DoubleValue;
-import org.knime.core.data.container.newapi.ArrowWriter;
-import org.knime.core.data.container.newapi.ArrowWriterFactory;
+public final class ArrowBooleanReaderFactory implements ArrowReaderFactory<BitVector, Boolean> {
 
-public class DoubleArrowWriterFactory implements ArrowWriterFactory {
-
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public ArrowWriter create(final String name, final BufferAllocator allocator, final int numRows) {
-        return new ArrowWriter() {
-
-            private final Float8Vector m_vec;
-
-            private int m_ctr;
-
-            {
-                m_vec = new Float8Vector(name, allocator);
-                m_vec.allocateNew(numRows);
-            }
-
-            @Override
-            public void accept(final DataCell t) {
-                if (!t.isMissing()) {
-                    //missing is implicitly assumed
-                    m_vec.set(m_ctr, ((DoubleValue)t).getDoubleValue());
-                }
-                m_vec.setValueCount(++m_ctr);
-            }
-
-            @Override
-            public void close() throws Exception {
-                m_vec.close();
-            }
-
-            @Override
-            public FieldVector retrieveVector() {
-                return m_vec;
-            }
-        };
+    public Class<BitVector> getSourceType() {
+        return BitVector.class;
     }
 
+    @Override
+    public ArrowBooleanReader create(final BitVector vector) {
+        return new ArrowBooleanReader(vector);
+    }
+
+    public static final class ArrowBooleanReader extends AbstractArrowReader<BitVector, Boolean> {
+
+        public ArrowBooleanReader(final BitVector vector) {
+            super(vector);
+        }
+
+        public boolean readBoolean(final int index) {
+            return m_vector.get(index) > 0;
+        }
+
+        @Override
+        public Boolean readNonNull(final int index) {
+            return readBoolean(index);
+        }
+    }
 }

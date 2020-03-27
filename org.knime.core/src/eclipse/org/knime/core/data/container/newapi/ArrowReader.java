@@ -48,16 +48,9 @@
  */
 package org.knime.core.data.container.newapi;
 
-import java.util.function.Supplier;
+public interface ArrowReader<T> extends AutoCloseable {
 
-import org.knime.core.data.DataCell;
+    boolean isNull(int index);
 
-/**
- * TODO: Object creation/cell proxies! We should not create data cells here but rather populate ones (or buffers).
- */
-public interface ArrowReader extends AutoCloseable {
-
-    public (DataCell dc) {
-        dc.setBooleanValue(dc);
-    }
+    T read(int index);
 }

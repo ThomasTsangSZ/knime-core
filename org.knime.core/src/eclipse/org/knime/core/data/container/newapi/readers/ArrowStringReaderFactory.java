@@ -44,63 +44,35 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Mar 26, 2020 (dietzc): created
+ *   Mar 26, 2020 (marcel): created
  */
-package org.knime.core.data.container.newapi;
+package org.knime.core.data.container.newapi.readers;
 
-import org.knime.core.data.DataTableSpec;
-import org.knime.core.data.container.CloseableRowIterator;
-import org.knime.core.data.container.filter.TableFilter;
-import org.knime.core.node.ExecutionMonitor;
+import org.apache.arrow.vector.VarCharVector;
+import org.knime.core.data.container.newapi.AbstractArrowReader;
+import org.knime.core.data.container.newapi.ArrowReaderFactory;
 
-/**
- *
- * @author dietzc
- */
-public class ArrowReadableTable implements ReadableTable {
+public final class ArrowStringReaderFactory implements ArrowReaderFactory<VarCharVector, String> {
 
-    // a table without spec is not super useful
-    private DataTableSpec m_spec;
-
-    public ArrowReadableTable(final DataTableSpec spec) {
-        m_spec = spec;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public DataTableSpec getDataTableSpec() {
-        return m_spec;
+    public Class<VarCharVector> getSourceType() {
+        return VarCharVector.class;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public void destroy() {
+    public ArrowStringReader create(final VarCharVector vector) {
+        return new ArrowStringReader(vector);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public long size() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
+    public static final class ArrowStringReader extends AbstractArrowReader<VarCharVector, String> {
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public CloseableRowIterator iterator() {
-        // TODO Auto-generated method stub
-        return null;
-    }
+        public ArrowStringReader(final VarCharVector vector) {
+            super(vector);
+        }
 
-    public CloseableRowIterator iteratorWithFilter(final TableFilter filter, final ExecutionMonitor exec) {
-        // TODO Auto-generated method stub
-        return null;
+        @Override
+        public String readNonNull(final int index) {
+            return m_vector.getObject(index).toString();
+        }
     }
 }

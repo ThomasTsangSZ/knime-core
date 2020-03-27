@@ -48,11 +48,11 @@
  */
 package org.knime.core.data.container.newapi;
 
-/**
- *
- * @author marcel
- */
-public interface ArrowReaderFactory<V> {
+import org.apache.arrow.vector.ValueVector;
 
-    ArrowReader create(V vector);
+public interface ArrowReaderFactory<I extends ValueVector, O> {
+
+    Class<I> getSourceType();
+
+    ArrowReader<O> create(I vector);
 }

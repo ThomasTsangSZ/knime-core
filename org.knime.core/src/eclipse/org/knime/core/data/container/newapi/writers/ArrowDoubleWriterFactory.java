@@ -1,6 +1,5 @@
 /*
  * ------------------------------------------------------------------------
- *
  *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
@@ -41,66 +40,43 @@
  *  propagated with or for interoperation with KNIME.  The owner of a Node
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
- * ---------------------------------------------------------------------
- *
- * History
- *   Mar 26, 2020 (dietzc): created
+ * ------------------------------------------------------------------------
  */
-package org.knime.core.data.container.newapi;
 
-import org.knime.core.data.DataTableSpec;
-import org.knime.core.data.container.CloseableRowIterator;
-import org.knime.core.data.container.filter.TableFilter;
-import org.knime.core.node.ExecutionMonitor;
+package org.knime.core.data.container.newapi.writers;
 
-/**
- *
- * @author dietzc
- */
-public class ArrowReadableTable implements ReadableTable {
+import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.vector.Float8Vector;
+import org.knime.core.data.container.newapi.ArrowWriterFactory;
 
-    // a table without spec is not super useful
-    private DataTableSpec m_spec;
+public final class ArrowDoubleWriterFactory implements ArrowWriterFactory<Double, Float8Vector> {
 
-    public ArrowReadableTable(final DataTableSpec spec) {
-        m_spec = spec;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public DataTableSpec getDataTableSpec() {
-        return m_spec;
+    @SuppressWarnings("resource") // Vector will be closed by writer.
+    public ArrowDoubleWriter create(final String name, final BufferAllocator allocator, final int numRows) {
+        final Float8Vector vector = new Float8Vector(name, allocator);
+        vector.allocateNew(numRows);
+        return new ArrowDoubleWriter(vector);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void destroy() {
-    }
+    public static final class ArrowDoubleWriter extends AbstractArrowWriter<Double, Float8Vector> {
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public long size() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
+        public ArrowDoubleWriter(final Float8Vector vector) {
+            super(vector);
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public CloseableRowIterator iterator() {
-        // TODO Auto-generated method stub
-        return null;
-    }
+        public void writeDouble(final int index, final double value) {
+            writeDoubleInternal(index, value);
+            incrementValueCounter();
+        }
 
-    public CloseableRowIterator iteratorWithFilter(final TableFilter filter, final ExecutionMonitor exec) {
-        // TODO Auto-generated method stub
-        return null;
+        @Override
+        protected void writeNonNull(final int index, final Double value) {
+            writeDoubleInternal(index, value);
+        }
+
+        private void writeDoubleInternal(final int index, final double value) {
+            m_vector.set(index, value);
+        }
     }
 }

@@ -1,5 +1,6 @@
 /*
  * ------------------------------------------------------------------------
+ *
  *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
@@ -40,68 +41,45 @@
  *  propagated with or for interoperation with KNIME.  The owner of a Node
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
- * ------------------------------------------------------------------------
+ * ---------------------------------------------------------------------
+ *
+ * History
+ *   Mar 27, 2020 (marcel): created
  */
-
 package org.knime.core.data.container.newapi.writers;
 
-import java.nio.charset.StandardCharsets;
-
-import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.FieldVector;
-import org.apache.arrow.vector.VarCharVector;
-import org.knime.core.data.DataCell;
-import org.knime.core.data.StringValue;
 import org.knime.core.data.container.newapi.ArrowWriter;
-import org.knime.core.data.container.newapi.ArrowWriterFactory;
 
-public class StringArrowWriterFactory implements ArrowWriterFactory {
+public abstract class AbstractArrowWriter<I, O extends FieldVector> implements ArrowWriter<I> {
 
-    /**
-     * {@inheritDoc}
-     */
+    protected final O m_vector;
+
+    public AbstractArrowWriter(final O vector) {
+        m_vector = vector;
+    }
+
     @Override
-    public ArrowWriter create(final String name, final BufferAllocator allocator, final int numRows) {
-        return new ArrowWriter() {
+    public O getVector() {
+        return m_vector;
+    }
 
-            private final VarCharVector m_vec;
+    @Override
+    public void write(final int index, final I value) {
+        if (value != null) {
+            writeNonNull(index, value);
+        }
+        incrementValueCounter();
+    }
 
-            private int m_byteCount;
+    protected abstract void writeNonNull(int index, I value);
 
-            private int m_ctr;
+    protected void incrementValueCounter() {
+        m_vector.setValueCount(m_vector.getValueCount() + 1);
+    }
 
-            {
-                m_vec = new VarCharVector(name, allocator);
-                // TODO more flexible configuration of "bytes per cell assumption". E.g. rowIds might be smaller
-                m_vec.allocateNew(64 * numRows, numRows);
-            }
-
-            @Override
-            public void accept(final DataCell cell) {
-                if (m_ctr >= m_vec.getValueCapacity()) {
-                    m_vec.reallocValidityAndOffsetBuffers();
-                }
-                if (!cell.isMissing()) {
-                    // Implicitly assumed to be missing.
-                    byte[] bVal = ((StringValue)cell).getStringValue().getBytes(StandardCharsets.UTF_8);
-                    m_byteCount += bVal.length;
-                    while (m_byteCount > m_vec.getByteCapacity()) {
-                        m_vec.reallocDataBuffer();
-                    }
-                    m_vec.set(m_ctr, bVal);
-                }
-                m_vec.setValueCount(++m_ctr);
-            }
-
-            @Override
-            public void close() throws Exception {
-                m_vec.close();
-            }
-
-            @Override
-            public FieldVector retrieveVector() {
-                return m_vec;
-            }
-        };
+    @Override
+    public void close() throws Exception {
+        m_vector.close();
     }
 }

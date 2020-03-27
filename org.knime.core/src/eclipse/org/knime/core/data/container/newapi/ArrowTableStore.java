@@ -52,6 +52,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.io.UncheckedIOException;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -61,16 +62,22 @@ import java.util.UUID;
 
 import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.FieldVector;
+import org.apache.arrow.vector.ValueVector;
 import org.apache.arrow.vector.VectorSchemaRoot;
 import org.apache.arrow.vector.ipc.ArrowStreamReader;
 import org.apache.arrow.vector.ipc.ArrowStreamWriter;
-import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.DataType;
-import org.knime.core.data.container.newapi.readers.BooleanArrowReaderFactory;
-import org.knime.core.data.container.newapi.writers.BooleanArrowWriterFactory;
-import org.knime.core.data.container.newapi.writers.DoubleArrowWriterFactory;
-import org.knime.core.data.container.newapi.writers.StringArrowWriterFactory;
+import org.knime.core.data.container.newapi.readers.ArrowBooleanReaderFactory;
+import org.knime.core.data.container.newapi.readers.ArrowBooleanReaderFactory.ArrowBooleanReader;
+import org.knime.core.data.container.newapi.readers.ArrowIntReaderFactory;
+import org.knime.core.data.container.newapi.readers.ArrowIntReaderFactory.ArrowIntReader;
+import org.knime.core.data.container.newapi.readers.ArrowStringReaderFactory;
+import org.knime.core.data.container.newapi.writers.ArrowBooleanWriterFactory;
+import org.knime.core.data.container.newapi.writers.ArrowBooleanWriterFactory.ArrowBooleanWriter;
+import org.knime.core.data.container.newapi.writers.ArrowDoubleWriterFactory;
+import org.knime.core.data.container.newapi.writers.ArrowDoubleWriterFactory.ArrowDoubleWriter;
+import org.knime.core.data.container.newapi.writers.ArrowStringWriterFactory;
 import org.knime.core.data.def.BooleanCell;
 import org.knime.core.data.def.DoubleCell;
 import org.knime.core.data.def.StringCell;
@@ -82,34 +89,32 @@ import org.knime.core.util.FileUtil;
  */
 public class ArrowTableStore implements TableStore {
 
-    // TODO Logging
-    private static final Map<DataType, ArrowWriterFactory> WRITER_FACTORIES = new HashMap<>();
-
-    private static final Map<DataType, ArrowReaderFactory<?>> READER_FACTORIES = new HashMap<>();
-
     // TODO configurable?
     // TODO memory dependent?
     // TODO ?
     private static final int BATCH_SIZE = 64;
 
+    // TODO Logging
+    private static final Map<DataType, ArrowWriterFactory<?, ?>> WRITER_FACTORIES = new HashMap<>();
+
+    private static final Map<DataType, ArrowReaderFactory<?, ?>> READER_FACTORIES = new HashMap<>();
     {
         // TODO let's make this extensible later on..
         // TODO missing collections
-        WRITER_FACTORIES.put(StringCell.TYPE, new StringArrowWriterFactory());
-        WRITER_FACTORIES.put(DoubleCell.TYPE, new DoubleArrowWriterFactory());
-        WRITER_FACTORIES.put(BooleanCell.TYPE, new BooleanArrowWriterFactory());
+        WRITER_FACTORIES.put(BooleanCell.TYPE, new ArrowBooleanWriterFactory());
+        WRITER_FACTORIES.put(DoubleCell.TYPE, new ArrowDoubleWriterFactory());
+        WRITER_FACTORIES.put(StringCell.TYPE, new ArrowStringWriterFactory());
 
-        // TODO more types
-        READER_FACTORIES.put(BooleanCell.TYPE, new BooleanArrowReaderFactory());
+        READER_FACTORIES.put(BooleanCell.TYPE, new ArrowBooleanReaderFactory());
+        READER_FACTORIES.put(BooleanCell.TYPE, new ArrowIntReaderFactory());
+        READER_FACTORIES.put(BooleanCell.TYPE, new ArrowStringReaderFactory());
     }
+
+    private DataTableSpec m_spec;
 
     private RootAllocator m_rootAllocator;
 
-    private int m_ctr;
-
     private File m_destFile;
-
-    private DataTableSpec m_spec;
 
     private boolean m_isWriting = false;;
 
@@ -137,7 +142,12 @@ public class ArrowTableStore implements TableStore {
             throw new IllegalStateException("only single writer supported");
         }
         m_isWriting = true;
-        return new ArrowTableStoreWriteAccess();
+        try {
+            return new ArrowTableStoreWriteAccess();
+        } catch (final FileNotFoundException ex) {
+            // TODO: What to do?
+            throw new UncheckedIOException(ex);
+        }
     }
 
     @Override
@@ -146,7 +156,12 @@ public class ArrowTableStore implements TableStore {
             // TODO implement synchrouniosuosuosu read/write
             throw new IllegalStateException("Not allowed atm");
         }
-        return new ArrowTableStoreReadAccess();
+        try {
+            return new ArrowTableStoreReadAccess();
+        } catch (final IOException ex) {
+            // TODO: What to do?
+            throw new UncheckedIOException(ex);
+        }
     }
 
     @Override
@@ -155,134 +170,137 @@ public class ArrowTableStore implements TableStore {
         m_destFile.delete();
     }
 
-    // TODO: Only supports single file (integer row count) for now
-
     private final class ArrowTableStoreWriteAccess implements TableStoreWriteAccess {
 
-        private final ArrowWriter[] m_writers;
+        private final ArrowWriter<?>[] m_writers;
+
+        private VectorSchemaRoot m_schemaRoot;
 
         private final ArrowStreamWriter m_streamWriter;
 
-        private long m_rowIndex = -1;
+        // TODO: Only supports single file (integer row count) for now
+        private int m_rowIndex = -1;
 
-        public ArrowTableStoreWriteAccess() {
+        public ArrowTableStoreWriteAccess() throws FileNotFoundException {
             m_writers = new ArrowWriter[m_spec.getNumColumns()];
-            final List<FieldVector> vecs = new ArrayList<>();
+            final List<FieldVector> vectors = new ArrayList<>();
             for (int i = 0; i < m_writers.length; i++) {
                 // TODO set batch size to 1024. No idea how to set optimal number here...
                 // for performance reasons we might add API for the developer (or the framework) to allocate size.
                 m_writers[i] = WRITER_FACTORIES.get(m_spec.getColumnSpec(i).getType()).create(m_spec.getName(),
                     m_rootAllocator, /* TODO*/ BATCH_SIZE);
-                final FieldVector vec = m_writers[i].retrieveVector(); // Closed via inserters. (TODO that feels very wrong...)
-                vecs.add(vec);
+                @SuppressWarnings("resource") // Closed via writer. (TODO that feels very wrong...)
+                final FieldVector vector = m_writers[i].getVector();
+                vectors.add(vector);
             }
-            try {
-                RandomAccessFile raf = new RandomAccessFile(m_destFile, "rw");
-                FileChannel channel = raf.getChannel();
-                m_streamWriter = new ArrowStreamWriter(new VectorSchemaRoot(vecs), null, channel);
-            } catch (Exception e) {
-                // TODO
-                throw new RuntimeException(e);
-            }
+            @SuppressWarnings("resource") // Closed via writer and channel.
+            final RandomAccessFile raFile = new RandomAccessFile(m_destFile, "rw");
+            @SuppressWarnings("resource") // Closed via writer.
+            final FileChannel channel = raFile.getChannel();
+            m_schemaRoot = new VectorSchemaRoot(vectors);
+            m_streamWriter = new ArrowStreamWriter(m_schemaRoot, null, channel);
         }
 
         @Override
-        public void add(final DataRow row) {
-            // TODO missing: special handling for RowKeys & Co
-            // TODO missing: special handling for filestores & blobstores
-            for (int i = 0; i < row.getNumCells(); i++) {
-                m_writers[i].accept(row.getCell(0));
-            }
-            m_ctr++;
+        public long getCapacity() {
+            return BATCH_SIZE;
+        }
+
+        @Override
+        public void forward() {
             flushIfRequired();
+            m_rowIndex++;
         }
 
         private void flushIfRequired() {
-            if (m_ctr == BATCH_SIZE) {
+            if (m_rowIndex == BATCH_SIZE - 1) {
                 flush();
             }
         }
 
         private void flush() {
             try {
-                m_arrowBatchWriter.writeBatch();
+                m_streamWriter.writeBatch();
             } catch (Exception e) {
                 // TODO later
                 throw new RuntimeException(e);
             }
-            m_ctr = 0;
-        }
-
-        @Override
-        public long getCapacity() {
-            // TODO Auto-generated method stub
-            return 0;
-        }
-
-        @Override
-        public void forward() {
-            // TODO Auto-generated method stub
-
+            m_rowIndex = -1;
         }
 
         @Override
         public long getNumColumns() {
-            // TODO Auto-generated method stub
-            return 0;
+            return m_writers.length;
+        }
+
+        // set-Methods:
+        // TODO: Get rid of element-wise (potentially unsafe) casts?
+        // TODO: Do we really need a long column index? m_readers array only supports integer index.
+
+        @Override
+        public void setBoolean(final long index, final boolean value) {
+            ((ArrowBooleanWriter)m_writers[(int)index]).writeBoolean(m_rowIndex, value);
         }
 
         @Override
-        public void setInt(final long index, final int value) {
-            m_writers[index].setIntValue(m_rowIndex, value);
+        public void setDouble(final long index, final double value) {
+            ((ArrowDoubleWriter)m_writers[(int)index]).writeDouble(m_rowIndex, value);
         }
 
         @Override
         public void setString(final long index, final String value) {
-            m_writers[index].setStringValue(m_rowIndex, value);
+            ((ArrowWriter<String>)m_writers[(int)index]).write(m_rowIndex, value);
         }
 
         @Override
         public void close() throws Exception {
+            // TODO: Carefully handle exceptions (later).
             flush();
+            m_streamWriter.close();
+            m_schemaRoot.close();
             for (int i = 0; i < m_writers.length; i++) {
-                try {
-                    m_writers[i].close();
-                } catch (Exception ex) {
-                    // TODO we need to carefully handle exceptions (later)
-                    throw new RuntimeException(ex);
-                }
+                m_writers[i].close();
             }
-            m_arrowBatchWriter.close();
             m_isWriting = false;
         }
     }
 
-    // TODO: Only supports single file (integer row count) for now
     private final class ArrowTableStoreReadAccess implements TableStoreReadAccess {
-
-        private final VectorSchemaRoot m_schemaRoot;
 
         private final ArrowStreamReader m_streamReader;
 
-        private final ArrowReader[] m_readers;
+        private final VectorSchemaRoot m_schemaRoot;
 
-        private long m_rowIndex = -1;
+        private final ArrowReader<?>[] m_readers;
 
-        public ArrowTableStoreReadAccess() {
-            final RandomAccessFile raFile;
-            try {
-                raFile = new RandomAccessFile(m_destFile, "r");
-            } catch (FileNotFoundException ex) {
-                ex.printStackTrace();
-            }
+        // TODO: Only supports single file (integer row count) for now
+        private int m_rowIndex = -1;
+
+        public ArrowTableStoreReadAccess() throws IOException {
+            @SuppressWarnings("resource") // Closed via reader and channel.
+            final RandomAccessFile raFile = new RandomAccessFile(m_destFile, "r");
             m_streamReader = new ArrowStreamReader(raFile.getChannel(), m_rootAllocator);
             m_schemaRoot = m_streamReader.getVectorSchemaRoot();
             m_readers = new ArrowReader[m_spec.getNumColumns()];
             for (int i = 0; i < m_readers.length; i++) {
+                final DataType columnType = m_spec.getColumnSpec(i).getType();
+                final ArrowReaderFactory<?, ?> readerFactory = READER_FACTORIES.get(columnType);
+                @SuppressWarnings("resource") // Handled by vector schema root.
                 final FieldVector vector = m_schemaRoot.getVector(i);
-                // TODO: Make as type-safe as possible
-                final ArrowReaderFactory readerFactory = READER_FACTORIES.get(m_spec.getColumnSpec(i).getType());
-                m_readers[i] = readerFactory.create(vector);
+                m_readers[i] = createReader(readerFactory, vector);
+            }
+        }
+
+        private <I extends ValueVector> ArrowReader<?> createReader(final ArrowReaderFactory<I, ?> readerFactory,
+            final FieldVector vector) {
+            final Class<?> readerSourceType = readerFactory.getSourceType();
+            if (readerSourceType.isInstance(vector)) {
+                @SuppressWarnings("unchecked") // Type was checked dynamically.
+                final I castedVector = (I)vector;
+                return readerFactory.create(castedVector);
+            } else {
+                throw new IllegalStateException("Type mismatch. Reader expects source of type: "
+                    + readerSourceType.getTypeName() + ", but vector is of type: " + vector.getClass().getTypeName());
             }
         }
 
@@ -306,27 +324,30 @@ public class ArrowTableStore implements TableStore {
             return m_readers.length;
         }
 
-        // TODO: Get rid of element-wise casts?
+        // get-Methods:
+        // TODO: Get rid of element-wise (potentially unsafe) casts?
+        // TODO: Do we really need a long column index? m_readers array only supports integer index.
+
+        @Override
+        public boolean getBoolean(final long index) {
+            return ((ArrowBooleanReader)m_readers[(int)index]).readBoolean(m_rowIndex);
+        }
 
         @Override
         public int getInt(final long index) {
-            return ((ArrowIntReader)m_readers[index]).getInt(m_rowIndex);
+            return ((ArrowIntReader)m_readers[(int)index]).readInt(m_rowIndex);
         }
 
         @Override
         public String getString(final long index) {
-            return ((ArrowStringReader)m_readers[index]).getString(m_rowIndex);
+            return ((ArrowReader<String>)m_readers[(int)index]).read(m_rowIndex);
         }
 
         @Override
         public void close() throws Exception {
+            // TODO: Carefully handle exceptions (later).
             for (int i = 0; i < m_readers.length; i++) {
-                try {
-                    m_readers[i].close();
-                } catch (Exception ex) {
-                    // TODO we need to carefully handle exceptions (later)
-                    throw new RuntimeException(ex);
-                }
+                m_readers[i].close();
             }
             m_streamReader.close();
         }

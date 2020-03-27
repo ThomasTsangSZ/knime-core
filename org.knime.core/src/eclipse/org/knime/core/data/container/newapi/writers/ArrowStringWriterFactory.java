@@ -1,6 +1,5 @@
 /*
  * ------------------------------------------------------------------------
- *
  *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
@@ -41,66 +40,47 @@
  *  propagated with or for interoperation with KNIME.  The owner of a Node
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
- * ---------------------------------------------------------------------
- *
- * History
- *   Mar 26, 2020 (dietzc): created
+ * ------------------------------------------------------------------------
  */
-package org.knime.core.data.container.newapi;
 
-import org.knime.core.data.DataTableSpec;
-import org.knime.core.data.container.CloseableRowIterator;
-import org.knime.core.data.container.filter.TableFilter;
-import org.knime.core.node.ExecutionMonitor;
+package org.knime.core.data.container.newapi.writers;
 
-/**
- *
- * @author dietzc
- */
-public class ArrowReadableTable implements ReadableTable {
+import java.nio.charset.StandardCharsets;
 
-    // a table without spec is not super useful
-    private DataTableSpec m_spec;
+import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.vector.VarCharVector;
+import org.knime.core.data.container.newapi.ArrowWriterFactory;
 
-    public ArrowReadableTable(final DataTableSpec spec) {
-        m_spec = spec;
-    }
+public final class ArrowStringWriterFactory implements ArrowWriterFactory<String, VarCharVector> {
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public DataTableSpec getDataTableSpec() {
-        return m_spec;
+    @SuppressWarnings("resource") // Vector will be closed by writer.
+    public ArrowStringWriter create(final String name, final BufferAllocator allocator, final int numRows) {
+        final VarCharVector vector = new VarCharVector(name, allocator);
+        // TODO more flexible configuration of "bytes per cell assumption". E.g. rowIds might be smaller
+        vector.allocateNew(64l * numRows, numRows);
+        return new ArrowStringWriter(vector);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void destroy() {
-    }
+    public static final class ArrowStringWriter extends AbstractArrowWriter<String, VarCharVector> {
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public long size() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
+        private int m_byteCount = 0;
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public CloseableRowIterator iterator() {
-        // TODO Auto-generated method stub
-        return null;
-    }
+        public ArrowStringWriter(final VarCharVector vector) {
+            super(vector);
+        }
 
-    public CloseableRowIterator iteratorWithFilter(final TableFilter filter, final ExecutionMonitor exec) {
-        // TODO Auto-generated method stub
-        return null;
+        @Override
+        protected void writeNonNull(final int index, final String value) {
+            if (index >= m_vector.getValueCapacity()) {
+                m_vector.reallocValidityAndOffsetBuffers();
+            }
+            final byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
+            m_byteCount += bytes.length;
+            while (m_byteCount > m_vector.getByteCapacity()) {
+                m_vector.reallocDataBuffer();
+            }
+            m_vector.set(index, bytes);
+        }
     }
 }

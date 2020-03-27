@@ -49,12 +49,13 @@
 package org.knime.core.data.container.newapi;
 
 import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.vector.FieldVector;
 
 /**
  *
  * @author dietzc
  */
-public interface ArrowWriterFactory {
+public interface ArrowWriterFactory<I, O extends FieldVector> {
 
-    ArrowWriter create(final String name, final BufferAllocator allocator, final int size);
+    ArrowWriter<I> create(final String name, final BufferAllocator allocator, final int size);
 }
