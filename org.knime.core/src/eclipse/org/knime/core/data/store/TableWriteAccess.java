@@ -44,37 +44,16 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Mar 26, 2020 (marcel): created
+ *   Mar 26, 2020 (dietzc): created
  */
-package org.knime.core.data.container.newapi.store.arrow;
+package org.knime.core.data.store;
 
-import org.apache.arrow.vector.BitVector;
+import org.knime.core.data.DataRow;
 
-public final class ArrowBooleanReaderFactory implements ArrowReaderFactory<BitVector, Boolean> {
-
-    @Override
-    public Class<BitVector> getSourceType() {
-        return BitVector.class;
-    }
-
-    @Override
-    public ArrowBooleanReader create(final BitVector vector) {
-        return new ArrowBooleanReader(vector);
-    }
-
-    public static final class ArrowBooleanReader extends AbstractArrowReader<BitVector, Boolean> {
-
-        public ArrowBooleanReader(final BitVector vector) {
-            super(vector);
-        }
-
-        public boolean readBoolean(final int index) {
-            return m_vector.get(index) > 0;
-        }
-
-        @Override
-        public Boolean readNonNull(final int index) {
-            return readBoolean(index);
-        }
-    }
+/**
+ *
+ * @author dietzc
+ */
+public interface TableWriteAccess extends AutoCloseable {
+    void add(DataRow row);
 }

@@ -44,13 +44,77 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Mar 26, 2020 (marcel): created
+ *   Mar 26, 2020 (dietzc): created
  */
-package org.knime.core.data.container.newapi.store.arrow;
+package org.knime.core.data.store;
 
-public interface ArrowReader<T> extends AutoCloseable {
+import org.knime.core.data.DataRow;
+import org.knime.core.data.DataTableSpec;
 
-    boolean isNull(int index);
+/*
+ * - Abstracts caching and life-cycle management (closing, iterators, data-row) from store implementor (Arrow, Parquet, etc.)
+ * - Implementors provide batches and possibly buffer them
+ */
+public class DefaultTableAccessible implements TableAccessible {
 
-    T read(int index);
+    private final DataTableSpec m_spec;
+
+    // TODO instantiate the right store.
+    private Store m_store;
+
+    public DefaultTableAccessible(final DataTableSpec spec) {
+        m_spec = spec;
+    }
+
+    @SuppressWarnings("resource")
+    @Override
+    public TableWriteAccess createWriteAccess() {
+        final StoreWriteAccess m_storeWriteAccess = m_store.createWriteAccess();
+
+        return new TableWriteAccess() {
+
+            @Override
+            public void add(final DataRow row) {
+                // TODO some associated proxy with row/type mapping. updated be "row". object can be reused.
+                // TODO proxy can be re-used
+                m_storeWriteAccess.accept(null);
+            }
+
+            @Override
+            public void close() throws Exception {
+                m_storeWriteAccess.close();
+            }
+        };
+    }
+
+    @SuppressWarnings("resource")
+    @Override
+    public TableReadAccess createReadAccess() {
+        // TODO pass config
+        final StoreReadAccess m_storeReadAccess = m_store.createReadAccess(null);
+        return new TableReadAccess() {
+
+            @Override
+            public boolean hasNext() {
+                return m_storeReadAccess.hasNext();
+            }
+
+            @Override
+            public DataRow next() {
+                PrimitiveRow next = m_storeReadAccess.next();
+                // type mapping of 'next' to DataRow
+                return null;
+            }
+
+            @Override
+            public void close() throws Exception {
+                m_storeReadAccess.close();
+            }
+        };
+    }
+
+    @Override
+    public void destroy() {
+        m_store.destroy();
+    }
 }

@@ -46,10 +46,11 @@
  * History
  *   Mar 26, 2020 (marcel): created
  */
-package org.knime.core.data.container.newapi.store;
+package org.knime.core.data.store.arrow;
 
-import java.util.function.Consumer;
+public interface ArrowReader<T> extends AutoCloseable {
 
-public interface StoreWriteAccess extends AutoCloseable, Consumer<PrimitiveRow> {
-    // NB: Marker
+    boolean isNull(int index);
+
+    T read(int index);
 }

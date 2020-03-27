@@ -46,16 +46,12 @@
  * History
  *   Mar 26, 2020 (marcel): created
  */
-package org.knime.core.data.container.newapi.store;
+package org.knime.core.data.store;
 
-public interface Store {
+public interface StoreReadAccess extends AutoCloseable {
 
-    StoreWriteAccess createWriteAccess();
+    PrimitiveRow next();
 
-    StoreReadAccess createReadAccess(StoreReadAccessConfig config);
+    boolean hasNext();
 
-    /**
-     * Deletes all files/resources created by this store instance. Invalidates this instance.
-     */
-    void destroy();
 }

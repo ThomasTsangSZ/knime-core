@@ -1,5 +1,6 @@
 /*
  * ------------------------------------------------------------------------
+ *
  *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
@@ -40,42 +41,15 @@
  *  propagated with or for interoperation with KNIME.  The owner of a Node
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
- * ------------------------------------------------------------------------
+ * ---------------------------------------------------------------------
+ *
+ * History
+ *   Mar 26, 2020 (dietzc): created
  */
+package org.knime.core.data.store;
 
-package org.knime.core.data.container.newapi.store.arrow;
+import java.util.function.Consumer;
 
-import org.apache.arrow.memory.BufferAllocator;
-import org.apache.arrow.vector.BitVector;
-
-public final class ArrowBooleanWriterFactory implements ArrowWriterFactory<Boolean, BitVector> {
-
-    @Override
-    @SuppressWarnings("resource") // Vector will be closed by writer.
-    public ArrowBooleanWriter create(final String name, final BufferAllocator allocator, final int size) {
-        final BitVector vector = new BitVector(name, allocator);
-        vector.allocateNew(size);
-        return new ArrowBooleanWriter(vector);
-    }
-
-    public static final class ArrowBooleanWriter extends AbstractArrowWriter<Boolean, BitVector> {
-
-        public ArrowBooleanWriter(final BitVector vector) {
-            super(vector);
-        }
-
-        public void writeBoolean(final int index, final boolean value) {
-            writeBooleanInternal(index, value);
-            incrementValueCounter();
-        }
-
-        @Override
-        public void writeNonNull(final int index, final Boolean value) {
-            writeBooleanInternal(index, value);
-        }
-
-        private void writeBooleanInternal(final int index, final boolean value) {
-            m_vector.set(index, value ? 1 : 0);
-        }
-    }
+public interface StoreWriteAccess extends AutoCloseable, Consumer<PrimitiveRow> {
+    // NB: Marker
 }

@@ -46,7 +46,7 @@
  * History
  *   Mar 26, 2020 (dietzc): created
  */
-package org.knime.core.data.container.newapi.store.arrow;
+package org.knime.core.data.store.arrow;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -68,17 +68,17 @@ import org.apache.arrow.vector.ipc.ArrowStreamReader;
 import org.apache.arrow.vector.ipc.ArrowStreamWriter;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.DataType;
-import org.knime.core.data.container.newapi.store.PrimitiveRow;
-import org.knime.core.data.container.newapi.store.Store;
-import org.knime.core.data.container.newapi.store.StoreReadAccess;
-import org.knime.core.data.container.newapi.store.StoreReadAccessConfig;
-import org.knime.core.data.container.newapi.store.StoreWriteAccess;
-import org.knime.core.data.container.newapi.store.arrow.ArrowBooleanReaderFactory.ArrowBooleanReader;
-import org.knime.core.data.container.newapi.store.arrow.ArrowBooleanWriterFactory.ArrowBooleanWriter;
-import org.knime.core.data.container.newapi.store.arrow.ArrowIntReaderFactory.ArrowIntReader;
 import org.knime.core.data.def.BooleanCell;
 import org.knime.core.data.def.DoubleCell;
 import org.knime.core.data.def.StringCell;
+import org.knime.core.data.store.PrimitiveRow;
+import org.knime.core.data.store.Store;
+import org.knime.core.data.store.StoreReadAccess;
+import org.knime.core.data.store.StoreReadAccessConfig;
+import org.knime.core.data.store.StoreWriteAccess;
+import org.knime.core.data.store.arrow.ArrowBooleanReaderFactory.ArrowBooleanReader;
+import org.knime.core.data.store.arrow.ArrowBooleanWriterFactory.ArrowBooleanWriter;
+import org.knime.core.data.store.arrow.ArrowIntReaderFactory.ArrowIntReader;
 import org.knime.core.util.FileUtil;
 
 /**

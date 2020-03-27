@@ -46,7 +46,7 @@
  * History
  *   Mar 26, 2020 (dietzc): created
  */
-package org.knime.core.data.container.newapi;
+package org.knime.core.data.store;
 
 import java.util.Iterator;
 

@@ -44,27 +44,15 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Mar 26, 2020 (dietzc): created
+ *   Mar 26, 2020 (marcel): created
  */
-package org.knime.core.data.container.newapi;
+package org.knime.core.data.store.arrow;
 
-/**
- *
- * Pointer on temp files.
- *
- * @author dietzc
- */
-public interface TableAccessible {
+import org.apache.arrow.vector.ValueVector;
 
-    // NB: required for parallel writing. No order guaranteed
-    TableWriteAccess createWriteAccess();
+public interface ArrowReaderFactory<I extends ValueVector, O> {
 
-    TableReadAccess createReadAccess();
+    Class<I> getSourceType();
 
-    /***
-     * Kills the entire store. Deletes _all_ associated temp files.
-     *
-     * TODO figure out when we actually can't destroy the store (i.e. if iterators are still open etc)
-     */
-    void destroy();
+    ArrowReader<O> create(I vector);
 }

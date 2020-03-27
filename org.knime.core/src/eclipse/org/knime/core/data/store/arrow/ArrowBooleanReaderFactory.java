@@ -44,41 +44,37 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Mar 27, 2020 (marcel): created
+ *   Mar 26, 2020 (marcel): created
  */
-package org.knime.core.data.container.newapi.store.arrow;
+package org.knime.core.data.store.arrow;
 
-import org.apache.arrow.vector.FieldVector;
+import org.apache.arrow.vector.BitVector;
 
-public abstract class AbstractArrowWriter<I, O extends FieldVector> implements ArrowWriter<I> {
+public final class ArrowBooleanReaderFactory implements ArrowReaderFactory<BitVector, Boolean> {
 
-    protected final O m_vector;
-
-    public AbstractArrowWriter(final O vector) {
-        m_vector = vector;
+    @Override
+    public Class<BitVector> getSourceType() {
+        return BitVector.class;
     }
 
     @Override
-    public O getVector() {
-        return m_vector;
+    public ArrowBooleanReader create(final BitVector vector) {
+        return new ArrowBooleanReader(vector);
     }
 
-    @Override
-    public void write(final int index, final I value) {
-        if (value != null) {
-            writeNonNull(index, value);
+    public static final class ArrowBooleanReader extends AbstractArrowReader<BitVector, Boolean> {
+
+        public ArrowBooleanReader(final BitVector vector) {
+            super(vector);
         }
-        incrementValueCounter();
-    }
 
-    protected abstract void writeNonNull(int index, I value);
+        public boolean readBoolean(final int index) {
+            return m_vector.get(index) > 0;
+        }
 
-    protected void incrementValueCounter() {
-        m_vector.setValueCount(m_vector.getValueCount() + 1);
-    }
-
-    @Override
-    public void close() throws Exception {
-        m_vector.close();
+        @Override
+        public Boolean readNonNull(final int index) {
+            return readBoolean(index);
+        }
     }
 }

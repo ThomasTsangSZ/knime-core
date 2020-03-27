@@ -43,39 +43,39 @@
  * ------------------------------------------------------------------------
  */
 
-package org.knime.core.data.container.newapi.store.arrow;
+package org.knime.core.data.store.arrow;
 
 import org.apache.arrow.memory.BufferAllocator;
-import org.apache.arrow.vector.Float8Vector;
+import org.apache.arrow.vector.BitVector;
 
-public final class ArrowDoubleWriterFactory implements ArrowWriterFactory<Double, Float8Vector> {
+public final class ArrowBooleanWriterFactory implements ArrowWriterFactory<Boolean, BitVector> {
 
     @Override
     @SuppressWarnings("resource") // Vector will be closed by writer.
-    public ArrowDoubleWriter create(final String name, final BufferAllocator allocator, final int numRows) {
-        final Float8Vector vector = new Float8Vector(name, allocator);
-        vector.allocateNew(numRows);
-        return new ArrowDoubleWriter(vector);
+    public ArrowBooleanWriter create(final String name, final BufferAllocator allocator, final int size) {
+        final BitVector vector = new BitVector(name, allocator);
+        vector.allocateNew(size);
+        return new ArrowBooleanWriter(vector);
     }
 
-    public static final class ArrowDoubleWriter extends AbstractArrowWriter<Double, Float8Vector> {
+    public static final class ArrowBooleanWriter extends AbstractArrowWriter<Boolean, BitVector> {
 
-        public ArrowDoubleWriter(final Float8Vector vector) {
+        public ArrowBooleanWriter(final BitVector vector) {
             super(vector);
         }
 
-        public void writeDouble(final int index, final double value) {
-            writeDoubleInternal(index, value);
+        public void writeBoolean(final int index, final boolean value) {
+            writeBooleanInternal(index, value);
             incrementValueCounter();
         }
 
         @Override
-        protected void writeNonNull(final int index, final Double value) {
-            writeDoubleInternal(index, value);
+        public void writeNonNull(final int index, final Boolean value) {
+            writeBooleanInternal(index, value);
         }
 
-        private void writeDoubleInternal(final int index, final double value) {
-            m_vector.set(index, value);
+        private void writeBooleanInternal(final int index, final boolean value) {
+            m_vector.set(index, value ? 1 : 0);
         }
     }
 }

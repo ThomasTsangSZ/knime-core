@@ -44,33 +44,17 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Mar 26, 2020 (marcel): created
+ *   Mar 26, 2020 (dietzc): created
  */
-package org.knime.core.data.container.newapi.store.arrow;
+package org.knime.core.data.store;
 
-import org.apache.arrow.vector.VarCharVector;
+public interface StoreReadAccessConfig {
 
-public final class ArrowStringReaderFactory implements ArrowReaderFactory<VarCharVector, String> {
+    // TODO: Add predicates?
 
-    @Override
-    public Class<VarCharVector> getSourceType() {
-        return VarCharVector.class;
-    }
+    long getStartIndex();
 
-    @Override
-    public ArrowStringReader create(final VarCharVector vector) {
-        return new ArrowStringReader(vector);
-    }
+    long getEndIndex();
 
-    public static final class ArrowStringReader extends AbstractArrowReader<VarCharVector, String> {
-
-        public ArrowStringReader(final VarCharVector vector) {
-            super(vector);
-        }
-
-        @Override
-        public String readNonNull(final int index) {
-            return m_vector.getObject(index).toString();
-        }
-    }
+    long[] getColumnIndices();
 }

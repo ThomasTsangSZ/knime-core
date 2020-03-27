@@ -44,15 +44,19 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Mar 26, 2020 (marcel): created
+ *   Mar 26, 2020 (dietzc): created
  */
-package org.knime.core.data.container.newapi.store.arrow;
+package org.knime.core.data.store.arrow;
 
-import org.apache.arrow.vector.ValueVector;
+import org.apache.arrow.vector.FieldVector;
 
-public interface ArrowReaderFactory<I extends ValueVector, O> {
+/**
+ *
+ * @author dietzc
+ */
+public interface ArrowWriter<T> extends AutoCloseable {
 
-    Class<I> getSourceType();
+    FieldVector getVector();
 
-    ArrowReader<O> create(I vector);
+    void write(int index, T value);
 }

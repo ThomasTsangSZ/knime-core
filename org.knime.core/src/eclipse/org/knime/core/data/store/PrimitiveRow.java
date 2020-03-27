@@ -46,16 +46,15 @@
  * History
  *   Mar 26, 2020 (dietzc): created
  */
-package org.knime.core.data.container.newapi.store.arrow;
+package org.knime.core.data.store;
 
-import org.apache.arrow.memory.BufferAllocator;
-import org.apache.arrow.vector.FieldVector;
+// TODO naming
+public interface PrimitiveRow {
+    long getNumColumns();
 
-/**
- *
- * @author dietzc
- */
-public interface ArrowWriterFactory<I, O extends FieldVector> {
+    boolean getBoolean(long index);
 
-    ArrowWriter<I> create(final String name, final BufferAllocator allocator, final int size);
+    int getInt(long index);
+
+    String getString(long index);
 }

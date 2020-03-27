@@ -44,14 +44,27 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Mar 26, 2020 (marcel): created
+ *   Mar 26, 2020 (dietzc): created
  */
-package org.knime.core.data.container.newapi.store;
+package org.knime.core.data.store;
 
-public interface StoreReadAccess extends AutoCloseable {
+/**
+ *
+ * Pointer on temp files.
+ *
+ * @author dietzc
+ */
+public interface TableAccessible {
 
-    PrimitiveRow next();
+    // NB: required for parallel writing. No order guaranteed
+    TableWriteAccess createWriteAccess();
 
-    boolean hasNext();
+    TableReadAccess createReadAccess();
 
+    /***
+     * Kills the entire store. Deletes _all_ associated temp files.
+     *
+     * TODO figure out when we actually can't destroy the store (i.e. if iterators are still open etc)
+     */
+    void destroy();
 }

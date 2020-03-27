@@ -44,19 +44,41 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Mar 26, 2020 (dietzc): created
+ *   Mar 27, 2020 (marcel): created
  */
-package org.knime.core.data.container.newapi.store.arrow;
+package org.knime.core.data.store.arrow;
 
 import org.apache.arrow.vector.FieldVector;
 
-/**
- *
- * @author dietzc
- */
-public interface ArrowWriter<T> extends AutoCloseable {
+public abstract class AbstractArrowWriter<I, O extends FieldVector> implements ArrowWriter<I> {
 
-    FieldVector getVector();
+    protected final O m_vector;
 
-    void write(int index, T value);
+    public AbstractArrowWriter(final O vector) {
+        m_vector = vector;
+    }
+
+    @Override
+    public O getVector() {
+        return m_vector;
+    }
+
+    @Override
+    public void write(final int index, final I value) {
+        if (value != null) {
+            writeNonNull(index, value);
+        }
+        incrementValueCounter();
+    }
+
+    protected abstract void writeNonNull(int index, I value);
+
+    protected void incrementValueCounter() {
+        m_vector.setValueCount(m_vector.getValueCount() + 1);
+    }
+
+    @Override
+    public void close() throws Exception {
+        m_vector.close();
+    }
 }
