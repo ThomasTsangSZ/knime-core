@@ -68,13 +68,13 @@ import org.apache.arrow.vector.ipc.ArrowStreamReader;
 import org.apache.arrow.vector.ipc.ArrowStreamWriter;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.data.DataType;
+import org.knime.core.data.container.newapi.store.PrimitiveRow;
 import org.knime.core.data.container.newapi.store.Store;
 import org.knime.core.data.container.newapi.store.StoreReadAccess;
 import org.knime.core.data.container.newapi.store.StoreReadAccessConfig;
 import org.knime.core.data.container.newapi.store.StoreWriteAccess;
 import org.knime.core.data.container.newapi.store.arrow.ArrowBooleanReaderFactory.ArrowBooleanReader;
 import org.knime.core.data.container.newapi.store.arrow.ArrowBooleanWriterFactory.ArrowBooleanWriter;
-import org.knime.core.data.container.newapi.store.arrow.ArrowDoubleWriterFactory.ArrowDoubleWriter;
 import org.knime.core.data.container.newapi.store.arrow.ArrowIntReaderFactory.ArrowIntReader;
 import org.knime.core.data.def.BooleanCell;
 import org.knime.core.data.def.DoubleCell;
@@ -85,7 +85,7 @@ import org.knime.core.util.FileUtil;
  *
  * @author dietzc
  */
-public class ArrowTableStore implements Store {
+public class ArrowStore implements Store {
 
     // TODO configurable?
     // TODO memory dependent?
@@ -121,7 +121,7 @@ public class ArrowTableStore implements Store {
     // TODO we want to make sure to "chunk data" later. Dest File could be a directory...
     // TODO later we can add serializers of all sorts to the table..
     // TODO we also want to be able to identify consecutive primitive types of same type in the table which are then stored as an array in arrow, rather than individual columns (later).
-    public ArrowTableStore(final DataTableSpec spec) {
+    public ArrowStore(final DataTableSpec spec) {
         m_spec = spec;
         m_rootAllocator = new RootAllocator(Long.MAX_VALUE);
         try {
@@ -199,17 +199,6 @@ public class ArrowTableStore implements Store {
             m_streamWriter = new ArrowStreamWriter(m_schemaRoot, null, channel);
         }
 
-        @Override
-        public long getCapacity() {
-            return BATCH_SIZE;
-        }
-
-        @Override
-        public void forward() {
-            flushIfRequired();
-            m_rowIndex++;
-        }
-
         private void flushIfRequired() {
             if (m_rowIndex == BATCH_SIZE - 1) {
                 flush();
@@ -227,30 +216,6 @@ public class ArrowTableStore implements Store {
         }
 
         @Override
-        public long getNumColumns() {
-            return m_writers.length;
-        }
-
-        // set-Methods:
-        // TODO: Get rid of element-wise (potentially unsafe) casts?
-        // TODO: Do we really need a long column index? m_readers array only supports integer index.
-
-        @Override
-        public void setBoolean(final long index, final boolean value) {
-            ((ArrowBooleanWriter)m_writers[(int)index]).writeBoolean(m_rowIndex, value);
-        }
-
-        @Override
-        public void setDouble(final long index, final double value) {
-            ((ArrowDoubleWriter)m_writers[(int)index]).writeDouble(m_rowIndex, value);
-        }
-
-        @Override
-        public void setString(final long index, final String value) {
-            ((ArrowWriter<String>)m_writers[(int)index]).write(m_rowIndex, value);
-        }
-
-        @Override
         public void close() throws Exception {
             // TODO: Carefully handle exceptions (later).
             flush();
@@ -260,6 +225,21 @@ public class ArrowTableStore implements Store {
                 m_writers[i].close();
             }
             m_isWriting = false;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void accept(final PrimitiveRow t) {
+            flushIfRequired();
+            // TODO do we want getNumColumns on row level? This should rather be part of a "PrimitiveSpec"
+            long numColumns = t.getNumColumns();
+            // TODO implement for all types. Likly we pass proxy down to write and write can do whatever writer wants here...
+            for (int i = 0; i < numColumns; i++) {
+                ((ArrowBooleanWriter)m_writers[i]).writeBoolean(m_rowIndex, t.getBoolean(i));
+            }
+            m_rowIndex++;
         }
     }
 
@@ -303,43 +283,45 @@ public class ArrowTableStore implements Store {
         }
 
         @Override
-        public long getNumRows() {
-            return m_schemaRoot.getRowCount();
+        public boolean hasNext() {
+            return m_rowIndex < m_schemaRoot.getRowCount() - 1;
         }
 
         @Override
-        public boolean canForward() {
-            return m_rowIndex < getNumRows() - 1;
-        }
-
-        @Override
-        public void forward() {
+        public PrimitiveRow next() {
             m_rowIndex++;
-        }
 
-        @Override
-        public long getNumColumns() {
-            return m_readers.length;
+            // TODO get rid of "casting"
+            // TODO handle missing values...
+            return new PrimitiveRow() {
+
+                @Override
+                public boolean getBoolean(final long index) {
+                    return ((ArrowBooleanReader)m_readers[(int)index]).readBoolean(m_rowIndex);
+                }
+
+                @Override
+                public int getInt(final long index) {
+                    return ((ArrowIntReader)m_readers[(int)index]).readInt(m_rowIndex);
+                }
+
+                @Override
+                public String getString(final long index) {
+                    return ((ArrowReader<String>)m_readers[(int)index]).read(m_rowIndex);
+                }
+
+                @Override
+                public long getNumColumns() {
+                    // TODO return number of columns of primitive schema!
+                    // TODO do we want to / have to do this on this level? actual the entire primitive row store should have the same schema.
+                    return 42;
+                }
+            };
         }
 
         // get-Methods:
         // TODO: Get rid of element-wise (potentially unsafe) casts?
         // TODO: Do we really need a long column index? m_readers array only supports integer index.
-
-        @Override
-        public boolean getBoolean(final long index) {
-            return ((ArrowBooleanReader)m_readers[(int)index]).readBoolean(m_rowIndex);
-        }
-
-        @Override
-        public int getInt(final long index) {
-            return ((ArrowIntReader)m_readers[(int)index]).readInt(m_rowIndex);
-        }
-
-        @Override
-        public String getString(final long index) {
-            return ((ArrowReader<String>)m_readers[(int)index]).read(m_rowIndex);
-        }
 
         @Override
         public void close() throws Exception {

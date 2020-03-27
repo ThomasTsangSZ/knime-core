@@ -50,17 +50,8 @@ package org.knime.core.data.container.newapi.store;
 
 public interface StoreReadAccess extends AutoCloseable {
 
-    long getNumRows();
+    PrimitiveRow next();
 
-    boolean canForward();
+    boolean hasNext();
 
-    void forward();
-
-    long getNumColumns();
-
-    boolean getBoolean(long index);
-
-    int getInt(long index);
-
-    String getString(long index);
 }

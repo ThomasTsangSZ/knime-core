@@ -50,6 +50,8 @@ package org.knime.core.data.container.newapi;
 
 import org.knime.core.data.DataRow;
 import org.knime.core.data.DataTableSpec;
+import org.knime.core.data.container.newapi.store.PrimitiveRow;
+import org.knime.core.data.container.newapi.store.Store;
 import org.knime.core.data.container.newapi.store.StoreReadAccess;
 import org.knime.core.data.container.newapi.store.StoreWriteAccess;
 
@@ -61,21 +63,25 @@ public class DefaultTableAccessible implements TableAccessible {
 
     private final DataTableSpec m_spec;
 
+    // TODO instantiate the right store.
+    private Store m_store;
+
     public DefaultTableAccessible(final DataTableSpec spec) {
         m_spec = spec;
     }
 
+    @SuppressWarnings("resource")
     @Override
     public TableWriteAccess createWriteAccess() {
-        final StoreWriteAccess m_storeWriteAccess = null;
+        final StoreWriteAccess m_storeWriteAccess = m_store.createWriteAccess();
+
         return new TableWriteAccess() {
 
             @Override
             public void add(final DataRow row) {
-                m_storeWriteAccess.forward();
-                for (int c = 0; c < m_storeWriteAccess.getNumColumns(); c++) {
-                    // TODO: type mapping
-                }
+                // TODO some associated proxy with row/type mapping. updated be "row". object can be reused.
+                // TODO proxy can be re-used
+                m_storeWriteAccess.accept(null);
             }
 
             @Override
@@ -85,23 +91,23 @@ public class DefaultTableAccessible implements TableAccessible {
         };
     }
 
+    @SuppressWarnings("resource")
     @Override
     public TableReadAccess createReadAccess() {
-        final StoreReadAccess m_storeReadAccess = null;
+        // TODO pass config
+        final StoreReadAccess m_storeReadAccess = m_store.createReadAccess(null);
         return new TableReadAccess() {
 
             @Override
             public boolean hasNext() {
-                return m_storeReadAccess.canForward();
+                return m_storeReadAccess.hasNext();
             }
 
             @Override
             public DataRow next() {
-                m_storeReadAccess.forward();
-                for (int c = 0; c < m_storeReadAccess.getNumColumns(); c++) {
-                    // TODO: type mapping
-                }
-                throw new IllegalStateException("nyi");
+                PrimitiveRow next = m_storeReadAccess.next();
+                // type mapping of 'next' to DataRow
+                return null;
             }
 
             @Override
@@ -113,6 +119,6 @@ public class DefaultTableAccessible implements TableAccessible {
 
     @Override
     public void destroy() {
-        // TODO Auto-generated method stub
+        m_store.destroy();
     }
 }

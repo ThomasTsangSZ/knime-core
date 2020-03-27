@@ -48,17 +48,8 @@
  */
 package org.knime.core.data.container.newapi.store;
 
-public interface StoreWriteAccess extends AutoCloseable {
+import java.util.function.Consumer;
 
-    long getCapacity();
-
-    void forward();
-
-    long getNumColumns();
-
-    void setBoolean(long index, boolean value);
-
-    void setDouble(long index, double value);
-
-    void setString(long index, String value);
+public interface StoreWriteAccess extends AutoCloseable, Consumer<PrimitiveRow> {
+    // NB: Marker
 }
