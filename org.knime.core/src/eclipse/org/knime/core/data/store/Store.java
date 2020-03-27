@@ -50,8 +50,10 @@ package org.knime.core.data.store;
 
 public interface Store {
 
+
     StoreWriteAccess createWriteAccess();
 
+    // TODO only available after writing. Split?
     StoreReadAccess createReadAccess(StoreReadAccessConfig config);
 
     /**
