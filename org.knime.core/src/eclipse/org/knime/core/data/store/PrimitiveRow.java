@@ -50,11 +50,19 @@ package org.knime.core.data.store;
 
 // TODO naming
 public interface PrimitiveRow {
+
+    // TODO do we need that?
     long getNumColumns();
 
-    boolean getBoolean(long index);
+    boolean getBoolean(long colIndex);
 
-    int getInt(long index);
+    int getInt(long colIndex);
 
-    String getString(long index);
+    String getString(long colIndex);
+
+    /**
+     * @param index
+     * @return
+     */
+    boolean isMissing(int colIndex);
 }

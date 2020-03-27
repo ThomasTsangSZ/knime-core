@@ -47,21 +47,23 @@ package org.knime.core.data.store.arrow;
 
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.BitVector;
+import org.knime.core.data.store.PrimitiveRow;
 
-public final class ArrowBooleanWriterFactory implements ArrowWriterFactory<Boolean, BitVector> {
+public final class ArrowBooleanWriterFactory implements ArrowWriterFactory<BitVector> {
 
     @Override
     @SuppressWarnings("resource") // Vector will be closed by writer.
-    public ArrowBooleanWriter create(final String name, final BufferAllocator allocator, final int size) {
+    public ArrowBooleanWriter create(final String name, final BufferAllocator allocator, final int size,
+        final int colIdx) {
         final BitVector vector = new BitVector(name, allocator);
         vector.allocateNew(size);
-        return new ArrowBooleanWriter(vector);
+        return new ArrowBooleanWriter(vector, colIdx);
     }
 
-    public static final class ArrowBooleanWriter extends AbstractArrowWriter<Boolean, BitVector> {
+    public static final class ArrowBooleanWriter extends AbstractArrowWriter<BitVector> {
 
-        public ArrowBooleanWriter(final BitVector vector) {
-            super(vector);
+        public ArrowBooleanWriter(final BitVector vector, final int colIdx) {
+            super(vector, colIdx);
         }
 
         public void writeBoolean(final int index, final boolean value) {
@@ -70,8 +72,8 @@ public final class ArrowBooleanWriterFactory implements ArrowWriterFactory<Boole
         }
 
         @Override
-        public void writeNonNull(final int index, final Boolean value) {
-            writeBooleanInternal(index, value);
+        public void writeNonNull(final int rowIndex, final PrimitiveRow row, final int colIdx) {
+            writeBooleanInternal(rowIndex, row.getBoolean(colIdx));
         }
 
         private void writeBooleanInternal(final int index, final boolean value) {

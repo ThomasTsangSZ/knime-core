@@ -49,37 +49,40 @@ import java.nio.charset.StandardCharsets;
 
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.VarCharVector;
+import org.knime.core.data.store.PrimitiveRow;
 
-public final class ArrowStringWriterFactory implements ArrowWriterFactory<String, VarCharVector> {
+public final class ArrowStringWriterFactory implements ArrowWriterFactory<VarCharVector> {
 
     @Override
     @SuppressWarnings("resource") // Vector will be closed by writer.
-    public ArrowStringWriter create(final String name, final BufferAllocator allocator, final int numRows) {
+    public ArrowStringWriter create(final String name, final BufferAllocator allocator, final int numRows,
+        final int colIdx) {
         final VarCharVector vector = new VarCharVector(name, allocator);
         // TODO more flexible configuration of "bytes per cell assumption". E.g. rowIds might be smaller
         vector.allocateNew(64l * numRows, numRows);
-        return new ArrowStringWriter(vector);
+        return new ArrowStringWriter(vector, colIdx);
     }
 
-    public static final class ArrowStringWriter extends AbstractArrowWriter<String, VarCharVector> {
+    public static final class ArrowStringWriter extends AbstractArrowWriter<VarCharVector> {
 
         private int m_byteCount = 0;
 
-        public ArrowStringWriter(final VarCharVector vector) {
-            super(vector);
+        public ArrowStringWriter(final VarCharVector vector, final int colIdx) {
+            super(vector, colIdx);
         }
 
         @Override
-        protected void writeNonNull(final int index, final String value) {
+        protected void writeNonNull(final int index, final PrimitiveRow value, final int colIdx) {
             if (index >= m_vector.getValueCapacity()) {
                 m_vector.reallocValidityAndOffsetBuffers();
             }
-            final byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
+            final byte[] bytes = value.getString(colIdx).getBytes(StandardCharsets.UTF_8);
             m_byteCount += bytes.length;
             while (m_byteCount > m_vector.getByteCapacity()) {
                 m_vector.reallocDataBuffer();
             }
             m_vector.set(index, bytes);
         }
+
     }
 }

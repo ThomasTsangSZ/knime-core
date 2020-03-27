@@ -101,6 +101,7 @@ public class DefaultTableAccessible implements TableAccessible {
 
             @Override
             public DataRow next() {
+                // data row can either be a copy or a implementation wrapping primitive row
                 PrimitiveRow next = m_storeReadAccess.next();
                 // type mapping of 'next' to DataRow
                 return null;

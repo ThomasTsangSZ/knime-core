@@ -93,7 +93,7 @@ public class ArrowStore implements Store {
     private static final int BATCH_SIZE = 64;
 
     // TODO Logging
-    private static final Map<DataType, ArrowWriterFactory<?, ?>> WRITER_FACTORIES = new HashMap<>();
+    private static final Map<DataType, ArrowWriterFactory<?>> WRITER_FACTORIES = new HashMap<>();
 
     private static final Map<DataType, ArrowReaderFactory<?, ?>> READER_FACTORIES = new HashMap<>();
     {
@@ -170,7 +170,7 @@ public class ArrowStore implements Store {
 
     private final class ArrowTableStoreWriteAccess implements StoreWriteAccess {
 
-        private final ArrowWriter<?>[] m_writers;
+        private final ArrowWriter[] m_writers;
 
         private VectorSchemaRoot m_schemaRoot;
 
@@ -182,13 +182,13 @@ public class ArrowStore implements Store {
         public ArrowTableStoreWriteAccess() throws FileNotFoundException {
             m_writers = new ArrowWriter[m_spec.getNumColumns()];
             final List<FieldVector> vectors = new ArrayList<>();
-            for (int i = 0; i < m_writers.length; i++) {
+            for (int colIdx = 0; colIdx < m_writers.length; colIdx++) {
                 // TODO set batch size to 1024. No idea how to set optimal number here...
                 // for performance reasons we might add API for the developer (or the framework) to allocate size.
-                m_writers[i] = WRITER_FACTORIES.get(m_spec.getColumnSpec(i).getType()).create(m_spec.getName(),
-                    m_rootAllocator, /* TODO*/ BATCH_SIZE);
+                m_writers[colIdx] = WRITER_FACTORIES.get(m_spec.getColumnSpec(colIdx).getType()).create(m_spec.getName(),
+                    m_rootAllocator, /* TODO*/ BATCH_SIZE, colIdx);
                 @SuppressWarnings("resource") // Closed via writer. (TODO that feels very wrong...)
-                final FieldVector vector = m_writers[i].getVector();
+                final FieldVector vector = m_writers[colIdx].getVector();
                 vectors.add(vector);
             }
             @SuppressWarnings("resource") // Closed via writer and channel.
@@ -291,6 +291,14 @@ public class ArrowStore implements Store {
         public PrimitiveRow next() {
             m_rowIndex++;
 
+            // Case 1: if in-memory: read from memory
+            // Case 2: if out-of memory: read into memory and handle as Case 1
+            // ----------------------
+            // what's a good chunk size to keep in memory?
+            // Currently in KNIME: all or nothing.
+
+            // Caching Strategy: If memory-alert: release memory for all chunks.
+
             // TODO get rid of "casting"
             // TODO handle missing values...
             return new PrimitiveRow() {
@@ -315,6 +323,12 @@ public class ArrowStore implements Store {
                     // TODO return number of columns of primitive schema!
                     // TODO do we want to / have to do this on this level? actual the entire primitive row store should have the same schema.
                     return 42;
+                }
+
+                @Override
+                public boolean isMissing(final int colIndex) {
+                    // TODO Auto-generated method stub
+                    return false;
                 }
             };
         }

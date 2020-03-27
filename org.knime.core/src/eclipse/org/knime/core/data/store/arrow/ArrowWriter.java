@@ -49,14 +49,16 @@
 package org.knime.core.data.store.arrow;
 
 import org.apache.arrow.vector.FieldVector;
+import org.knime.core.data.store.PrimitiveRow;
 
 /**
  *
  * @author dietzc
  */
-public interface ArrowWriter<T> extends AutoCloseable {
+public interface ArrowWriter extends AutoCloseable {
 
+    // TODO do we need that? :-(
     FieldVector getVector();
 
-    void write(int index, T value);
+    void write(int index, PrimitiveRow row);
 }

@@ -47,21 +47,23 @@ package org.knime.core.data.store.arrow;
 
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.Float8Vector;
+import org.knime.core.data.store.PrimitiveRow;
 
-public final class ArrowDoubleWriterFactory implements ArrowWriterFactory<Double, Float8Vector> {
+public final class ArrowDoubleWriterFactory implements ArrowWriterFactory<Float8Vector> {
 
     @Override
-    @SuppressWarnings("resource") // Vector will be closed by writer.
-    public ArrowDoubleWriter create(final String name, final BufferAllocator allocator, final int numRows) {
+    @SuppressWarnings("resource") // Vector will be closed by writer
+    public ArrowDoubleWriter create(final String name, final BufferAllocator allocator, final int numRows,
+        final int colIdx) {
         final Float8Vector vector = new Float8Vector(name, allocator);
         vector.allocateNew(numRows);
-        return new ArrowDoubleWriter(vector);
+        return new ArrowDoubleWriter(vector, colIdx);
     }
 
-    public static final class ArrowDoubleWriter extends AbstractArrowWriter<Double, Float8Vector> {
+    public static final class ArrowDoubleWriter extends AbstractArrowWriter<Float8Vector> {
 
-        public ArrowDoubleWriter(final Float8Vector vector) {
-            super(vector);
+        public ArrowDoubleWriter(final Float8Vector vector, final int colIdx) {
+            super(vector, colIdx);
         }
 
         public void writeDouble(final int index, final double value) {
@@ -69,13 +71,14 @@ public final class ArrowDoubleWriterFactory implements ArrowWriterFactory<Double
             incrementValueCounter();
         }
 
-        @Override
-        protected void writeNonNull(final int index, final Double value) {
-            writeDoubleInternal(index, value);
-        }
-
         private void writeDoubleInternal(final int index, final double value) {
             m_vector.set(index, value);
         }
+
+        @Override
+        protected void writeNonNull(final int index, final PrimitiveRow value, final int colIdx) {
+            writeDoubleInternal(index, value.getInt(colIdx));
+        }
+
     }
 }

@@ -49,13 +49,17 @@
 package org.knime.core.data.store.arrow;
 
 import org.apache.arrow.vector.FieldVector;
+import org.knime.core.data.store.PrimitiveRow;
 
-public abstract class AbstractArrowWriter<I, O extends FieldVector> implements ArrowWriter<I> {
+public abstract class AbstractArrowWriter<O extends FieldVector> implements ArrowWriter {
 
     protected final O m_vector;
 
-    public AbstractArrowWriter(final O vector) {
+    private int m_colIdx;
+
+    public AbstractArrowWriter(final O vector, final int colIdx) {
         m_vector = vector;
+        m_colIdx = colIdx;
     }
 
     @Override
@@ -64,14 +68,14 @@ public abstract class AbstractArrowWriter<I, O extends FieldVector> implements A
     }
 
     @Override
-    public void write(final int index, final I value) {
-        if (value != null) {
-            writeNonNull(index, value);
+    public void write(final int index, final PrimitiveRow row) {
+        if (!row.isMissing(index)) {
+            writeNonNull(index, row, m_colIdx);
         }
         incrementValueCounter();
     }
 
-    protected abstract void writeNonNull(int index, I value);
+    protected abstract void writeNonNull(int index, PrimitiveRow value, int colIndx);
 
     protected void incrementValueCounter() {
         m_vector.setValueCount(m_vector.getValueCount() + 1);
