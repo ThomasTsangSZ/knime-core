@@ -1,21 +1,21 @@
 package org.knime.core.data.store.arrow;
 
-import org.knime.core.data.store.Batch;
-import org.knime.core.data.store.BatchColumnAccessible;
-import org.knime.core.data.store.BatchColumnReadAccess;
-import org.knime.core.data.store.BatchColumnWriteAccess;
-import org.knime.core.data.store.BatchSpec;
+import org.knime.core.data.store.Chunk;
+import org.knime.core.data.store.ChunkSchema;
+import org.knime.core.data.store.vec.Vec;
+import org.knime.core.data.store.vec.VecReadAccess;
+import org.knime.core.data.store.vec.VecWriteAccess;
 
-public class ArrowInMemoryBatch implements Batch {
+public class ArrowInMemoryBatch implements Chunk {
 
-	private final BatchSpec m_spec;
-	private final BatchColumnAccessible[] m_accessibles;
+	private final ChunkSchema m_spec;
+	private final Vec[] m_accessibles;
 
-	public ArrowInMemoryBatch(final ArrowColumnAccessibleFactory fac, BatchSpec spec) {
+	public ArrowInMemoryBatch(final ArrowVecFactory fac, ChunkSchema spec) {
 		m_spec = spec;
-		m_accessibles = new BatchColumnAccessible[spec.getNumColumns()];
+		m_accessibles = new Vec[spec.getNumVecs()];
 		for (int colIdx = 0; colIdx < m_accessibles.length; colIdx++) {
-			m_accessibles[colIdx] = fac.create(spec.getTypeAt(colIdx));
+			m_accessibles[colIdx] = fac.create(spec.getVecTypeAt(colIdx));
 		}
 	}
 
@@ -29,17 +29,17 @@ public class ArrowInMemoryBatch implements Batch {
 	}
 
 	@Override
-	public BatchSpec getSpec() {
+	public ChunkSchema getSchema() {
 		return m_spec;
 	}
 
 	@Override
-	public BatchColumnReadAccess getReadAccessAt(int idx) {
+	public VecReadAccess getReadAccessAt(int idx) {
 		return m_accessibles[idx].readAccess();
 	}
 
 	@Override
-	public BatchColumnWriteAccess getWriteAccessAt(int idx) {
+	public VecWriteAccess getWriteAccessAt(int idx) {
 		return m_accessibles[idx].writeAccess();
 	}
 }

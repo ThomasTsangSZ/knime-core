@@ -1,12 +1,12 @@
 package org.knime.core.data.store.arrow;
 
 import org.apache.arrow.vector.FieldVector;
-import org.knime.core.data.store.BatchColumnReadAccess;
+import org.knime.core.data.store.vec.VecReadAccess;
 
-public abstract class AbstractArrowColumnReadAccess<V extends FieldVector> extends AbstractArrowColumnAccess<V>
-		implements BatchColumnReadAccess {
+public abstract class AbstractArrowVecReadAccess<V extends FieldVector> extends AbstractArrowVecAccess<V>
+		implements VecReadAccess {
 
-	protected AbstractArrowColumnReadAccess(final V vector) {
+	protected AbstractArrowVecReadAccess(final V vector) {
 		super(vector);
 	}
 

@@ -5,30 +5,35 @@ import java.io.IOException;
 import java.nio.file.Files;
 
 import org.apache.arrow.memory.RootAllocator;
-import org.knime.core.data.store.BatchSpec;
-import org.knime.core.data.store.Store;
+import org.knime.core.data.store.ChunkSchema;
+import org.knime.core.data.store.ChunkStore;
 
 // TODO maybe we want to actually split into read/write later.
-public class ArrowStore implements Store<ArrowInMemoryBatch> {
+public class ArrowStore implements ChunkStore<ArrowInMemoryBatch> {
 
-	private ArrowColumnAccessibleFactory m_factory;
-	private BatchSpec m_spec;
+	private ArrowVecFactory m_factory;
+	private ChunkSchema m_spec;
 	private File m_dest;
 	private RootAllocator m_root;
+	private int m_numChunks;
 
-	public ArrowStore(File dest, final BatchSpec spec, final long limit) {
+	public ArrowStore(File dest, final ChunkSchema spec, final long limit) {
 		// TODO add allocation listener for this store.
 		// TODO likely we need one central allocator for ALL tables/stores
 		m_root = new RootAllocator(limit);
-		m_factory = new ArrowColumnAccessibleFactory(2048, m_root);
+		
+		// TODO where is the batch-size coming from?
+		m_factory = new ArrowVecFactory(2048, m_root);
 		m_spec = spec;
 		m_dest = dest;
 	}
 
 	@Override
 	public void persist(ArrowInMemoryBatch batch) {
-		// TODO write to disc. 
+		// TODO write to disc.
 		// TODO one file per batch. maybe physical batch size != logical (CPU cache etc)
+		
+		// NB: this method can also be called during reading (i.e. when a chunk has been cached before).
 	}
 
 	@Override
@@ -39,7 +44,11 @@ public class ArrowStore implements Store<ArrowInMemoryBatch> {
 
 	@Override
 	public ArrowInMemoryBatch createNext() {
-		// To be closed by caller
+		// TODO in the KNIME case this method will never be called after load(long idx) has been called.
+		// TODO however in general - we can create new batches while reading - this is possible... undecided what to do. use-case: streaming.
+		
+		m_numChunks++;
+		// batc to be closed by caller
 		return new ArrowInMemoryBatch(m_factory, m_spec);
 	}
 
@@ -56,6 +65,11 @@ public class ArrowStore implements Store<ArrowInMemoryBatch> {
 			// TODO
 			throw new RuntimeException(e);
 		}
+	}
+
+	@Override
+	public long numChunks() {
+		return m_numChunks;
 	}
 
 }

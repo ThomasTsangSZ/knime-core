@@ -44,14 +44,27 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Mar 26, 2020 (marcel): created
+ *   Mar 26, 2020 (dietzc): created
  */
 package org.knime.core.data.store;
 
-public interface StoreReadAccess extends AutoCloseable {
+public interface ChunkStore<C extends Chunk> {
 
-    PrimitiveRow next();
+	// persistence layer: potentially to be split later
+	void persist(C chunk);
 
-    boolean hasNext();
+	C load(long idx);
+
+	// appends a new batch to all previously created batches. Sequential writing
+	// assumed.
+	C createNext();
+
+	long numChunks();
+
+	/*
+	 * Deletes all files/resources created by this store instance. Invalidates this
+	 * instance.
+	 */
+	void destroy();
 
 }
