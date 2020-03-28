@@ -1,6 +1,7 @@
 package org.knime.core.data.store;
 
 // TODO here we can implement caching INDEPENDENT from memory / storage layout.
+// TODO general idea: as long as we don't close a chunk, the chunk remains open in cache.
 public class CachedChunkStore<C extends Chunk> implements ChunkStore<C> {
 
 	private ChunkStore<C> m_delegate;
