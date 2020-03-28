@@ -5,7 +5,17 @@
 	<groupId>org.knime</groupId>
 	<artifactId>org.knime.data.container.store</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 	<dependencies>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
@@ -66,7 +76,6 @@
 			<artifactId>guava</artifactId>
 			<version>28.2-jre</version>
 		</dependency>
-
 
 	</dependencies>
 </project>
