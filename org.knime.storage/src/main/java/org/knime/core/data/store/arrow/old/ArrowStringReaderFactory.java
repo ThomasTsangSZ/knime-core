@@ -1,5 +1,6 @@
 /*
  * ------------------------------------------------------------------------
+ *
  *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
@@ -40,49 +41,36 @@
  *  propagated with or for interoperation with KNIME.  The owner of a Node
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
- * ------------------------------------------------------------------------
+ * ---------------------------------------------------------------------
+ *
+ * History
+ *   Mar 26, 2020 (marcel): created
  */
+package org.knime.core.data.store.arrow.old;
 
-package org.knime.core.data.store.arrow;
-
-import java.nio.charset.StandardCharsets;
-
-import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.VarCharVector;
-import org.knime.core.data.store.PrimitiveRow;
 
-public final class ArrowStringWriterFactory implements ArrowWriterFactory<VarCharVector> {
+public final class ArrowStringReaderFactory implements ArrowReaderFactory<VarCharVector, String> {
 
-
-    public static final class ArrowStringWriter extends AbstractArrowWriter<VarCharVector> {
-
-        private int m_byteCount = 0;
-
-        public ArrowStringWriter(final VarCharVector vector, final int colIdx) {
-            super(vector, colIdx);
-        }
-
-        @Override
-        protected void writeNonNull(final int index, final PrimitiveRow value, final int colIdx) {
-            if (index >= m_vector.getValueCapacity()) {
-                m_vector.reallocValidityAndOffsetBuffers();
-            }
-            final byte[] bytes = value.getString(colIdx).getBytes(StandardCharsets.UTF_8);
-            m_byteCount += bytes.length;
-            while (m_byteCount > m_vector.getByteCapacity()) {
-                m_vector.reallocDataBuffer();
-            }
-            m_vector.set(index, bytes);
-        }
-
+    @Override
+    public Class<VarCharVector> getSourceType() {
+        return VarCharVector.class;
     }
 
     @Override
-    public ArrowStringWriter create(final String name, final BufferAllocator allocator, final int numRows,
-        final int colIdx) {
-        final VarCharVector vector = new VarCharVector(name, allocator);
-        // TODO more flexible configuration of "bytes per cell assumption". E.g. rowIds might be smaller
-        vector.allocateNew(64l * numRows, numRows);
-        return new ArrowStringWriter(vector, colIdx);
+    public ArrowStringReader create(final VarCharVector vector) {
+        return new ArrowStringReader(vector);
+    }
+
+    public static final class ArrowStringReader extends AbstractArrowReader<VarCharVector, String> {
+
+        public ArrowStringReader(final VarCharVector vector) {
+            super(vector);
+        }
+
+        @Override
+        public String readNonNull(final int index) {
+            return m_vector.getObject(index).toString();
+        }
     }
 }

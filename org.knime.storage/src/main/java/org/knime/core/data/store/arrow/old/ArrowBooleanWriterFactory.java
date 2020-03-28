@@ -1,6 +1,5 @@
 /*
  * ------------------------------------------------------------------------
- *
  *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
@@ -41,38 +40,62 @@
  *  propagated with or for interoperation with KNIME.  The owner of a Node
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
- * ---------------------------------------------------------------------
- *
- * History
- *   Mar 26, 2020 (marcel): created
+ * ------------------------------------------------------------------------
  */
-package org.knime.core.data.store.arrow;
 
-import org.apache.arrow.vector.ValueVector;
+package org.knime.core.data.store.arrow.old;
 
-public abstract class AbstractArrowReader<I extends ValueVector, O> implements ArrowReader<O> {
+import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.vector.BitVector;
+import org.knime.core.data.store.BooleanColumnAccess;
+import org.knime.core.data.store.PrimitiveRow;
 
-    protected final I m_vector;
+public final class ArrowBooleanWriterFactory implements ArrowWriterFactory<BitVector> {
 
-    public AbstractArrowReader(final I vector) {
-        m_vector = vector;
-    }
-    
+	@Override
+	@SuppressWarnings("resource") // Vector will be closed by writer.
+	public ArrowBooleanWriter create(final String name, final BufferAllocator allocator, final int size,
+			final int colIdx) {
 
-    @Override
-    public boolean isNull(final int index) {
-        return m_vector.isNull(index);
-    }
+		return new ArrowBooleanWriter(vector, colIdx);
+	}
 
-    @Override
-    public O read(final int index) {
-        return isNull(index) ? null : readNonNull(index);
-    }
+	public static final class ArrowBooleanWriter implements BooleanColumnAccess {
 
-    protected abstract O readNonNull(int index);
+		public ArrowBooleanWriter(final BitVector vector, final int colIdx) {
+			super(vector, colIdx);
+		}
 
-    @Override
-    public void close() throws Exception {
-        m_vector.close();
-    }
+		public void writeBoolean(final int index, final boolean value) {
+			writeBooleanInternal(index, value);
+			incrementValueCounter();
+		}
+
+		@Override
+		public void writeNonNull(final int rowIndex, final PrimitiveRow row, final int colIdx) {
+			writeBooleanInternal(rowIndex, row.getBoolean(colIdx));
+		}
+
+		private void writeBooleanInternal(final int index, final boolean value) {
+			m_vector.set(index, value ? 1 : 0);
+		}
+
+		@Override
+		public void fwd() {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void set(boolean val) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public boolean get() {
+			// TODO Auto-generated method stub
+			return false;
+		}
+	}
 }

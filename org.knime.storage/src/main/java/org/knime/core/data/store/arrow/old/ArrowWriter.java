@@ -44,37 +44,21 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Mar 26, 2020 (marcel): created
+ *   Mar 26, 2020 (dietzc): created
  */
-package org.knime.core.data.store.arrow;
+package org.knime.core.data.store.arrow.old;
 
-import org.apache.arrow.vector.BitVector;
+import org.apache.arrow.vector.FieldVector;
+import org.knime.core.data.store.PrimitiveRow;
 
-public final class ArrowBooleanReaderFactory implements ArrowReaderFactory<BitVector, Boolean> {
+/**
+ *
+ * @author dietzc
+ */
+public interface ArrowWriter extends AutoCloseable {
 
-    @Override
-    public Class<BitVector> getSourceType() {
-        return BitVector.class;
-    }
+    // TODO do we need that? :-(
+    FieldVector getVector();
 
-    @Override
-    public ArrowBooleanReader create(final BitVector vector) {
-        return new ArrowBooleanReader(vector);
-    }
-
-    public static final class ArrowBooleanReader extends AbstractArrowReader<BitVector, Boolean> {
-
-        public ArrowBooleanReader(final BitVector vector) {
-            super(vector);
-        }
-
-        public boolean readBoolean(final int index) {
-            return m_vector.get(index) > 0;
-        }
-
-        @Override
-        public Boolean readNonNull(final int index) {
-            return readBoolean(index);
-        }
-    }
+    void write(int index, PrimitiveRow row);
 }

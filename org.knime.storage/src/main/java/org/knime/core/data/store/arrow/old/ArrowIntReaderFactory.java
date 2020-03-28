@@ -46,13 +46,35 @@
  * History
  *   Mar 26, 2020 (marcel): created
  */
-package org.knime.core.data.store.arrow;
+package org.knime.core.data.store.arrow.old;
 
-import org.apache.arrow.vector.ValueVector;
+import org.apache.arrow.vector.IntVector;
 
-public interface ArrowReaderFactory<I extends ValueVector, O> {
+public final class ArrowIntReaderFactory implements ArrowReaderFactory<IntVector, Integer> {
 
-    Class<I> getSourceType();
+    @Override
+    public Class<IntVector> getSourceType() {
+        return IntVector.class;
+    }
 
-    ArrowReader<O> create(I vector);
+    @Override
+    public ArrowIntReader create(final IntVector vector) {
+        return new ArrowIntReader(vector);
+    }
+
+    public static final class ArrowIntReader extends AbstractArrowReader<IntVector, Integer> {
+
+        public ArrowIntReader(final IntVector vector) {
+            super(vector);
+        }
+
+        public int readInt(final int index) {
+            return m_vector.get(index);
+        }
+
+        @Override
+        public Integer readNonNull(final int index) {
+            return readInt(index);
+        }
+    }
 }

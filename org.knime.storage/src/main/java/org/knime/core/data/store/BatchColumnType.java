@@ -1,5 +1,5 @@
 package org.knime.core.data.store;
 
-public enum PrimitiveType {
+public enum BatchColumnType {
 	BOOLEAN, STRING, INTEGER, DOUBLE, FLOAT, BYTE_ARRAY;
 }

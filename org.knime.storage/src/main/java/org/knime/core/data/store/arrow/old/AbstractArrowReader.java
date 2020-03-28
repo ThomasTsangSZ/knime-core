@@ -44,25 +44,35 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Mar 26, 2020 (dietzc): created
+ *   Mar 26, 2020 (marcel): created
  */
-package org.knime.core.data.store;
+package org.knime.core.data.store.arrow.old;
 
-// TODO naming
-public interface PrimitiveRow {
+import org.apache.arrow.vector.ValueVector;
 
-    // TODO do we need that?
-    long getNumColumns();
+public abstract class AbstractArrowReader<I extends ValueVector, O> implements ArrowReader<O> {
 
-    boolean getBoolean(long colIndex);
+    protected final I m_vector;
 
-    int getInt(long colIndex);
+    public AbstractArrowReader(final I vector) {
+        m_vector = vector;
+    }
+    
 
-    String getString(long colIndex);
+    @Override
+    public boolean isNull(final int index) {
+        return m_vector.isNull(index);
+    }
 
-    /**
-     * @param index
-     * @return
-     */
-    boolean isMissing(int colIndex);
+    @Override
+    public O read(final int index) {
+        return isNull(index) ? null : readNonNull(index);
+    }
+
+    protected abstract O readNonNull(int index);
+
+    @Override
+    public void close() throws Exception {
+        m_vector.close();
+    }
 }

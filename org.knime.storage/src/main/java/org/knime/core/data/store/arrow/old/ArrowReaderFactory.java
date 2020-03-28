@@ -44,45 +44,15 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Mar 27, 2020 (marcel): created
+ *   Mar 26, 2020 (marcel): created
  */
-package org.knime.core.data.store.arrow;
+package org.knime.core.data.store.arrow.old;
 
-import org.apache.arrow.vector.FieldVector;
-import org.knime.core.data.store.PrimitiveRow;
+import org.apache.arrow.vector.ValueVector;
 
-public abstract class AbstractArrowWriter<O extends FieldVector> implements ArrowWriter {
+public interface ArrowReaderFactory<I extends ValueVector, O> {
 
-    protected final O m_vector;
+    Class<I> getSourceType();
 
-    private int m_colIdx;
-
-    public AbstractArrowWriter(final O vector, final int colIdx) {
-        m_vector = vector;
-        m_colIdx = colIdx;
-    }
-
-    @Override
-    public O getVector() {
-        return m_vector;
-    }
-
-    @Override
-    public void write(final int index, final PrimitiveRow row) {
-        if (!row.isMissing(index)) {
-            writeNonNull(index, row, m_colIdx);
-        }
-        incrementValueCounter();
-    }
-
-    protected abstract void writeNonNull(int index, PrimitiveRow value, int colIndx);
-
-    protected void incrementValueCounter() {
-        m_vector.setValueCount(m_vector.getValueCount() + 1);
-    }
-
-    @Override
-    public void close() throws Exception {
-        m_vector.close();
-    }
+    ArrowReader<O> create(I vector);
 }

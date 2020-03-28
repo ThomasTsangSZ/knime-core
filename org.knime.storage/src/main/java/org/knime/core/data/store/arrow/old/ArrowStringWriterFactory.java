@@ -1,6 +1,5 @@
 /*
  * ------------------------------------------------------------------------
- *
  *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
@@ -41,40 +40,50 @@
  *  propagated with or for interoperation with KNIME.  The owner of a Node
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
- * ---------------------------------------------------------------------
- *
- * History
- *   Mar 26, 2020 (marcel): created
+ * ------------------------------------------------------------------------
  */
-package org.knime.core.data.store.arrow;
 
-import org.apache.arrow.vector.IntVector;
+package org.knime.core.data.store.arrow.old;
 
-public final class ArrowIntReaderFactory implements ArrowReaderFactory<IntVector, Integer> {
+import java.nio.charset.StandardCharsets;
 
-    @Override
-    public Class<IntVector> getSourceType() {
-        return IntVector.class;
-    }
+import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.vector.VarCharVector;
+import org.knime.core.data.store.PrimitiveRow;
 
-    @Override
-    public ArrowIntReader create(final IntVector vector) {
-        return new ArrowIntReader(vector);
-    }
+public final class ArrowStringWriterFactory implements ArrowWriterFactory<VarCharVector> {
 
-    public static final class ArrowIntReader extends AbstractArrowReader<IntVector, Integer> {
 
-        public ArrowIntReader(final IntVector vector) {
-            super(vector);
-        }
+    public static final class ArrowStringWriter extends AbstractArrowWriter<VarCharVector> {
 
-        public int readInt(final int index) {
-            return m_vector.get(index);
+        private int m_byteCount = 0;
+
+        public ArrowStringWriter(final VarCharVector vector, final int colIdx) {
+            super(vector, colIdx);
         }
 
         @Override
-        public Integer readNonNull(final int index) {
-            return readInt(index);
+        protected void writeNonNull(final int index, final PrimitiveRow value, final int colIdx) {
+            if (index >= m_vector.getValueCapacity()) {
+                m_vector.reallocValidityAndOffsetBuffers();
+            }
+            final byte[] bytes = value.getString(colIdx).getBytes(StandardCharsets.UTF_8);
+            m_byteCount += bytes.length;
+            while (m_byteCount > m_vector.getByteCapacity()) {
+                m_vector.reallocDataBuffer();
+            }
+            m_vector.set(index, bytes);
         }
+
+    }
+
+    @Override
+    public ArrowStringWriter create(final String name, final BufferAllocator allocator, final int numRows,
+        final int colIdx) {
+    	 final VarCharVector vector = new VarCharVector(name, allocator);
+         // TODO more flexible configuration of "bytes per cell assumption". E.g. rowIds might be smaller
+         vector.allocateNew(64l * numRows, numRows);
+         return new ArrowStringWriter(vector, colIdx
+       );
     }
 }

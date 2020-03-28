@@ -44,33 +44,18 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Mar 26, 2020 (marcel): created
+ *   Mar 26, 2020 (dietzc): created
  */
-package org.knime.core.data.store.arrow;
+package org.knime.core.data.store.arrow.old;
 
-import org.apache.arrow.vector.VarCharVector;
+import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.vector.FieldVector;
 
-public final class ArrowStringReaderFactory implements ArrowReaderFactory<VarCharVector, String> {
+/**
+ *
+ * @author dietzc
+ */
+public interface ArrowWriterFactory<O extends FieldVector> {
 
-    @Override
-    public Class<VarCharVector> getSourceType() {
-        return VarCharVector.class;
-    }
-
-    @Override
-    public ArrowStringReader create(final VarCharVector vector) {
-        return new ArrowStringReader(vector);
-    }
-
-    public static final class ArrowStringReader extends AbstractArrowReader<VarCharVector, String> {
-
-        public ArrowStringReader(final VarCharVector vector) {
-            super(vector);
-        }
-
-        @Override
-        public String readNonNull(final int index) {
-            return m_vector.getObject(index).toString();
-        }
-    }
+	ArrowWriter create(final String name, final BufferAllocator allocator, final int size, final int colIdx);
 }

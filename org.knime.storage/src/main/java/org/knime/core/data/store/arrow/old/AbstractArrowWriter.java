@@ -44,18 +44,45 @@
  * ---------------------------------------------------------------------
  *
  * History
- *   Mar 26, 2020 (dietzc): created
+ *   Mar 27, 2020 (marcel): created
  */
-package org.knime.core.data.store.arrow;
+package org.knime.core.data.store.arrow.old;
 
-import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.FieldVector;
+import org.knime.core.data.store.PrimitiveRow;
 
-/**
- *
- * @author dietzc
- */
-public interface ArrowWriterFactory<O extends FieldVector> {
+public abstract class AbstractArrowWriter<O extends FieldVector> implements ArrowWriter {
 
-	ArrowWriter create(final String name, final BufferAllocator allocator, final int size, final int colIdx);
+    protected final O m_vector;
+
+    private int m_colIdx;
+
+    public AbstractArrowWriter(final O vector, final int colIdx) {
+        m_vector = vector;
+        m_colIdx = colIdx;
+    }
+
+    @Override
+    public O getVector() {
+        return m_vector;
+    }
+
+    @Override
+    public void write(final int index, final PrimitiveRow row) {
+        if (!row.isMissing(index)) {
+            writeNonNull(index, row, m_colIdx);
+        }
+        incrementValueCounter();
+    }
+
+    protected abstract void writeNonNull(int index, PrimitiveRow value, int colIndx);
+
+    protected void incrementValueCounter() {
+        m_vector.setValueCount(m_vector.getValueCount() + 1);
+    }
+
+    @Override
+    public void close() throws Exception {
+        m_vector.close();
+    }
 }

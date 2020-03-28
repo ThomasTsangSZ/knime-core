@@ -48,15 +48,17 @@
  */
 package org.knime.core.data.store;
 
-public interface Store {
+public interface Store<B extends Batch> {
 
+	// persistence layer: potentially to be split later
+	void persist(B batch);
+	
+	B load(long idx);
+	
+	// appends a new batch to all previously created batches. Sequential writing assumed.
+	B createNext();
 
-    StoreWriteAccess createWriteAccess();
-
-    // TODO only available after writing. Split?
-    StoreReadAccess createReadAccess(StoreReadAccessConfig config);
-
-    /**
+    /*
      * Deletes all files/resources created by this store instance. Invalidates this instance.
      */
     void destroy();

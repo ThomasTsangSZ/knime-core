@@ -1,6 +1,5 @@
 /*
  * ------------------------------------------------------------------------
- *
  *  Copyright by KNIME AG, Zurich, Switzerland
  *  Website: http://www.knime.com; Email: contact@knime.com
  *
@@ -41,24 +40,45 @@
  *  propagated with or for interoperation with KNIME.  The owner of a Node
  *  may freely choose the license terms applicable to such Node, including
  *  when such Node is propagated with or for interoperation with KNIME.
- * ---------------------------------------------------------------------
- *
- * History
- *   Mar 26, 2020 (dietzc): created
+ * ------------------------------------------------------------------------
  */
-package org.knime.core.data.store.arrow;
 
-import org.apache.arrow.vector.FieldVector;
+package org.knime.core.data.store.arrow.old;
+
+import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.vector.Float8Vector;
 import org.knime.core.data.store.PrimitiveRow;
 
-/**
- *
- * @author dietzc
- */
-public interface ArrowWriter extends AutoCloseable {
+public final class ArrowDoubleWriterFactory implements ArrowWriterFactory<Float8Vector> {
 
-    // TODO do we need that? :-(
-    FieldVector getVector();
+    @Override
+    @SuppressWarnings("resource") // Vector will be closed by writer
+    public ArrowDoubleWriter create(final String name, final BufferAllocator allocator, final int numRows,
+        final int colIdx) {
+        final Float8Vector vector = new Float8Vector(name, allocator);
+        vector.allocateNew(numRows);
+        return new ArrowDoubleWriter(vector, colIdx);
+    }
 
-    void write(int index, PrimitiveRow row);
+    public static final class ArrowDoubleWriter extends AbstractArrowWriter<Float8Vector> {
+
+        public ArrowDoubleWriter(final Float8Vector vector, final int colIdx) {
+            super(vector, colIdx);
+        }
+
+        public void writeDouble(final int index, final double value) {
+            writeDoubleInternal(index, value);
+            incrementValueCounter();
+        }
+
+        private void writeDoubleInternal(final int index, final double value) {
+            m_vector.set(index, value);
+        }
+
+        @Override
+        protected void writeNonNull(final int index, final PrimitiveRow value, final int colIdx) {
+            writeDoubleInternal(index, value.getInt(colIdx));
+        }
+
+    }
 }
