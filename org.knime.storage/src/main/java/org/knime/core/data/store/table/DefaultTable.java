@@ -5,13 +5,13 @@ import org.knime.core.data.store.vec.VecAccess;
 import org.knime.core.data.store.vec.VecAccessible;
 
 // row access on vector accessible
-public class DefaultRowAccessibleTable implements RowAccessibleBounded {
+public class DefaultTable implements TableAccessibleBounded {
 
 	private VecAccessible[] m_accessible;
 	private long m_size;
 
 	// TODO make VecAccessible and Size one interface..
-	DefaultRowAccessibleTable(VecAccessible[] accessible, final long size) {
+	DefaultTable(VecAccessible[] accessible, final long size) {
 		m_accessible = accessible;
 		m_size = size;
 	}
@@ -22,8 +22,8 @@ public class DefaultRowAccessibleTable implements RowAccessibleBounded {
 	}
 
 	@Override
-	public RowAccess access() {
-		return new RowAccess() {
+	public TableAccess access() {
+		return new TableAccess() {
 
 			// proxy row. reused.
 			private final Row m_proxy = new Row() {
