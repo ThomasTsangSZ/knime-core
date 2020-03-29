@@ -2,15 +2,15 @@ package org.knime.core.data.store.vec;
 
 import java.util.Iterator;
 
-import org.knime.core.data.store.Value;
+import org.knime.core.data.store.MutableValue;
 
-public class VecAccessibleOnVecAccessibles<V extends Value, A extends VecAccessible<V, ?>>
-		implements VecAccessible<V, A> {
+public class VecAccessibleOnVecAccessibles implements VecAccessible {
 
 	private VecSchema m_schema;
-	private Iterable<VecReadAccessible<V>> m_accessibles;
 
-	public VecAccessibleOnVecAccessibles(VecSchema schema, Iterable<VecReadAccessible<V>> accessibles) {
+	private Iterable<VecAccessible> m_accessibles;
+
+	public VecAccessibleOnVecAccessibles(VecSchema schema, Iterable<VecAccessible> accessibles) {
 		m_schema = schema;
 		m_accessibles = accessibles;
 	}
@@ -21,10 +21,10 @@ public class VecAccessibleOnVecAccessibles<V extends Value, A extends VecAccessi
 	}
 
 	@Override
-	public VecReadAccess<V> access() {
-		final Iterator<VecReadAccessible<V>> it = m_accessibles.iterator();
-		return new VecReadAccess<V>() {
-			private VecReadAccess<V> curr = it.next().access();
+	public VecAccess access() {
+		final Iterator<VecAccessible> it = m_accessibles.iterator();
+		return new VecAccess() {
+			private VecAccess curr = it.next().access();
 
 			@Override
 			public void fwd() {
@@ -46,12 +46,12 @@ public class VecAccessibleOnVecAccessibles<V extends Value, A extends VecAccessi
 			}
 
 			@Override
-			public V[] get() {
+			public MutableValue[] get() {
 				return curr.get();
 			}
 
 			@Override
-			public V[] next() {
+			public MutableValue[] next() {
 				fwd();
 				return get();
 			}

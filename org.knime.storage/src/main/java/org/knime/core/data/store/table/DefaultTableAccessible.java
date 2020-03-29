@@ -1,34 +1,34 @@
 package org.knime.core.data.store.table;
 
-import org.knime.core.data.store.Value;
-import org.knime.core.data.store.vec.VecReadAccess;
-import org.knime.core.data.store.vec.VecReadAccessible;
+import org.knime.core.data.store.MutableValue;
+import org.knime.core.data.store.vec.VecAccess;
+import org.knime.core.data.store.vec.VecAccessible;
 
 // row access on vector accessible
 // TODO generalize row-independent code and move to store.vec
 
 // TODO we didn't implement "destroy" here. might be done by a wrapper.
-public class DefaultTableAccessible<V extends Value> implements TableAccessible<V> {
+public class DefaultTableAccessible implements TableAccessible<MutableValue> {
 
-	private VecReadAccessible<V> m_accessible;
+	private VecAccessible m_accessible;
 
-	DefaultTableAccessible(VecReadAccessible<V> accessible) {
+	DefaultTableAccessible(VecAccessible accessible) {
 		m_accessible = accessible;
 	}
 
 	@Override
-	public TableAccess<V> access() {
-		return new TableAccess<V>() {
-			private final VecReadAccess<V> m_vecAccess = m_accessible.access();
-			private final V[] vecAccesses = m_vecAccess.get();
+	public TableAccess<MutableValue> access() {
+		return new TableAccess<MutableValue>() {
+			private final VecAccess m_vecAccess = m_accessible.access();
+			private final MutableValue[] vecAccesses = m_vecAccess.get();
 
 			private long idx = -1;
 
 			// proxy row. reused.
-			private final Row<V> m_proxy = new Row<V>() {
+			private final Row<MutableValue> m_proxy = new Row<MutableValue>() {
 
 				@Override
-				public V valueAt(int i) {
+				public MutableValue valueAt(int i) {
 					return vecAccesses[i];
 				}
 
@@ -44,7 +44,7 @@ public class DefaultTableAccessible<V extends Value> implements TableAccessible<
 			}
 
 			@Override
-			public Row<V> next() {
+			public Row<MutableValue> next() {
 				fwd();
 				return get();
 			}
@@ -55,7 +55,7 @@ public class DefaultTableAccessible<V extends Value> implements TableAccessible<
 			}
 
 			@Override
-			public Row<V> get() {
+			public Row<MutableValue> get() {
 				return m_proxy;
 			}
 
