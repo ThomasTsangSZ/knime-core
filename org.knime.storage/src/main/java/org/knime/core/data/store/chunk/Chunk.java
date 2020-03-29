@@ -1,8 +1,8 @@
 package org.knime.core.data.store.chunk;
 
-import org.knime.core.data.store.vec.VecAccessible;
-
 // Chunk of data. 
 // accessible for vecs (read/write)
-public interface Chunk extends AutoCloseable, VecAccessible {
+
+// TODO isn't this just a small table? Get rid of interface? :-)
+public interface Chunk extends AutoCloseable {
 }

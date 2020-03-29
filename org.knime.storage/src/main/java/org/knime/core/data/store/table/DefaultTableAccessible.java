@@ -1,6 +1,6 @@
 package org.knime.core.data.store.table;
 
-import org.knime.core.data.store.MutableValue;
+import org.knime.core.data.store.MutableDataValue;
 import org.knime.core.data.store.vec.VecAccess;
 import org.knime.core.data.store.vec.VecAccessible;
 
@@ -8,7 +8,7 @@ import org.knime.core.data.store.vec.VecAccessible;
 // TODO generalize row-independent code and move to store.vec
 
 // TODO we didn't implement "destroy" here. might be done by a wrapper.
-public class DefaultTableAccessible implements TableAccessible<MutableValue> {
+public class DefaultTableAccessible implements TableAccessible<MutableDataValue> {
 
 	private VecAccessible m_accessible;
 
@@ -17,18 +17,18 @@ public class DefaultTableAccessible implements TableAccessible<MutableValue> {
 	}
 
 	@Override
-	public TableAccess<MutableValue> access() {
-		return new TableAccess<MutableValue>() {
+	public TableAccess<MutableDataValue> access() {
+		return new TableAccess<MutableDataValue>() {
 			private final VecAccess m_vecAccess = m_accessible.access();
-			private final MutableValue[] vecAccesses = m_vecAccess.get();
+			private final MutableDataValue[] vecAccesses = m_vecAccess.get();
 
 			private long idx = -1;
 
 			// proxy row. reused.
-			private final Row<MutableValue> m_proxy = new Row<MutableValue>() {
+			private final Row<MutableDataValue> m_proxy = new Row<MutableDataValue>() {
 
 				@Override
-				public MutableValue valueAt(int i) {
+				public MutableDataValue valueAt(int i) {
 					return vecAccesses[i];
 				}
 
@@ -44,7 +44,7 @@ public class DefaultTableAccessible implements TableAccessible<MutableValue> {
 			}
 
 			@Override
-			public Row<MutableValue> next() {
+			public Row<MutableDataValue> next() {
 				fwd();
 				return get();
 			}
@@ -55,7 +55,7 @@ public class DefaultTableAccessible implements TableAccessible<MutableValue> {
 			}
 
 			@Override
-			public Row<MutableValue> get() {
+			public Row<MutableDataValue> get() {
 				return m_proxy;
 			}
 

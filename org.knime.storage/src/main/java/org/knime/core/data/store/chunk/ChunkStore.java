@@ -53,14 +53,17 @@ import org.knime.core.data.store.vec.VecSchema;
 public interface ChunkStore {
 
 	// persistence layer: potentially to be split later
+	// FROM DISC
 	void persist(Chunk chunk);
 
+	// FROM DISC
 	Chunk load(long idx);
 
 	// appends a new batch to all previously created batches. Sequential writing
 	// assumed.
 	Chunk createNext();
 
+	// how many chunks did I create so far.
 	long numChunks();
 
 	/*
@@ -69,6 +72,7 @@ public interface ChunkStore {
 	 */
 	void destroy();
 
+	// SCHEMA
 	VecSchema schema();
 
 }

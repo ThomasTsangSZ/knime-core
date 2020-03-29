@@ -29,9 +29,25 @@ public class ChunkedVecReadAccessible implements VecAccessible {
 						return m_chunkIdx < m_store.numChunks();
 					}
 
+					// Reusable vec-accessible!!!!
 					@Override
 					public VecAccessible next() {
-						return m_store.load(m_chunkIdx++);
+						// TODO load chunk into my updateableVectorAccessible
+//						new VecAccessible() {
+//
+//							@Override
+//							public VecSchema schema() {
+//								return m_store.schema();
+//							}
+//
+//							@Override
+//							public VecAccess access() {
+//								m_store.load(m_chunkIdx++);
+//								return ;
+//							}
+//						};
+
+//						return proxy;
 					}
 				};
 			}
@@ -43,7 +59,6 @@ public class ChunkedVecReadAccessible implements VecAccessible {
 		return m_store.schema();
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public VecAccess access() {
 		return m_vecAccessible.access();

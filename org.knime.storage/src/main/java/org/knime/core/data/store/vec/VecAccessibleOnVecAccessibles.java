@@ -2,7 +2,7 @@ package org.knime.core.data.store.vec;
 
 import java.util.Iterator;
 
-import org.knime.core.data.store.MutableValue;
+import org.knime.core.data.store.MutableDataValue;
 
 public class VecAccessibleOnVecAccessibles implements VecAccessible {
 
@@ -46,12 +46,12 @@ public class VecAccessibleOnVecAccessibles implements VecAccessible {
 			}
 
 			@Override
-			public MutableValue[] get() {
+			public MutableDataValue[] get() {
 				return curr.get();
 			}
 
 			@Override
-			public MutableValue[] next() {
+			public MutableDataValue[] next() {
 				fwd();
 				return get();
 			}

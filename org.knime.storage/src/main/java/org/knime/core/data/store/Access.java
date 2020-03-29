@@ -9,4 +9,5 @@ public interface Access<T> extends AutoCloseable {
 	T get();
 
 	T next();
+	
 }

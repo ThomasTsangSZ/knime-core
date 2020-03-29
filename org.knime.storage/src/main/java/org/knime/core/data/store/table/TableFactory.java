@@ -1,15 +1,15 @@
 package org.knime.core.data.store.table;
 
 import org.knime.core.data.store.CachedChunkStore;
-import org.knime.core.data.store.MutableValue;
-import org.knime.core.data.store.Value;
+import org.knime.core.data.store.MutableDataValue;
+import org.knime.core.data.store.DataValue;
 import org.knime.core.data.store.chunk.ChunkStore;
 import org.knime.core.data.store.chunk.ChunkedVecWriteAccessible;
 import org.knime.core.data.store.vec.VecSchema;
 
 public class TableFactory {
 
-	public static TableAccessible<MutableValue> createWritableTable(VecSchema schema) {
+	public static TableAccessible<MutableDataValue> createWritableTable(VecSchema schema) {
 		// TODO get store from somewhere
 		ChunkStore store = null;
 
@@ -17,7 +17,7 @@ public class TableFactory {
 		return new DefaultTableAccessible(new ChunkedVecWriteAccessible(new CachedChunkStore(store)));
 	}
 
-	public static TableAccessibleBounded<Value> createReadableTable(VecSchema schema) {
+	public static TableAccessibleBounded<DataValue> createReadableTable(VecSchema schema) {
 		// TODO get store from somewhere
 		// TODO Q: same store as in write case? A: at least shared cache as chunks are
 		// cached during writing and reader might be able to read from disc.
