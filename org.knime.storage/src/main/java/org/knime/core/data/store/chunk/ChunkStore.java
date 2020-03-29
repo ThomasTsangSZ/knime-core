@@ -46,18 +46,20 @@
  * History
  *   Mar 26, 2020 (dietzc): created
  */
-package org.knime.core.data.store;
+package org.knime.core.data.store.chunk;
 
-public interface ChunkStore<C extends Chunk> {
+import org.knime.core.data.store.vec.VecSchema;
+
+public interface ChunkStore {
 
 	// persistence layer: potentially to be split later
-	void persist(C chunk);
+	void persist(Chunk chunk);
 
-	C load(long idx);
+	Chunk load(long idx);
 
 	// appends a new batch to all previously created batches. Sequential writing
 	// assumed.
-	C createNext();
+	Chunk createNext();
 
 	long numChunks();
 
@@ -66,5 +68,7 @@ public interface ChunkStore<C extends Chunk> {
 	 * instance.
 	 */
 	void destroy();
+
+	VecSchema schema();
 
 }

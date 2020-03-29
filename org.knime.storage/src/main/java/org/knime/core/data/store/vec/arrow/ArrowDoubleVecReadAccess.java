@@ -1,4 +1,4 @@
-package org.knime.core.data.store.arrow;
+package org.knime.core.data.store.vec.arrow;
 
 import org.apache.arrow.vector.Float8Vector;
 import org.knime.core.data.store.vec.rw.DoubleVecReadAccess;

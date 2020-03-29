@@ -1,9 +1,9 @@
-package org.knime.core.data.store.arrow;
+package org.knime.core.data.store.vec.arrow;
 
 import org.apache.arrow.vector.FieldVector;
-import org.knime.core.data.store.vec.VecAccess;
+import org.knime.core.data.store.vec.VecReadAccess;
 
-public abstract class AbstractArrowVecAccess<V extends FieldVector> implements VecAccess {
+public abstract class AbstractArrowVecAccess<V extends FieldVector> implements VecReadAccess {
 
 	protected V m_vector;
 	protected int m_idx = -1;

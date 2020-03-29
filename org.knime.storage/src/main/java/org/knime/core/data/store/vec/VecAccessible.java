@@ -1,5 +1,10 @@
 package org.knime.core.data.store.vec;
 
-public interface VecAccessible {
-	VecAccess access();
+import org.knime.core.data.store.Value;
+
+public interface VecAccessible<V extends Value, A extends VecAccess<V>> {
+
+	A access();
+
+	VecSchema schema();
 }

@@ -1,10 +1,10 @@
-package org.knime.core.data.store.arrow;
+package org.knime.core.data.store.vec.arrow;
 
 import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.BitVector;
 import org.apache.arrow.vector.Float8Vector;
 import org.apache.arrow.vector.VarCharVector;
-import org.knime.core.data.store.vec.VecAccessible;
+import org.knime.core.data.store.vec.VecReadAccessible;
 import org.knime.core.data.store.vec.VecType;
 import org.knime.core.data.store.vec.rw.VecFactory;
 import org.knime.core.data.store.vec.rw.VecReadAccess;
@@ -22,10 +22,10 @@ public class ArrowVecFactory implements VecFactory {
 
 	// make extensible later?
 	@Override
-	public VecAccessible create(VecType type) {
+	public VecReadAccessible create(VecType type) {
 		switch (type) {
 		case BOOLEAN:
-			return new VecAccessible() {
+			return new VecReadAccessible() {
 				private BitVector m_vector;
 				{
 					// TODO better name for vector.
@@ -49,7 +49,7 @@ public class ArrowVecFactory implements VecFactory {
 				}
 			};
 		case STRING:
-			return new VecAccessible() {
+			return new VecReadAccessible() {
 				final VarCharVector m_vector;
 				{
 					m_vector = new VarCharVector(type.toString(), m_alloc);
@@ -74,7 +74,7 @@ public class ArrowVecFactory implements VecFactory {
 				}
 			};
 		case DOUBLE:
-			return new VecAccessible() {
+			return new VecReadAccessible() {
 				final Float8Vector m_vector;
 				{
 					m_vector = new Float8Vector(type.toString(), m_alloc);

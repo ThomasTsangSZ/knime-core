@@ -1,4 +1,4 @@
-package org.knime.core.data.store.arrow;
+package org.knime.core.data.store.vec.arrow;
 ///*
 // * ------------------------------------------------------------------------
 // *
