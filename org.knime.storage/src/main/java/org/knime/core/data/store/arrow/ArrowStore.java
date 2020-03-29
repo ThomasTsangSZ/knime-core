@@ -5,19 +5,19 @@ import java.io.IOException;
 import java.nio.file.Files;
 
 import org.apache.arrow.memory.RootAllocator;
-import org.knime.core.data.store.ChunkSchema;
+import org.knime.core.data.store.VecGroupSchema;
 import org.knime.core.data.store.ChunkStore;
 
 // TODO maybe we want to actually split into read/write later.
 public class ArrowStore implements ChunkStore<ArrowInMemoryBatch> {
 
 	private ArrowVecFactory m_factory;
-	private ChunkSchema m_spec;
+	private VecGroupSchema m_spec;
 	private File m_dest;
 	private RootAllocator m_root;
 	private int m_numChunks;
 
-	public ArrowStore(File dest, final ChunkSchema spec, final long limit) {
+	public ArrowStore(File dest, final VecGroupSchema spec, final long limit) {
 		// TODO add allocation listener for this store.
 		// TODO likely we need one central allocator for ALL tables/stores
 		m_root = new RootAllocator(limit);

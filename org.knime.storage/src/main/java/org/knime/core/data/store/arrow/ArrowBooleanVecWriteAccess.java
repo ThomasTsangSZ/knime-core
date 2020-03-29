@@ -1,7 +1,7 @@
 package org.knime.core.data.store.arrow;
 
 import org.apache.arrow.vector.BitVector;
-import org.knime.core.data.store.vec.BooleanVecWriteAccess;
+import org.knime.core.data.store.vec.rw.BooleanVecWriteAccess;
 
 public class ArrowBooleanVecWriteAccess extends AbstractArrowVecWriteAccess<BitVector>
 		implements BooleanVecWriteAccess {

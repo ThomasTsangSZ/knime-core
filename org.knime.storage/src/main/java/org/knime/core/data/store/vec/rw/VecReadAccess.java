@@ -1,4 +1,4 @@
-package org.knime.core.data.store.vec;
+package org.knime.core.data.store.vec.rw;
 
 public interface VecReadAccess extends VecAccess {
 

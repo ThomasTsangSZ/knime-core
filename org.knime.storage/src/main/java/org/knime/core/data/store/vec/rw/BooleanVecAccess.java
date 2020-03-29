@@ -1,4 +1,6 @@
-package org.knime.core.data.store.vec;
+package org.knime.core.data.store.vec.rw;
+
+import org.knime.core.data.store.vec.VecType;
 
 public interface BooleanVecAccess extends VecAccess {
 	@Override

@@ -1,19 +1,19 @@
 package org.knime.core.data.store.arrow;
 
 import org.knime.core.data.store.Chunk;
-import org.knime.core.data.store.ChunkSchema;
-import org.knime.core.data.store.vec.Vec;
-import org.knime.core.data.store.vec.VecReadAccess;
-import org.knime.core.data.store.vec.VecWriteAccess;
+import org.knime.core.data.store.VecGroupSchema;
+import org.knime.core.data.store.vec.VecAccessible;
+import org.knime.core.data.store.vec.rw.VecReadAccess;
+import org.knime.core.data.store.vec.rw.VecWriteAccess;
 
 public class ArrowInMemoryBatch implements Chunk {
 
-	private final ChunkSchema m_spec;
-	private final Vec[] m_accessibles;
+	private final VecGroupSchema m_spec;
+	private final VecAccessible[] m_accessibles;
 
-	public ArrowInMemoryBatch(final ArrowVecFactory fac, ChunkSchema spec) {
+	public ArrowInMemoryBatch(final ArrowVecFactory fac, VecGroupSchema spec) {
 		m_spec = spec;
-		m_accessibles = new Vec[spec.getNumVecs()];
+		m_accessibles = new VecAccessible[spec.getNumVecs()];
 		for (int colIdx = 0; colIdx < m_accessibles.length; colIdx++) {
 			m_accessibles[colIdx] = fac.create(spec.getVecTypeAt(colIdx));
 		}
@@ -29,7 +29,7 @@ public class ArrowInMemoryBatch implements Chunk {
 	}
 
 	@Override
-	public ChunkSchema getSchema() {
+	public VecGroupSchema getSchema() {
 		return m_spec;
 	}
 

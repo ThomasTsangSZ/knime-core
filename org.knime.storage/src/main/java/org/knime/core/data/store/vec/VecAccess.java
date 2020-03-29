@@ -1,9 +1,8 @@
 package org.knime.core.data.store.vec;
 
-public interface VecAccess {
-	VecType getType();
+import org.knime.core.data.store.Access;
+import org.knime.core.data.store.Value;
 
-	void fwd();
-
-	boolean canForward();
+public interface VecAccess extends Access<Value> {
+	// NB: Marker interface to access vec values.
 }

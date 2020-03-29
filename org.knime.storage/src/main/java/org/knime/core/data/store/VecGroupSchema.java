@@ -2,7 +2,7 @@ package org.knime.core.data.store;
 
 import org.knime.core.data.store.vec.VecType;
 
-public interface ChunkSchema {
+public interface VecGroupSchema {
 
 	int getNumVecs();
 

@@ -1,7 +1,7 @@
 package org.knime.core.data.store.arrow;
 
 import org.apache.arrow.vector.Float8Vector;
-import org.knime.core.data.store.vec.DoubleVecReadAccess;
+import org.knime.core.data.store.vec.rw.DoubleVecReadAccess;
 
 final class ArrowDoubleVecReadAccess extends AbstractArrowVecReadAccess<Float8Vector> implements DoubleVecReadAccess {
 

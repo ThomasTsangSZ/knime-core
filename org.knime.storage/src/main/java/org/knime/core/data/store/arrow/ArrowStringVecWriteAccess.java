@@ -3,7 +3,7 @@ package org.knime.core.data.store.arrow;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.arrow.vector.VarCharVector;
-import org.knime.core.data.store.vec.StringVecWriteAccess;
+import org.knime.core.data.store.vec.rw.StringVecWriteAccess;
 
 public class ArrowStringVecWriteAccess extends AbstractArrowVecWriteAccess<VarCharVector>
 		implements StringVecWriteAccess {

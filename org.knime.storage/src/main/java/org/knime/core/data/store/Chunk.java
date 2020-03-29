@@ -1,11 +1,11 @@
 package org.knime.core.data.store;
 
-import org.knime.core.data.store.vec.VecReadAccess;
-import org.knime.core.data.store.vec.VecWriteAccess;
+import org.knime.core.data.store.vec.rw.VecReadAccess;
+import org.knime.core.data.store.vec.rw.VecWriteAccess;
 
 public interface Chunk extends AutoCloseable {
 
-	ChunkSchema getSchema();
+	VecGroupSchema getSchema();
 
 	VecReadAccess getReadAccessAt(int idx);
 	

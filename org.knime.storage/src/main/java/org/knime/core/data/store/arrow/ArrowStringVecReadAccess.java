@@ -1,7 +1,7 @@
 package org.knime.core.data.store.arrow;
 
 import org.apache.arrow.vector.VarCharVector;
-import org.knime.core.data.store.vec.StringVecReadAccess;
+import org.knime.core.data.store.vec.rw.StringVecReadAccess;
 
 final class ArrowStringVecReadAccess extends AbstractArrowVecReadAccess<VarCharVector> implements StringVecReadAccess {
 

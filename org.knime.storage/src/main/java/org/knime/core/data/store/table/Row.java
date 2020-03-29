@@ -1,5 +1,9 @@
 package org.knime.core.data.store.table;
 
-public interface Row {
+import org.knime.core.data.store.Value;
 
+public interface Row {
+	Value valueAt(int i);
+
+	long numValues();
 }
