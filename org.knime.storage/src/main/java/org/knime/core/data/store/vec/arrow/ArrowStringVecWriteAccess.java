@@ -1,3 +1,4 @@
+
 package org.knime.core.data.store.vec.arrow;
 
 import java.nio.charset.StandardCharsets;
@@ -5,22 +6,19 @@ import java.nio.charset.StandardCharsets;
 import org.apache.arrow.vector.VarCharVector;
 import org.knime.core.data.store.vec.rw.StringVecWriteAccess;
 
-public class ArrowStringVecWriteAccess extends AbstractArrowVecWriteAccess<VarCharVector>
-		implements StringVecWriteAccess {
+final class ArrowStringVecWriteAccess extends AbstractArrowVecWriteAccess<VarCharVector> implements
+	StringVecWriteAccess
+{
 
-	protected ArrowStringVecWriteAccess(VarCharVector vector) {
+	public ArrowStringVecWriteAccess(final VarCharVector vector) {
 		super(vector);
 	}
 
 	@Override
-	public void setMissing() {
-		m_vector.setNull(m_idx);
-	}
-
-	@Override
-	public void set(String val) {
+	public void setStringValue(final String val) {
+		// TODO: Is this correct? See knime-python's StringInserter which also
+		// handles possible reallocations.
 		m_vector.set(m_idx, val.getBytes(StandardCharsets.UTF_8));
-
+		m_vector.setValueCount(m_idx + 1);
 	}
-
 }

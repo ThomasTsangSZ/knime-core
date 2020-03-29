@@ -1,24 +1,21 @@
+
 package org.knime.core.data.store.vec.arrow;
 
 import org.apache.arrow.vector.BitVector;
 import org.knime.core.data.store.vec.rw.BooleanVecWriteAccess;
 
-public class ArrowBooleanVecWriteAccess extends AbstractArrowVecWriteAccess<BitVector>
-		implements BooleanVecWriteAccess {
+final class ArrowBooleanVecWriteAccess //
+	extends AbstractArrowVecWriteAccess<BitVector> //
+	implements BooleanVecWriteAccess
+{
 
-	protected ArrowBooleanVecWriteAccess(BitVector vector) {
+	public ArrowBooleanVecWriteAccess(final BitVector vector) {
 		super(vector);
 	}
 
 	@Override
-	public void setMissing() {
-		m_vector.setNull(m_idx);
+	public void setBooleanValue(final boolean value) {
+		m_vector.set(m_idx, value ? 1 : 0);
+		m_vector.setValueCount(m_idx + 1);
 	}
-
-	@Override
-	public void set(boolean val) {
-		// TODO double check if this is correct
-		m_vector.set(m_idx, val ? 1 : 0);
-	}
-
 }

@@ -1,6 +1,9 @@
+
 package org.knime.core.data.store.vec.rw;
 
-public interface VecWriteAccess extends VecReadAccess {
-	// set value in column at current pos missing
+public interface VecWriteAccess extends AutoCloseable {
+
+	void fwd();
+
 	void setMissing();
 }

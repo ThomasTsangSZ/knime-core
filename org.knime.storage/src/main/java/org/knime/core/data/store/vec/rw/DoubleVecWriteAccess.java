@@ -1,5 +1,7 @@
+
 package org.knime.core.data.store.vec.rw;
 
-public interface DoubleVecWriteAccess extends DoubleVecAccess, VecWriteAccess {
-	void set(double val);
+public interface DoubleVecWriteAccess extends VecWriteAccess {
+
+	void setDoubleValue(double value);
 }

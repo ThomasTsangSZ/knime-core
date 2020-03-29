@@ -1,9 +1,9 @@
 
-package org.knime.core.data.store.vec.rw;
+package org.knime.core.data.store.table.column;
 
 import java.util.NoSuchElementException;
 
-public interface VecReadAccess extends AutoCloseable {
+public interface ReadableColumn extends AutoCloseable {
 
 	boolean canFwd();
 

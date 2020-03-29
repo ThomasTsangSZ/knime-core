@@ -1,3 +1,4 @@
+
 package org.knime.core.data.store.vec.arrow;
 
 import org.apache.arrow.vector.Float8Vector;
@@ -5,12 +6,12 @@ import org.knime.core.data.store.vec.rw.DoubleVecReadAccess;
 
 final class ArrowDoubleVecReadAccess extends AbstractArrowVecReadAccess<Float8Vector> implements DoubleVecReadAccess {
 
-	protected ArrowDoubleVecReadAccess(Float8Vector vector) {
+	public ArrowDoubleVecReadAccess(final Float8Vector vector) {
 		super(vector);
 	}
 
 	@Override
-	public double get() {
+	public double getDoubleValue() {
 		return m_vector.get(m_idx);
 	}
 }

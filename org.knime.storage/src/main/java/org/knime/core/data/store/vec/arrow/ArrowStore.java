@@ -1,3 +1,4 @@
+
 package org.knime.core.data.store.vec.arrow;
 
 import java.io.File;
@@ -6,22 +7,28 @@ import java.nio.file.Files;
 
 import org.apache.arrow.memory.RootAllocator;
 import org.knime.core.data.store.chunk.ChunkStore;
+import org.knime.core.data.store.vec.VecAccessible;
 import org.knime.core.data.store.vec.VecSchema;
 
 // TODO maybe we want to actually split into read/write later.
-public class ArrowStore implements ChunkStore<ArrowInMemoryBatch> {
+// TODO: Only stores chunks of single columns after the most recent changes
+public class ArrowStore implements ChunkStore<VecAccessible> {
 
-	private ArrowVecFactory m_factory;
-	private VecSchema m_spec;
-	private File m_dest;
-	private RootAllocator m_root;
+	private final ArrowVecFactory m_factory;
+
+	private final VecSchema m_spec;
+
+	private final File m_dest;
+
+	private final RootAllocator m_root;
+
 	private int m_numChunks;
 
-	public ArrowStore(File dest, final VecSchema spec, final long limit) {
+	public ArrowStore(final File dest, final VecSchema spec, final long limit) {
 		// TODO add allocation listener for this store.
 		// TODO likely we need one central allocator for ALL tables/stores
 		m_root = new RootAllocator(limit);
-		
+
 		// TODO where is the batch-size coming from?
 		m_factory = new ArrowVecFactory(2048, m_root);
 		m_spec = spec;
@@ -29,39 +36,52 @@ public class ArrowStore implements ChunkStore<ArrowInMemoryBatch> {
 	}
 
 	@Override
-	public void persist(ArrowInMemoryBatch batch) {
-		// TODO write to disc.
-		// TODO one file per batch. maybe physical batch size != logical (CPU cache etc)
-		
-		// NB: this method can also be called during reading (i.e. when a chunk has been cached before).
+	public VecSchema schema() {
+		return m_spec;
 	}
 
 	@Override
-	public ArrowInMemoryBatch load(long idx) {
+	public void persist(final VecAccessible batch) {
+		// TODO write to disc.
+		// TODO one file per batch. maybe physical batch size != logical (CPU cache
+		// etc)
+
+		// NB: this method can also be called during reading (i.e. when a chunk has
+		// been cached before).
+	}
+
+	@Override
+	public VecAccessible load(final long idx) {
 		// TODO load from disc
 		return null;
 	}
 
 	@Override
-	public ArrowInMemoryBatch createNext() {
-		// TODO in the KNIME case this method will never be called after load(long idx) has been called.
-		// TODO however in general - we can create new batches while reading - this is possible... undecided what to do. use-case: streaming.
-		
+	public VecAccessible createNext() {
+		// TODO in the KNIME case this method will never be called after load(long
+		// idx) has been called.
+		// TODO however in general - we can create new batches while reading - this
+		// is possible... undecided what to do. use-case: streaming.
+
 		m_numChunks++;
 		// batc to be closed by caller
-		return new ArrowInMemoryBatch(m_factory, m_spec);
+		return m_factory.create(m_spec.getType());
 	}
 
 	@Override
 	public void destroy() {
-		// Assumption: we never, ever keep any references on batches, so all references
+		// Assumption: we never, ever keep any references on batches, so all
+		// references
 		// should have been closed externally.
-		// however as a fallback we could simply kill the root allocator for this store.
-		// TODO check if this is correct, in case someone is still "accessing the batch"
+		// however as a fallback we could simply kill the root allocator for this
+		// store.
+		// TODO check if this is correct, in case someone is still "accessing the
+		// batch"
 //		m_root.close();
 		try {
 			Files.delete(m_dest.toPath());
-		} catch (IOException e) {
+		}
+		catch (final IOException e) {
 			// TODO
 			throw new RuntimeException(e);
 		}
@@ -71,5 +91,4 @@ public class ArrowStore implements ChunkStore<ArrowInMemoryBatch> {
 	public long numChunks() {
 		return m_numChunks;
 	}
-
 }

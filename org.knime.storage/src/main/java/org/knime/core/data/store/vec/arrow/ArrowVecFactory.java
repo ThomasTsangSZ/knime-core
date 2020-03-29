@@ -1,104 +1,90 @@
+
 package org.knime.core.data.store.vec.arrow;
+
+import java.util.function.Function;
 
 import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.BitVector;
 import org.apache.arrow.vector.Float8Vector;
 import org.apache.arrow.vector.VarCharVector;
-import org.knime.core.data.store.vec.VecReadAccessible;
+import org.knime.core.data.store.vec.VecAccessible;
 import org.knime.core.data.store.vec.VecType;
 import org.knime.core.data.store.vec.rw.VecFactory;
 import org.knime.core.data.store.vec.rw.VecReadAccess;
 import org.knime.core.data.store.vec.rw.VecWriteAccess;
 
-public class ArrowVecFactory implements VecFactory {
+public final class ArrowVecFactory implements VecFactory {
 
-	private RootAllocator m_alloc;
-	private int m_batchSize;
+	private final RootAllocator m_alloc;
 
-	ArrowVecFactory(int batchMaxSize, RootAllocator alloc) {
+	private final int m_batchSize;
+
+	ArrowVecFactory(final int batchMaxSize, final RootAllocator alloc) {
 		m_batchSize = batchMaxSize;
 		m_alloc = alloc;
 	}
 
 	// make extensible later?
 	@Override
-	public VecReadAccessible create(VecType type) {
+	public VecAccessible create(final VecType type) {
 		switch (type) {
-		case BOOLEAN:
-			return new VecReadAccessible() {
-				private BitVector m_vector;
-				{
-					// TODO better name for vector.
-					m_vector = new BitVector(type.toString(), m_alloc);
-					m_vector.allocateNew(m_batchSize);
-				}
+			case BOOLEAN: {
+				final BitVector vector = new BitVector(type.toString(), m_alloc);
+				vector.allocateNew(m_batchSize);
+				return new ArrowVecAccessible<>(vector, ArrowBooleanVecWriteAccess::new, ArrowBooleanVecReadAccess::new);
+			}
+			case STRING: {
+				final VarCharVector vector = new VarCharVector(type.toString(), m_alloc);
+				// TODO more flexible configuration of "bytes per cell assumption".
+				// E.g. rowIds might be smaller
+				vector.allocateNew(64l * m_batchSize, m_batchSize);
+				return new ArrowVecAccessible<>(vector, ArrowStringVecWriteAccess::new, ArrowStringVecReadAccess::new);
+			}
+			case DOUBLE: {
+				final Float8Vector vector = new Float8Vector(type.toString(), m_alloc);
+				vector.allocateNew(m_batchSize);
+				return new ArrowVecAccessible<>(vector, ArrowDoubleVecWriteAccess::new, ArrowDoubleVecReadAccess::new);
+			}
+			default:
+				throw new UnsupportedOperationException(type + " nyi");
+		}
+	}
 
-				@Override
-				public void close() throws Exception {
-					m_vector.close();
-				}
+	private static final class ArrowVecAccessible<V extends AutoCloseable> implements VecAccessible {
 
-				@Override
-				public VecWriteAccess writeAccess() {
-					return new ArrowBooleanVecWriteAccess(m_vector);
-				}
+		private final V m_vector;
 
-				@Override
-				public VecReadAccess readAccess() {
-					return new ArrowBooleanVecReadAccess(m_vector);
-				}
-			};
-		case STRING:
-			return new VecReadAccessible() {
-				final VarCharVector m_vector;
-				{
-					m_vector = new VarCharVector(type.toString(), m_alloc);
-					// TODO more flexible configuration of "bytes per cell assumption". E.g. rowIds
-					// might be smaller
-					m_vector.allocateNew(64l * m_batchSize, m_batchSize);
-				}
+		private final Function<V, VecWriteAccess> m_writeAccessConstructor;
 
-				@Override
-				public void close() throws Exception {
-					m_vector.close();
-				}
+		private final Function<V, VecReadAccess> m_readAccessConstructor;
 
-				@Override
-				public VecWriteAccess writeAccess() {
-					return new ArrowStringVecWriteAccess(m_vector);
-				}
+		private VecWriteAccess m_writeAccess;
 
-				@Override
-				public VecReadAccess readAccess() {
-					return new ArrowStringVecReadAccess(m_vector);
-				}
-			};
-		case DOUBLE:
-			return new VecReadAccessible() {
-				final Float8Vector m_vector;
-				{
-					m_vector = new Float8Vector(type.toString(), m_alloc);
-					m_vector.allocateNew(m_batchSize);
-				}
+		public ArrowVecAccessible(final V vector, final Function<V, VecWriteAccess> writeAccessConstructor,
+			final Function<V, VecReadAccess> readAccessConstructor)
+		{
+			m_vector = vector;
+			m_writeAccessConstructor = writeAccessConstructor;
+			m_readAccessConstructor = readAccessConstructor;
+		}
 
-				@Override
-				public void close() throws Exception {
-					m_vector.close();
-				}
+		@Override
+		public VecWriteAccess getWriteAccess() {
+			// TODO: This is not sufficient to prevent concurrent writes
+			if (m_writeAccess == null) {
+				m_writeAccess = m_writeAccessConstructor.apply(m_vector);
+			}
+			return m_writeAccess;
+		}
 
-				@Override
-				public VecReadAccess readAccess() {
-					return new ArrowDoubleVecReadAccess(m_vector);
-				}
+		@Override
+		public VecReadAccess createReadAccess() {
+			return m_readAccessConstructor.apply(m_vector);
+		}
 
-				@Override
-				public VecWriteAccess writeAccess() {
-					return new ArrowDoubleVecWriteAccess(m_vector);
-				}
-			};
-		default:
-			throw new UnsupportedOperationException(type + " nyi");
-
+		@Override
+		public void close() throws Exception {
+			m_vector.close();
 		}
 	}
 }
