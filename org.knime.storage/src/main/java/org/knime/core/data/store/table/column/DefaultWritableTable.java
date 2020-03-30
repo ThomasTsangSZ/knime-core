@@ -5,9 +5,9 @@ import org.knime.core.data.store.Store;
 
 public final class DefaultWritableTable implements WritableTable {
 
-	private Store m_store;
+	private final Store m_store;
 
-	public DefaultWritableTable(Store store) {
+	public DefaultWritableTable(final Store store) {
 		m_store = store;
 	}
 
@@ -18,11 +18,11 @@ public final class DefaultWritableTable implements WritableTable {
 
 	@Override
 	public WritableColumn getColumnAt(final long index) {
-		return m_store.getLogicalColumnAt(index);
+		return m_store.getWritableLogicalColumnAt(index);
 	}
 
 	@Override
 	public void close() throws Exception {
-		m_store.closeForWriting();
+		// TODO
 	}
 }

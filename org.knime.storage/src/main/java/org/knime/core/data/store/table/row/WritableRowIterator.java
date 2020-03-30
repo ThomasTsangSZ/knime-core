@@ -58,9 +58,7 @@ public final class WritableRowIterator implements AutoCloseable {
 
 		@Override
 		public void close() throws Exception {
-			for (final WritableColumn column : m_columns) {
-				column.close();
-			}
+			// TODO
 		}
 	}
 }
