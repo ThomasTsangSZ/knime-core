@@ -49,8 +49,8 @@
 
 package org.knime.core.data.store.chunk;
 
+import org.knime.core.data.store.table.column.ColumnSchema;
 import org.knime.core.data.store.vec.VecAccessible;
-import org.knime.core.data.store.vec.VecSchema;
 
 public interface ChunkStore<V extends VecAccessible> {
 
@@ -75,5 +75,5 @@ public interface ChunkStore<V extends VecAccessible> {
 	void destroy();
 
 	// SCHEMA
-	VecSchema schema();
+	ColumnSchema schema();
 }

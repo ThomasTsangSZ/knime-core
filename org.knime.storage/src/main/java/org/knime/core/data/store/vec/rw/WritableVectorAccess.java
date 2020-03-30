@@ -1,7 +1,7 @@
 
 package org.knime.core.data.store.vec.rw;
 
-public interface VecWriteAccess extends AutoCloseable {
+public interface WritableVectorAccess extends AutoCloseable {
 
 	void fwd();
 

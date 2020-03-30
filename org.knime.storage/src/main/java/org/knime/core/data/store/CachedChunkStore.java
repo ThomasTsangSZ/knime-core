@@ -2,8 +2,8 @@
 package org.knime.core.data.store;
 
 import org.knime.core.data.store.chunk.ChunkStore;
+import org.knime.core.data.store.table.column.ColumnSchema;
 import org.knime.core.data.store.vec.VecAccessible;
-import org.knime.core.data.store.vec.VecSchema;
 
 // TODO here we can implement caching INDEPENDENT from memory / storage layout.
 // TODO general idea: as long as we don't close a chunk, the chunk remains open in cache.
@@ -41,7 +41,7 @@ public class CachedChunkStore<V extends VecAccessible> implements ChunkStore<V> 
 	}
 
 	@Override
-	public VecSchema schema() {
+	public ColumnSchema schema() {
 		return m_delegate.schema();
 	}
 }

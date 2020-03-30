@@ -5,15 +5,13 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.knime.core.data.store.table.column.ReadableColumn;
-import org.knime.core.data.store.table.column.impl.ReadableDoubleColumn;
-import org.knime.core.data.store.table.row.impl.ReadableDoubleValue;
+import org.knime.core.data.store.table.column.ReadableColumnIterator;
 
-public final class ReadableRowIterator implements Iterator<Row<ReadableDataValue>>, AutoCloseable {
+public final class ReadableRowIterator implements Iterator<Row<ReadableValueAccess>>, AutoCloseable {
 
 	private final ColumnBackedReadableRow m_row;
 
-	public ReadableRowIterator(final List<ReadableColumn> columns) {
+	public ReadableRowIterator(final List<ReadableColumnIterator> columns) {
 		m_row = new ColumnBackedReadableRow(columns);
 	}
 
@@ -23,7 +21,7 @@ public final class ReadableRowIterator implements Iterator<Row<ReadableDataValue
 	}
 
 	@Override
-	public Row<ReadableDataValue> next() {
+	public Row<ReadableValueAccess> next() {
 		m_row.fwd();
 		return m_row;
 	}
@@ -33,25 +31,17 @@ public final class ReadableRowIterator implements Iterator<Row<ReadableDataValue
 		m_row.close();
 	}
 
-	private static final class ColumnBackedReadableRow implements Row<ReadableDataValue>, AutoCloseable {
+	private static final class ColumnBackedReadableRow implements Row<ReadableValueAccess>, AutoCloseable {
 
-		private final List<ReadableColumn> m_columns;
+		private final List<ReadableColumnIterator> m_columns;
 
-		private final List<ReadableDataValue> m_dataValues;
+		private final List<ReadableValueAccess> m_dataValues;
 
-		public ColumnBackedReadableRow(final List<ReadableColumn> columns) {
+		public ColumnBackedReadableRow(final List<ReadableColumnIterator> columns) {
 			m_columns = columns;
 			m_dataValues = new ArrayList<>(columns.size());
-			for (final ReadableColumn column : m_columns) {
-				final ReadableDataValue dataValue;
-				// TODO: Matching
-				if (column instanceof ReadableDoubleColumn) {
-					dataValue = new ReadableDoubleValue((ReadableDoubleColumn) column);
-				}
-				else {
-					throw new IllegalStateException("not yet implemented");
-				}
-				m_dataValues.add(dataValue);
+			for (final ReadableColumnIterator column : m_columns) {
+				m_dataValues.add(column.get());
 			}
 		}
 
@@ -60,7 +50,7 @@ public final class ReadableRowIterator implements Iterator<Row<ReadableDataValue
 		}
 
 		private void fwd() {
-			for (final ReadableColumn column : m_columns) {
+			for (final ReadableColumnIterator column : m_columns) {
 				column.fwd();
 			}
 		}
@@ -71,13 +61,13 @@ public final class ReadableRowIterator implements Iterator<Row<ReadableDataValue
 		}
 
 		@Override
-		public ReadableDataValue getValueAt(final int idx) {
+		public ReadableValueAccess getValueAt(final int idx) {
 			return m_dataValues.get(idx);
 		}
 
 		@Override
 		public void close() throws Exception {
-			for (final ReadableColumn column : m_columns) {
+			for (final ReadableColumnIterator column : m_columns) {
 				column.close();
 			}
 		}

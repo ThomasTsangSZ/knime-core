@@ -5,8 +5,8 @@ import java.util.Iterator;
 
 import org.knime.core.data.store.vec.VecAccessible;
 import org.knime.core.data.store.vec.VecAccessibleOnVecAccessibles;
-import org.knime.core.data.store.vec.rw.VecReadAccess;
-import org.knime.core.data.store.vec.rw.VecWriteAccess;
+import org.knime.core.data.store.vec.rw.ReadableVectorAccess;
+import org.knime.core.data.store.vec.rw.WritableVectorAccess;
 
 public class ChunkedVecReadAccessible implements VecAccessible {
 
@@ -51,12 +51,12 @@ public class ChunkedVecReadAccessible implements VecAccessible {
 	}
 
 	@Override
-	public VecWriteAccess getWriteAccess() {
+	public WritableVectorAccess getWriteAccess() {
 		return m_vecAccessible.getWriteAccess();
 	}
 
 	@Override
-	public VecReadAccess createReadAccess() {
+	public ReadableVectorAccess createReadAccess() {
 		return m_vecAccessible.createReadAccess();
 	}
 }

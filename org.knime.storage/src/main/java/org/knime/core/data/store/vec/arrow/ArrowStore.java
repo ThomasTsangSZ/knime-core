@@ -7,8 +7,8 @@ import java.nio.file.Files;
 
 import org.apache.arrow.memory.RootAllocator;
 import org.knime.core.data.store.chunk.ChunkStore;
+import org.knime.core.data.store.table.column.ColumnSchema;
 import org.knime.core.data.store.vec.VecAccessible;
-import org.knime.core.data.store.vec.VecSchema;
 
 // TODO maybe we want to actually split into read/write later.
 // TODO: Only stores chunks of single columns after the most recent changes
@@ -16,7 +16,7 @@ public class ArrowStore implements ChunkStore<VecAccessible> {
 
 	private final ArrowVecFactory m_factory;
 
-	private final VecSchema m_spec;
+	private final ColumnSchema m_spec;
 
 	private final File m_dest;
 
@@ -24,7 +24,7 @@ public class ArrowStore implements ChunkStore<VecAccessible> {
 
 	private int m_numChunks;
 
-	public ArrowStore(final File dest, final VecSchema spec, final long limit) {
+	public ArrowStore(final File dest, final ColumnSchema spec, final long limit) {
 		// TODO add allocation listener for this store.
 		// TODO likely we need one central allocator for ALL tables/stores
 		m_root = new RootAllocator(limit);
@@ -36,7 +36,7 @@ public class ArrowStore implements ChunkStore<VecAccessible> {
 	}
 
 	@Override
-	public VecSchema schema() {
+	public ColumnSchema schema() {
 		return m_spec;
 	}
 

@@ -1,9 +1,9 @@
 
 package org.knime.core.data.store.table.column;
 
-public interface ReadableTable extends AutoCloseable {
+public interface ReadableTable {
 
 	long getNumColumns();
 
-	ReadableColumn getColumnAt(long index);
+	ReadableColumnIterator iterator(long columnIndex);
 }

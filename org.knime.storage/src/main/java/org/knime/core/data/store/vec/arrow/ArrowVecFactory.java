@@ -7,11 +7,11 @@ import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.BitVector;
 import org.apache.arrow.vector.Float8Vector;
 import org.apache.arrow.vector.VarCharVector;
+import org.knime.core.data.store.table.column.ColumnType;
 import org.knime.core.data.store.vec.VecAccessible;
-import org.knime.core.data.store.vec.VecType;
 import org.knime.core.data.store.vec.rw.VecFactory;
-import org.knime.core.data.store.vec.rw.VecReadAccess;
-import org.knime.core.data.store.vec.rw.VecWriteAccess;
+import org.knime.core.data.store.vec.rw.ReadableVectorAccess;
+import org.knime.core.data.store.vec.rw.WritableVectorAccess;
 
 public final class ArrowVecFactory implements VecFactory {
 
@@ -26,7 +26,7 @@ public final class ArrowVecFactory implements VecFactory {
 
 	// make extensible later?
 	@Override
-	public VecAccessible create(final VecType type) {
+	public VecAccessible create(final ColumnType type) {
 		switch (type) {
 			case BOOLEAN: {
 				final BitVector vector = new BitVector(type.toString(), m_alloc);
@@ -54,14 +54,14 @@ public final class ArrowVecFactory implements VecFactory {
 
 		private final V m_vector;
 
-		private final Function<V, VecWriteAccess> m_writeAccessConstructor;
+		private final Function<V, WritableVectorAccess> m_writeAccessConstructor;
 
-		private final Function<V, VecReadAccess> m_readAccessConstructor;
+		private final Function<V, ReadableVectorAccess> m_readAccessConstructor;
 
-		private VecWriteAccess m_writeAccess;
+		private WritableVectorAccess m_writeAccess;
 
-		public ArrowVecAccessible(final V vector, final Function<V, VecWriteAccess> writeAccessConstructor,
-			final Function<V, VecReadAccess> readAccessConstructor)
+		public ArrowVecAccessible(final V vector, final Function<V, WritableVectorAccess> writeAccessConstructor,
+			final Function<V, ReadableVectorAccess> readAccessConstructor)
 		{
 			m_vector = vector;
 			m_writeAccessConstructor = writeAccessConstructor;
@@ -69,7 +69,7 @@ public final class ArrowVecFactory implements VecFactory {
 		}
 
 		@Override
-		public VecWriteAccess getWriteAccess() {
+		public WritableVectorAccess getWriteAccess() {
 			// TODO: This is not sufficient to prevent concurrent writes
 			if (m_writeAccess == null) {
 				m_writeAccess = m_writeAccessConstructor.apply(m_vector);
@@ -78,7 +78,7 @@ public final class ArrowVecFactory implements VecFactory {
 		}
 
 		@Override
-		public VecReadAccess createReadAccess() {
+		public ReadableVectorAccess createReadAccess() {
 			return m_readAccessConstructor.apply(m_vector);
 		}
 

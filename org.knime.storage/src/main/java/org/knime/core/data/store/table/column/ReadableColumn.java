@@ -1,16 +1,9 @@
-
 package org.knime.core.data.store.table.column;
 
-import java.util.NoSuchElementException;
+public interface ReadableColumn {
 
-public interface ReadableColumn extends AutoCloseable {
+	long size();
 
-	boolean canFwd();
+	ReadableColumnIterator iterator();
 
-	/**
-	 * @throws NoSuchElementException
-	 */
-	void fwd();
-
-	boolean isMissing();
 }

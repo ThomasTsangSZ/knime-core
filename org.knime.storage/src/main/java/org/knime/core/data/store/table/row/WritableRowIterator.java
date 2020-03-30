@@ -5,10 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.knime.core.data.store.table.column.WritableColumn;
-import org.knime.core.data.store.table.column.impl.WritableDoubleColumn;
-import org.knime.core.data.store.table.row.impl.WritableDoubleValue;
 
 // TODO: Other name. This is not an iterator. More similar to RowOutput or an access.
+// TODO: Implemented against KNIME classes ('DataValue', 'DataCell', ...)
 public final class WritableRowIterator implements AutoCloseable {
 
 	private final ColumnBackedWritableRow m_row;
@@ -17,7 +16,7 @@ public final class WritableRowIterator implements AutoCloseable {
 		m_row = new ColumnBackedWritableRow(columns);
 	}
 
-	public Row<WritableDataValue> next() {
+	public Row<WritableValueAccess> next() {
 		m_row.fwd();
 		return m_row;
 	}
@@ -27,25 +26,17 @@ public final class WritableRowIterator implements AutoCloseable {
 		m_row.close();
 	}
 
-	private static final class ColumnBackedWritableRow implements Row<WritableDataValue>, AutoCloseable {
+	private static final class ColumnBackedWritableRow implements Row<WritableValueAccess>, AutoCloseable {
 
 		private final List<WritableColumn> m_columns;
 
-		private final List<WritableDataValue> m_dataValues;
+		private final List<WritableValueAccess> m_dataValues;
 
 		public ColumnBackedWritableRow(final List<WritableColumn> columns) {
 			m_columns = columns;
 			m_dataValues = new ArrayList<>(columns.size());
 			for (final WritableColumn column : m_columns) {
-				final WritableDataValue dataValue;
-				// TODO: Matching
-				if (column instanceof WritableDoubleColumn) {
-					dataValue = new WritableDoubleValue((WritableDoubleColumn) column);
-				}
-				else {
-					throw new IllegalStateException("not yet implemented");
-				}
-				m_dataValues.add(dataValue);
+				m_dataValues.add(column.get());
 			}
 		}
 
@@ -61,7 +52,7 @@ public final class WritableRowIterator implements AutoCloseable {
 		}
 
 		@Override
-		public WritableDataValue getValueAt(final int idx) {
+		public WritableValueAccess getValueAt(final int idx) {
 			return m_dataValues.get(idx);
 		}
 

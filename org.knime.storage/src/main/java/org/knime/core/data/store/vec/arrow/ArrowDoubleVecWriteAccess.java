@@ -2,11 +2,11 @@
 package org.knime.core.data.store.vec.arrow;
 
 import org.apache.arrow.vector.Float8Vector;
-import org.knime.core.data.store.vec.rw.DoubleVecWriteAccess;
+import org.knime.core.data.store.vec.rw.WritableDoubleValueAccess;
 
 final class ArrowDoubleVecWriteAccess//
 	extends AbstractArrowVecWriteAccess<Float8Vector> //
-	implements DoubleVecWriteAccess
+	implements WritableDoubleValueAccess
 {
 
 	public ArrowDoubleVecWriteAccess(final Float8Vector vector) {

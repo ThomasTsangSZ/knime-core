@@ -1,39 +1,28 @@
 
 package org.knime.core.data.store.table.column;
 
-import java.util.List;
-
-import org.knime.core.data.store.vec.VecSchema;
+import org.knime.core.data.store.Store;
 
 public final class DefaultWritableTable implements WritableTable {
 
-	private final WritableColumn[] m_columns;
+	private Store m_store;
 
-	public DefaultWritableTable(final List<VecSchema> schema) {
-		m_columns = new WritableColumn[schema.size()];
-		for (int i = 0; i < schema.size(); i++) {
-			// TODO: Match schema (or probably rather KNIME's DataType or the like
-			// since we're basically in Node-facing code) to corresponding writable
-			// column implementations.
-			// Allocate column/table store here?
-		}
-		throw new IllegalStateException("not yet implemented");
+	public DefaultWritableTable(Store store) {
+		m_store = store;
 	}
 
 	@Override
 	public long getNumColumns() {
-		return m_columns.length;
+		return m_store.getNumLogicalColumns();
 	}
 
 	@Override
 	public WritableColumn getColumnAt(final long index) {
-		return m_columns[Math.toIntExact(index)];
+		return m_store.getLogicalColumnAt(index);
 	}
 
 	@Override
 	public void close() throws Exception {
-		for (final WritableColumn column : m_columns) {
-			column.close();
-		}
+		m_store.closeForWriting();
 	}
 }

@@ -1,12 +1,12 @@
 
 package org.knime.core.data.store.vec;
 
-import org.knime.core.data.store.vec.rw.VecReadAccess;
-import org.knime.core.data.store.vec.rw.VecWriteAccess;
+import org.knime.core.data.store.vec.rw.ReadableVectorAccess;
+import org.knime.core.data.store.vec.rw.WritableVectorAccess;
 
 public interface VecAccessible extends AutoCloseable {
 
-	VecWriteAccess getWriteAccess();
+	WritableVectorAccess getWriteAccess();
 
-	VecReadAccess createReadAccess();
+	ReadableVectorAccess createReadAccess();
 }

@@ -2,11 +2,11 @@
 package org.knime.core.data.store.vec.arrow;
 
 import org.apache.arrow.vector.FieldVector;
-import org.knime.core.data.store.vec.rw.VecReadAccess;
+import org.knime.core.data.store.vec.rw.ReadableVectorAccess;
 
 public abstract class AbstractArrowVecReadAccess<V extends FieldVector> //
 	extends AbstractArrowVecAccess<V> //
-	implements VecReadAccess
+	implements ReadableVectorAccess
 {
 
 	public AbstractArrowVecReadAccess(final V vector) {

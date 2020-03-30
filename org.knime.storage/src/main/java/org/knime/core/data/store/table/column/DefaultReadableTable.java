@@ -1,28 +1,26 @@
 
 package org.knime.core.data.store.table.column;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public final class DefaultReadableTable implements ReadableTable {
 
-	private final ReadableColumn[] m_columns;
+	// TODO support long lists
+	final List<ReadableColumn> m_columns = new ArrayList<>();
 
-	public DefaultReadableTable(/* TODO: Pass some table store here? */) {
+	public DefaultReadableTable(List<ReadableColumn> columns) {
 		throw new IllegalStateException("not yet implemented");
 	}
 
 	@Override
 	public long getNumColumns() {
-		return m_columns.length;
+		return m_columns.size();
 	}
 
 	@Override
-	public ReadableColumn getColumnAt(final long index) {
-		return m_columns[Math.toIntExact(index)];
-	}
-
-	@Override
-	public void close() throws Exception {
-		for (final ReadableColumn column : m_columns) {
-			column.close();
-		}
+	public ReadableColumnIterator iterator(final long index) {
+		// TODO support long lists
+		return m_columns.get((int) index).iterator();
 	}
 }
