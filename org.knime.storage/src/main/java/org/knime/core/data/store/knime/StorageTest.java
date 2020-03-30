@@ -14,12 +14,12 @@ import org.knime.core.data.store.table.column.ReadableTable;
 import org.knime.core.data.store.table.column.WritableColumn;
 import org.knime.core.data.store.table.column.WritableTable;
 import org.knime.core.data.store.table.row.ReadableRowIterator;
-import org.knime.core.data.store.table.row.ReadableValueAccess;
 import org.knime.core.data.store.table.row.Row;
 import org.knime.core.data.store.table.row.WritableRowIterator;
-import org.knime.core.data.store.table.row.WritableValueAccess;
-import org.knime.core.data.store.vec.rw.ReadableDoubleValueAccess;
-import org.knime.core.data.store.vec.rw.WritableDoubleValueAccess;
+import org.knime.core.data.store.table.value.ReadableDoubleValueAccess;
+import org.knime.core.data.store.table.value.ReadableValueAccess;
+import org.knime.core.data.store.table.value.WritableDoubleValueAccess;
+import org.knime.core.data.store.table.value.WritableValueAccess;
 
 public class StorageTest {
 
@@ -28,7 +28,7 @@ public class StorageTest {
 	@Test
 	public void columnwiseWriteReadSingleDoubleColumnIdentityTest() throws Exception {
 		final long numRows = 1000;
-		final Store store = new ArrowStore(new ColumnSchema[] { doubleVectorSchema });
+		final Store store = new ArrowStoreAlsoOld(new ColumnSchema[] { doubleVectorSchema });
 
 		try (final WritableTable writableTable = new DefaultWritableTable(store)) {
 			final WritableColumn column = writableTable.getColumnAt(0);
@@ -68,7 +68,7 @@ public class StorageTest {
 	@Test
 	public void rowwiseWriteReadSingleDoubleColumnIdentityTest() throws Exception {
 		final long numRows = 1000;
-		final Store store = new ArrowStore(new ColumnSchema[] { doubleVectorSchema });
+		final Store store = new ArrowStoreAlsoOld(new ColumnSchema[] { doubleVectorSchema });
 
 		final WritableTable writableTable = new DefaultWritableTable(store);
 		try (final WritableRowIterator iterator = TableFactory.createRowWriteAccess(writableTable)) {
@@ -105,63 +105,66 @@ public class StorageTest {
 	 *
 	 */
 
-//	@Test
-//	public void pushViaKNIMEAPI() {
-//		final DataContainer container = new DataContainer() {
-//
-//			{
-//				final WritableTable table = TableFactory.createWritableTable(convert(getSpec()));
-//			}
-//
-//			private ColumnSchema convert(final DataTableSpec spec) {
-//				return null;
-//			}
-//
-//			@Override
-//			public void addRowToTable(final DataRow row) {}
-//
-//			@Override
-//			public DataTableSpec getSpec() {
-//				return null;
-//			}
-//		};
-//	}
-//
-//	interface DataContainer {
-//
-//		void addRowToTable(DataRow row);
-//
-//		DataTableSpec getSpec();
-//	}
-//
-//	interface DataTableSpec {
-//
-//	}
-//
-//	interface BufferedDataTable extends Iterable<DataRow> {
-//
-//	}
-//
-//	interface DataRow {
-//
-//		String getRowKey();
-//
-//		DataCell getCell(int i);
-//
-//		int numCells();
-//
-//		// TODO more stuff
-//	}
-//
-//	class DataCell implements DataValue {
-//
-//	}
-//
-//	interface DataValue {
-//
-//	}
-//
-//	interface WritableDataValue {
-//
-//	}
+	@Test
+	public void pushViaKNIMEAPI() {
+		final DataTableSpec spec = null;
+		final DataContainer container = new DataContainer() {
+
+			private final WritableTable m_table;
+			{
+				final ArrowStoreAlsoOld store = new ArrowStoreAlsoOld(convert(spec));
+				m_table = new DefaultWritableTable(store);
+			}
+
+			private ColumnSchema[] convert(final DataTableSpec spec) {
+				return null;
+			}
+
+			@Override
+			public void addRowToTable(final DataRow row) {}
+
+			@Override
+			public DataTableSpec getSpec() {
+				return null;
+			}
+		};
+	}
+
+	interface DataContainer {
+
+		void addRowToTable(DataRow row);
+
+		DataTableSpec getSpec();
+	}
+
+	interface DataTableSpec {
+
+	}
+
+	interface BufferedDataTable extends Iterable<DataRow> {
+
+	}
+
+	interface DataRow {
+
+		String getRowKey();
+
+		DataCell getCell(int i);
+
+		int numCells();
+
+		// TODO more stuff
+	}
+
+	class DataCell implements DataValue {
+
+	}
+
+	interface DataValue {
+
+	}
+
+	interface WritableDataValue {
+
+	}
 }

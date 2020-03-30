@@ -1,7 +1,7 @@
 
 package org.knime.core.data.store.chunk;
 
-import org.knime.core.data.store.vec.VecAccessible;
+import org.knime.core.data.store.VecAccessible;
 
 public interface ChunkAccess extends AutoCloseable {
 

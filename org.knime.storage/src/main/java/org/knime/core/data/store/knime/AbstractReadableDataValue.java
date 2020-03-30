@@ -2,7 +2,7 @@
 package org.knime.core.data.store.knime;
 
 import org.knime.core.data.store.knime.StorageTest.DataValue;
-import org.knime.core.data.store.table.row.ReadableValueAccess;
+import org.knime.core.data.store.table.value.ReadableValueAccess;
 
 public abstract class AbstractReadableDataValue<V extends ReadableValueAccess> implements DataValue {
 

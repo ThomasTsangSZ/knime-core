@@ -1,7 +1,7 @@
 
 package org.knime.core.data.store.knime;
 
-import org.knime.core.data.store.vec.rw.ReadableDoubleValueAccess;
+import org.knime.core.data.store.table.value.ReadableDoubleValueAccess;
 
 public final class ReadableDoubleDataValue extends AbstractReadableDataValue<ReadableDoubleValueAccess> {
 

@@ -3,7 +3,6 @@ package org.knime.core.data.store;
 
 import org.knime.core.data.store.chunk.ChunkStore;
 import org.knime.core.data.store.table.column.ColumnSchema;
-import org.knime.core.data.store.vec.VecAccessible;
 
 // TODO here we can implement caching INDEPENDENT from memory / storage layout.
 // TODO general idea: as long as we don't close a chunk, the chunk remains open in cache.

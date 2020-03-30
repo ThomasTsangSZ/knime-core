@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.knime.core.data.store.table.column.WritableColumn;
+import org.knime.core.data.store.table.value.WritableValueAccess;
 
 // TODO: Other name. This is not an iterator. More similar to RowOutput or an access.
 // TODO: Implemented against KNIME classes ('DataValue', 'DataCell', ...)

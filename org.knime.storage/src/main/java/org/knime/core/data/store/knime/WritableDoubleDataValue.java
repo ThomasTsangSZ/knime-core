@@ -1,6 +1,6 @@
 package org.knime.core.data.store.knime;
 
-import org.knime.core.data.store.vec.rw.WritableDoubleValueAccess;
+import org.knime.core.data.store.table.value.WritableDoubleValueAccess;
 
 public final class WritableDoubleDataValue extends AbstractWritableDataValue<WritableDoubleValueAccess> {
 

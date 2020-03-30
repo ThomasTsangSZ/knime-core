@@ -3,10 +3,10 @@ package org.knime.core.data.store.chunk;
 
 import java.util.Iterator;
 
-import org.knime.core.data.store.vec.VecAccessible;
-import org.knime.core.data.store.vec.VecAccessibleOnVecAccessibles;
-import org.knime.core.data.store.vec.rw.ReadableVectorAccess;
-import org.knime.core.data.store.vec.rw.WritableVectorAccess;
+import org.knime.core.data.store.VecAccessible;
+import org.knime.core.data.store.VecAccessibleOnVecAccessibles;
+import org.knime.core.data.store.table.value.ReadableVectorAccess;
+import org.knime.core.data.store.table.value.WritableVectorAccess;
 
 public class ChunkedVecWriteAccessible implements VecAccessible {
 

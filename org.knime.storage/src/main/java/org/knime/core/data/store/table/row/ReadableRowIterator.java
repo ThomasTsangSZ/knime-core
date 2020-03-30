@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.knime.core.data.store.table.column.ReadableColumnIterator;
+import org.knime.core.data.store.table.value.ReadableValueAccess;
 
 public final class ReadableRowIterator implements Iterator<Row<ReadableValueAccess>>, AutoCloseable {
 
