@@ -2,35 +2,27 @@
 package org.knime.core.data.store;
 
 import org.apache.arrow.vector.Float8Vector;
-import org.knime.core.data.store.table.column.WritableColumn;
+import org.knime.core.data.store.table.row.WritableValueAccess;
 import org.knime.core.data.store.vec.rw.WritableDoubleValueAccess;
 
-public class ArrowWritableDoubleColumn implements WritableColumn {
+public class ArrowWritableDoubleColumn extends AbstractArrowWritableColumn<Float8Vector> {
 
-	private final Float8Vector m_vector;
 	private final ArrowWritableDoubleValueAccess m_access;
 
-	private int m_idx = 0;
-
-	ArrowWritableDoubleColumn(final Float8Vector vector) {
-		m_vector = vector;
+	ArrowWritableDoubleColumn(final VectorStore<Float8Vector> vectorStore) {
+		super(vectorStore);
 		m_access = new ArrowWritableDoubleValueAccess();
 	}
 
 	@Override
-	public void fwd() {
-		m_idx++;
-	}
-
-	@Override
-	public ArrowWritableDoubleValueAccess get() {
+	public WritableValueAccess get() {
 		return m_access;
 	}
 
 	// TODO IF this is a problem with performance that we have an additional
 	// method
 	// call, then this guy could implement WritableDoubleDataValue of KNIME
-	class ArrowWritableDoubleValueAccess implements WritableDoubleValueAccess {
+	private class ArrowWritableDoubleValueAccess implements WritableDoubleValueAccess {
 
 		// TODO is this actually correct? setNull?
 		@Override

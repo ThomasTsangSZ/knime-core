@@ -36,18 +36,13 @@ public class ArrowStore implements Store {
 		// mem-management
 		m_rootAllocator = new RootAllocator();
 
-		m_columnVectors = new ValueVector[m_schemas.length];
-
 		// TODO factory
 		m_writableLogicalColumns = new WritableColumn[m_schemas.length];
 
 		for (int i = 0; i < m_schemas.length; i++) {
 			switch (m_schemas[i].getType()) {
 				case DOUBLE: {
-					final Float8Vector vector = new Float8Vector("TODO", m_rootAllocator);
-					vector.allocateNew(BATCH_SIZE);
-					m_columnVectors[i] = vector;
-					m_writableLogicalColumns[i] = new ArrowWritableDoubleColumn(vector);
+					m_writableLogicalColumns[i] = new ArrowWritableDoubleColumn(vectorFactory);
 				}
 				case STRING:
 				default:
