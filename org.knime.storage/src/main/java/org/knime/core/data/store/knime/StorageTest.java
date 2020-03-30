@@ -13,13 +13,12 @@ import org.knime.core.data.store.table.column.ReadableColumnIterator;
 import org.knime.core.data.store.table.column.ReadableTable;
 import org.knime.core.data.store.table.column.WritableColumn;
 import org.knime.core.data.store.table.column.WritableTable;
-import org.knime.core.data.store.table.row.ReadableRowIterator;
-import org.knime.core.data.store.table.row.Row;
-import org.knime.core.data.store.table.row.WritableRowIterator;
+import org.knime.core.data.store.table.row.ColumnBackedReadableRow;
+import org.knime.core.data.store.table.row.ColumnBackedWritableRow;
+import org.knime.core.data.store.table.row.ReadableRow;
+import org.knime.core.data.store.table.row.WritableRow;
 import org.knime.core.data.store.table.value.ReadableDoubleValueAccess;
-import org.knime.core.data.store.table.value.ReadableValueAccess;
 import org.knime.core.data.store.table.value.WritableDoubleValueAccess;
-import org.knime.core.data.store.table.value.WritableValueAccess;
 
 public class StorageTest {
 
@@ -32,7 +31,7 @@ public class StorageTest {
 
 		try (final WritableTable writableTable = new DefaultWritableTable(store)) {
 			final WritableColumn column = writableTable.getColumnAt(0);
-			final WritableDoubleValueAccess value = (WritableDoubleValueAccess) column.get();
+			final WritableDoubleValueAccess value = (WritableDoubleValueAccess) column.getValueAccess();
 			for (long i = 0; i < numRows; i++) {
 				column.fwd();
 				if (i % numRows / 100 == 0) {
@@ -45,8 +44,8 @@ public class StorageTest {
 		}
 
 		final ReadableTable readableTable = new DefaultReadableTable(store);
-		try (ReadableColumnIterator column = readableTable.iterator(0)) {
-			final ReadableDoubleValueAccess value = (ReadableDoubleValueAccess) column.get();
+		try (final ReadableColumnIterator column = readableTable.getColumnIteratorAt(0)) {
+			final ReadableDoubleValueAccess value = (ReadableDoubleValueAccess) column.getValueAccess();
 			for (long i = 0; column.canFwd(); i++) {
 				column.fwd();
 				if (i % numRows / 100 == 0) {
@@ -59,22 +58,16 @@ public class StorageTest {
 		}
 	}
 
-	/**
-	 * Somewhat close to KNIME's original table API. The underlying implementation
-	 * already uses row and data-value proxies, so we could pre-cast them and only
-	 * fwd the iterators.<br>
-	 * TODO: Actually do that.
-	 */
 	@Test
 	public void rowwiseWriteReadSingleDoubleColumnIdentityTest() throws Exception {
 		final long numRows = 1000;
 		final Store store = new ArrowStore(new ColumnSchema[] { doubleVectorSchema });
 
 		final WritableTable writableTable = new DefaultWritableTable(store);
-		try (final WritableRowIterator iterator = TableFactory.createRowWriteAccess(writableTable)) {
+		try (final WritableRow row = ColumnBackedWritableRow.fromWritableTable(writableTable)) {
+			final WritableDoubleValueAccess value = (WritableDoubleValueAccess) row.getValueAccessAt(0);
 			for (long i = 0; i < numRows; i++) {
-				final Row<WritableValueAccess> row = iterator.next();
-				final WritableDoubleValueAccess value = (WritableDoubleValueAccess) row.getValueAt(0);
+				row.fwd();
 				if (i % numRows / 100 == 0) {
 					value.setMissing();
 				}
@@ -85,10 +78,10 @@ public class StorageTest {
 		}
 
 		final ReadableTable readableTable = new DefaultReadableTable(store);
-		try (final ReadableRowIterator iterator = TableFactory.createRowReadAccess(readableTable)) {
-			for (long i = 0; iterator.hasNext(); i++) {
-				final Row<ReadableValueAccess> row = iterator.next();
-				final ReadableDoubleValueAccess value = (ReadableDoubleValueAccess) row.getValueAt(0);
+		try (final ReadableRow row = ColumnBackedReadableRow.fromReadableTable(readableTable)) {
+			final ReadableDoubleValueAccess value = (ReadableDoubleValueAccess) row.getValueAccessAt(0);
+			for (long i = 0; row.canFwd(); i++) {
+				row.fwd();
 				if (i % numRows / 100 == 0) {
 					Assert.assertTrue(value.isMissing());
 				}
@@ -104,7 +97,6 @@ public class StorageTest {
 	 * MOCKS TO MIMIC KNIME API
 	 *
 	 */
-
 	@Test
 	public void pushViaKNIMEAPI() {
 		final DataTableSpec spec = null;

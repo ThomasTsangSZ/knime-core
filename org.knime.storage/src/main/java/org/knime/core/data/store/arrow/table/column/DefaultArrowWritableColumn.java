@@ -52,7 +52,7 @@ public final class DefaultArrowWritableColumn<V extends ValueVector> implements 
 	}
 
 	@Override
-	public WritableValueAccess get() {
+	public WritableValueAccess getValueAccess() {
 		return m_access;
 	}
 

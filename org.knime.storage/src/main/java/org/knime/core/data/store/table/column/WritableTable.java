@@ -5,5 +5,5 @@ public interface WritableTable extends AutoCloseable {
 
 	long getNumColumns();
 
-	WritableColumn getColumnAt(long index);
+	WritableColumn getColumnAt(long columnIndex);
 }

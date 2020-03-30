@@ -9,5 +9,5 @@ public interface ReadableColumnIterator extends AutoCloseable {
 
 	void fwd();
 	
-	ReadableValueAccess get();
+	ReadableValueAccess getValueAccess();
 }

@@ -5,5 +5,5 @@ public interface ReadableTable {
 
 	long getNumColumns();
 
-	ReadableColumnIterator iterator(long columnIndex);
+	ReadableColumnIterator getColumnIteratorAt(long columnIndex);
 }

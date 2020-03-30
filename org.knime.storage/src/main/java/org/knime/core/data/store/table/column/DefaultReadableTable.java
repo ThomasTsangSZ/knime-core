@@ -17,7 +17,7 @@ public final class DefaultReadableTable implements ReadableTable {
 	}
 
 	@Override
-	public ReadableColumnIterator iterator(final long index) {
+	public ReadableColumnIterator getColumnIteratorAt(final long index) {
 		return m_store.getReadableLogicalColumnAt(index).iterator();
 	}
 }

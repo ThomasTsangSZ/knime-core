@@ -7,5 +7,5 @@ public interface WritableColumn extends AutoCloseable {
 
 	void fwd();
 
-	WritableValueAccess get();
+	WritableValueAccess getValueAccess();
 }

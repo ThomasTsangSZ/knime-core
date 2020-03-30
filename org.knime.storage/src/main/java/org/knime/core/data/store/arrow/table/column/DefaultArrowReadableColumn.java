@@ -83,7 +83,7 @@ public final class DefaultArrowReadableColumn<V extends ValueVector> implements 
 		}
 
 		@Override
-		public ReadableValueAccess get() {
+		public ReadableValueAccess getValueAccess() {
 			return m_access;
 		}
 
