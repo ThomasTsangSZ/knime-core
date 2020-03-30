@@ -1,4 +1,4 @@
-package org.knime.core.data.store;
+package org.knime.core.data.store.chunk;
 //
 //package org.knime.core.data.store.vec;
 //

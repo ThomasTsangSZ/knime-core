@@ -3,8 +3,8 @@ package org.knime.core.data.store.knime;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.knime.core.data.store.ArrowStore;
-import org.knime.core.data.store.Store;
+import org.knime.core.data.store.arrow.table.ArrowStore;
+import org.knime.core.data.store.table.Store;
 import org.knime.core.data.store.table.column.ColumnSchema;
 import org.knime.core.data.store.table.column.ColumnType;
 import org.knime.core.data.store.table.column.DefaultReadableTable;
@@ -28,7 +28,7 @@ public class StorageTest {
 	@Test
 	public void columnwiseWriteReadSingleDoubleColumnIdentityTest() throws Exception {
 		final long numRows = 1000;
-		final Store store = new ArrowStoreAlsoOld(new ColumnSchema[] { doubleVectorSchema });
+		final Store store = new ArrowStore(new ColumnSchema[] { doubleVectorSchema });
 
 		try (final WritableTable writableTable = new DefaultWritableTable(store)) {
 			final WritableColumn column = writableTable.getColumnAt(0);
@@ -68,7 +68,7 @@ public class StorageTest {
 	@Test
 	public void rowwiseWriteReadSingleDoubleColumnIdentityTest() throws Exception {
 		final long numRows = 1000;
-		final Store store = new ArrowStoreAlsoOld(new ColumnSchema[] { doubleVectorSchema });
+		final Store store = new ArrowStore(new ColumnSchema[] { doubleVectorSchema });
 
 		final WritableTable writableTable = new DefaultWritableTable(store);
 		try (final WritableRowIterator iterator = TableFactory.createRowWriteAccess(writableTable)) {
@@ -112,7 +112,7 @@ public class StorageTest {
 
 			private final WritableTable m_table;
 			{
-				final ArrowStoreAlsoOld store = new ArrowStoreAlsoOld(convert(spec));
+				final Store store = new ArrowStore(convert(spec));
 				m_table = new DefaultWritableTable(store);
 			}
 

@@ -1,7 +1,7 @@
 
 package org.knime.core.data.store.table.column;
 
-import org.knime.core.data.store.Store;
+import org.knime.core.data.store.table.Store;
 
 public final class DefaultReadableTable implements ReadableTable {
 

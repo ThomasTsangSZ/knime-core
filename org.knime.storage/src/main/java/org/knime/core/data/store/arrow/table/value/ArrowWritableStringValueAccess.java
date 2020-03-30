@@ -6,7 +6,7 @@ import java.nio.charset.StandardCharsets;
 import org.apache.arrow.vector.VarCharVector;
 import org.knime.core.data.store.table.value.WritableStringValueAccess;
 
-final class ArrowWritableStringValueAccess //
+public final class ArrowWritableStringValueAccess //
 	extends AbstractArrowWritableValueAccess<VarCharVector> //
 	implements WritableStringValueAccess
 {

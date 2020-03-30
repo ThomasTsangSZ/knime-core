@@ -1,7 +1,6 @@
 
-package org.knime.core.data.store;
+package org.knime.core.data.store.chunk;
 
-import org.knime.core.data.store.chunk.ChunkStore;
 import org.knime.core.data.store.table.column.ColumnSchema;
 
 // TODO here we can implement caching INDEPENDENT from memory / storage layout.
