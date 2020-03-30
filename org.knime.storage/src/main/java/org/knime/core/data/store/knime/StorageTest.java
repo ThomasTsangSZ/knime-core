@@ -9,7 +9,9 @@ import org.knime.core.data.store.table.column.ColumnSchema;
 import org.knime.core.data.store.table.column.ColumnType;
 import org.knime.core.data.store.table.column.DefaultReadableTable;
 import org.knime.core.data.store.table.column.DefaultWritableTable;
+import org.knime.core.data.store.table.column.ReadableColumnIterator;
 import org.knime.core.data.store.table.column.ReadableTable;
+import org.knime.core.data.store.table.column.WritableColumn;
 import org.knime.core.data.store.table.column.WritableTable;
 import org.knime.core.data.store.table.row.ReadableRowIterator;
 import org.knime.core.data.store.table.row.ReadableValueAccess;
@@ -23,43 +25,45 @@ public class StorageTest {
 
 	private static final ColumnSchema doubleVectorSchema = () -> ColumnType.DOUBLE;
 
-//	@Test
-//	public void columnwiseWriteReadSingleDoubleColumnIdentityTest() throws Exception {
-//		final long numRows = 100_000_000;
-//
-//		try (final WritableTable table = TableFactory.createWritableTable(doubleVectorSchema)) {
-//			try (final WritableColumn column = (WritableColumn) table.getColumnAt(0)) {
-//				for (long i = 0; i < numRows; i++) {
-//					column.fwd();
-//					if (i % numRows / 100 == 0) {
-//						column.setMissing();
-//					} else {
-//						column.setDoubleValue(i);
-//					}
-//				}
-//			}
-//		}
-//
-//		// TODO: Somehow transfer underlying table store from writable table above
-//		// to readable table here.
-//		try (final ReadableTable table = TableFactory.createReadableTable()) {
-//			try (final ReadableDoubleColumn column = (ReadableDoubleColumn) table.getColumnAt(0)) {
-//				for (long i = 0; column.canFwd(); i++) {
-//					column.fwd();
-//					if (i % numRows / 100 == 0) {
-//						Assert.assertTrue(column.isMissing());
-//					} else {
-//						Assert.assertEquals(i, column.getDoubleValue(), 0.0000001);
-//					}
-//				}
-//			}
-//		}
-//	}
+	@Test
+	public void columnwiseWriteReadSingleDoubleColumnIdentityTest() throws Exception {
+		final long numRows = 1000;
+		final Store store = new ArrowStore(new ColumnSchema[] { doubleVectorSchema });
+
+		try (final WritableTable writableTable = new DefaultWritableTable(store)) {
+			final WritableColumn column = writableTable.getColumnAt(0);
+			final WritableDoubleValueAccess value = (WritableDoubleValueAccess) column.get();
+			for (long i = 0; i < numRows; i++) {
+				column.fwd();
+				if (i % numRows / 100 == 0) {
+					value.setMissing();
+				}
+				else {
+					value.setDoubleValue(i);
+				}
+			}
+		}
+
+		final ReadableTable readableTable = new DefaultReadableTable(store);
+		try (ReadableColumnIterator column = readableTable.iterator(0)) {
+			final ReadableDoubleValueAccess value = (ReadableDoubleValueAccess) column.get();
+			for (long i = 0; column.canFwd(); i++) {
+				column.fwd();
+				if (i % numRows / 100 == 0) {
+					Assert.assertTrue(value.isMissing());
+				}
+				else {
+					Assert.assertEquals(i, value.getDoubleValue(), 0.0000001);
+				}
+			}
+		}
+	}
 
 	/**
 	 * Somewhat close to KNIME's original table API. The underlying implementation
 	 * already uses row and data-value proxies, so we could pre-cast them and only
-	 * fwd the iterators. TODO: Move casting etc. outside of loop.
+	 * fwd the iterators.<br>
+	 * TODO: Actually do that.
 	 */
 	@Test
 	public void rowwiseWriteReadSingleDoubleColumnIdentityTest() throws Exception {
