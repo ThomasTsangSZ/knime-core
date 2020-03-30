@@ -15,7 +15,8 @@ import org.knime.core.data.store.vec.VecSchema;
 
 public final class TableFactory {
 
-	private TableFactory() {}
+	private TableFactory() {
+	}
 
 	public static WritableTable createWritableTable(final VecSchema... schema) {
 		// TODO get store from somewhere
@@ -25,14 +26,6 @@ public final class TableFactory {
 		// return new WritableTable(new ChunkedVecWriteAccessible(new
 		// CachedChunkStore(store)));
 		throw new IllegalStateException("not yet implemented"); // TODO: implement
-	}
-
-	public static WritableRowIterator createRowwiseWriteAccess(final WritableTable table) {
-		final List<WritableColumn> columns = new ArrayList<>(Math.toIntExact(table.getNumColumns()));
-		for (long i = 0; i < table.getNumColumns(); i++) {
-			columns.add(table.getColumnAt(i));
-		}
-		return new WritableRowIterator(columns);
 	}
 
 	public static ReadableTable createReadableTable() {
@@ -49,7 +42,15 @@ public final class TableFactory {
 		throw new IllegalStateException("not yet implemented"); // TODO: implement
 	}
 
-	public static ReadableRowIterator createRowwiseReadAccess(final ReadableTable table) {
+	public static WritableRowIterator createRowWriteAccess(final WritableTable table) {
+		final List<WritableColumn> columns = new ArrayList<>(Math.toIntExact(table.getNumColumns()));
+		for (long i = 0; i < table.getNumColumns(); i++) {
+			columns.add(table.getColumnAt(i));
+		}
+		return new WritableRowIterator(columns);
+	}
+
+	public static ReadableRowIterator createRowReadAccess(final ReadableTable table) {
 		final List<ReadableColumn> columns = new ArrayList<>(Math.toIntExact(table.getNumColumns()));
 		for (long i = 0; i < table.getNumColumns(); i++) {
 			columns.add(table.getColumnAt(i));

@@ -67,7 +67,7 @@ public class StorageTest {
 		final long numRows = 100_000_000;
 
 		try (final WritableRowIterator iterator = //
-			TableFactory.createRowwiseWriteAccess(TableFactory.createWritableTable(doubleVectorSchema)))
+			TableFactory.createRowWriteAccess(TableFactory.createWritableTable(doubleVectorSchema)))
 		{
 			for (long i = 0; i < numRows; i++) {
 				final Row<WritableDataValue> row = iterator.next();
@@ -84,7 +84,7 @@ public class StorageTest {
 		try (final ReadableRowIterator iterator = //
 			// TODO: Somehow transfer underlying table store from writable table above
 			// to readable table here.
-			TableFactory.createRowwiseReadAccess(TableFactory.createReadableTable()))
+			TableFactory.createRowReadAccess(TableFactory.createReadableTable()))
 		{
 			for (long i = 0; iterator.hasNext(); i++) {
 				final Row<ReadableDataValue> row = iterator.next();
