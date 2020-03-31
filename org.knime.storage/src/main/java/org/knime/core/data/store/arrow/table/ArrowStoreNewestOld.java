@@ -26,7 +26,7 @@ import org.knime.core.data.store.table.column.ReadableColumn;
 import org.knime.core.data.store.table.column.Store;
 import org.knime.core.data.store.table.column.WritableColumn;
 
-public class ArrowStore implements Store {
+public class ArrowStoreNewestOld implements Store {
 
 	// Batch size in number of values, not in bytes!
 	// TODO: Maybe adaptive later? Is the current value a reasonable default?
@@ -45,7 +45,7 @@ public class ArrowStore implements Store {
 	// TODO: Handle wide tables more efficiently.
 	// - Instantiate vector stores and columns on demand
 	// - Access column schema schema on demand
-	public ArrowStore(final ColumnSchema[] schemas) throws IOException {
+	public ArrowStoreNewestOld(final ColumnSchema[] schemas) throws IOException {
 		// TODO: Test directory for now.
 		m_baseDirectory = Files.createTempDirectory("knime-new-table-api-test").toFile();
 		m_baseDirectory.deleteOnExit();

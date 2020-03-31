@@ -1,6 +1,5 @@
 package org.knime.core.data.store.partition;
 
-import org.knime.core.data.store.table.column.ColumnType;
 import org.knime.core.data.store.table.column.ReadableColumnCursor;
 import org.knime.core.data.store.table.column.ReadableTable;
 import org.knime.core.data.store.table.column.WritableColumn;
@@ -9,33 +8,36 @@ import org.knime.core.data.store.table.value.ReadableValueAccess;
 import org.knime.core.data.store.table.value.WritableValueAccess;
 
 // glue between store and table
-public class PartitionedTableAccess implements ReadableTable, WritableTable {
+public class PartitionedTable implements ReadableTable, WritableTable {
 
-	private ColumnPartitionStore[] m_columnPartitions;
+	private PartitionedTableStore m_store;
 
-	public PartitionedTableAccess(final TablePartitionStore store, ColumnType[] types) {
-		for (int i = 0; i < types.length; i++) {
-			m_columnPartitions[i] = store.add(types[i]);
-		}
+	public PartitionedTable(final PartitionedTableStore store) {
+		m_store = store;
 	}
 
 	@Override
 	public long getNumColumns() {
-		return m_columnPartitions.length;
+		return m_store.numStoredColumns();
 	}
 
 	@Override
 	public ReadableColumnCursor createReadableColumnCursor(long index) {
-		return new ReadableBufferColumnCursor(m_columnPartitions[(int) index]);
+		return new ReadablePartitionedColumnCursor(m_store.getOrCreate(index));
 	}
 
 	@Override
 	public WritableColumn getWritableColumn(long index) {
 		// TODO do we need a singleton pattern for WColumns per index?
-		return new WritableColumnPartitionStore(m_columnPartitions[(int) index]);
+		return new WritablePartitionedColumn(m_store.getOrCreate(index));
 	}
 
-	final class WritableColumnPartitionStore implements WritableColumn {
+	@Override
+	public void close() throws Exception {
+		// TODO implement carefully (close -> release all memory, nothing else)
+	}
+
+	final class WritablePartitionedColumn implements WritableColumn {
 
 		private final ColumnPartitionWritableValueAccess m_valueAccess;
 
@@ -49,7 +51,7 @@ public class PartitionedTableAccess implements ReadableTable, WritableTable {
 
 		private ColumnPartitionStore m_columnPartitionStore;
 
-		public WritableColumnPartitionStore(ColumnPartitionStore store) {
+		public WritablePartitionedColumn(ColumnPartitionStore store) {
 			m_valueAccess = store.getWriteAccess();
 			m_columnPartitionStore = store;
 
@@ -93,7 +95,7 @@ public class PartitionedTableAccess implements ReadableTable, WritableTable {
 		}
 	}
 
-	final class ReadableBufferColumnCursor //
+	final class ReadablePartitionedColumnCursor //
 			implements ReadableColumnCursor {
 
 		private final ColumnPartitionReadableValueAccess m_valueAccess;
@@ -108,7 +110,7 @@ public class PartitionedTableAccess implements ReadableTable, WritableTable {
 
 		private ColumnPartitionStore m_columnStore;
 
-		public ReadableBufferColumnCursor(ColumnPartitionStore store) {
+		public ReadablePartitionedColumnCursor(ColumnPartitionStore store) {
 			m_valueAccess = store.getReadAccess();
 			m_columnStore = store;
 			switchToNextBuffer();
@@ -158,8 +160,4 @@ public class PartitionedTableAccess implements ReadableTable, WritableTable {
 		}
 	}
 
-	@Override
-	public void close() throws Exception {
-
-	}
 }
