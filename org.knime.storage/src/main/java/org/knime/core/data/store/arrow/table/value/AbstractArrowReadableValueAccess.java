@@ -2,24 +2,25 @@
 package org.knime.core.data.store.arrow.table.value;
 
 import org.apache.arrow.vector.ValueVector;
-import org.knime.core.data.store.table.value.ReadableValueAccess;
+import org.knime.core.data.store.partition.ColumnPartitionReadableValueAccess;
 
-public abstract class AbstractArrowReadableValueAccess<V extends ValueVector> implements ReadableValueAccess {
+public abstract class AbstractArrowReadableValueAccess<V extends ValueVector> implements
+	ColumnPartitionReadableValueAccess<V>
+{
 
 	protected int m_index = -1;
 
 	protected V m_vector;
 
+	@Override
 	public void incIndex() {
 		m_index++;
 	}
 
-	public final V getVector() {
-		return m_vector;
-	}
-
-	public void setVector(final V vector) {
-		m_vector = vector;
+	@Override
+	public void updatePartition(final V partition) {
+		m_index = 0;
+		m_vector = partition;
 	}
 
 	@Override
