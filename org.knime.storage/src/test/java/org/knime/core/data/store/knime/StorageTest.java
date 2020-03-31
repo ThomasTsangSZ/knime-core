@@ -6,13 +6,13 @@ import java.io.IOException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.knime.core.data.store.arrow.table.ArrowStore;
-import org.knime.core.data.store.table.Store;
 import org.knime.core.data.store.table.column.ColumnSchema;
 import org.knime.core.data.store.table.column.ColumnType;
-import org.knime.core.data.store.table.column.DefaultReadableTable;
-import org.knime.core.data.store.table.column.DefaultWritableTable;
-import org.knime.core.data.store.table.column.ReadableColumnIterator;
+import org.knime.core.data.store.table.column.ReadableBufferTable;
+import org.knime.core.data.store.table.column.ReadableColumnCursor;
 import org.knime.core.data.store.table.column.ReadableTable;
+import org.knime.core.data.store.table.column.Store;
+import org.knime.core.data.store.table.column.DefaultWritableTable;
 import org.knime.core.data.store.table.column.WritableColumn;
 import org.knime.core.data.store.table.column.WritableTable;
 import org.knime.core.data.store.table.row.ColumnBackedReadableRow;
@@ -32,7 +32,7 @@ public class StorageTest {
 		final Store store = new ArrowStore(new ColumnSchema[] { doubleVectorSchema });
 
 		try (final WritableTable writableTable = new DefaultWritableTable(store)) {
-			final WritableColumn column = writableTable.getColumnAt(0);
+			final WritableColumn column = writableTable.getWritableColumn(0);
 			final WritableDoubleValueAccess value = (WritableDoubleValueAccess) column.getValueAccess();
 			for (long i = 0; i < numRows; i++) {
 				column.fwd();
@@ -45,8 +45,8 @@ public class StorageTest {
 			}
 		}
 
-		final ReadableTable readableTable = new DefaultReadableTable(store);
-		try (final ReadableColumnIterator column = readableTable.getColumnIteratorAt(0)) {
+		final ReadableTable readableTable = new ReadableBufferTable(store);
+		try (final ReadableColumnCursor column = readableTable.createReadableColumnCursor(0)) {
 			final ReadableDoubleValueAccess value = (ReadableDoubleValueAccess) column.getValueAccess();
 			for (long i = 0; column.canFwd(); i++) {
 				column.fwd();
@@ -79,7 +79,7 @@ public class StorageTest {
 			}
 		}
 
-		final ReadableTable readableTable = new DefaultReadableTable(store);
+		final ReadableTable readableTable = new ReadableBufferTable(store);
 		try (final ReadableRow row = ColumnBackedReadableRow.fromReadableTable(readableTable)) {
 			final ReadableDoubleValueAccess value = (ReadableDoubleValueAccess) row.getValueAccessAt(0);
 			for (long i = 0; row.canFwd(); i++) {

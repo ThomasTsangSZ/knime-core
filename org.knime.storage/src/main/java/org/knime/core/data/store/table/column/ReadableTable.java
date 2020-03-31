@@ -1,9 +1,7 @@
 
 package org.knime.core.data.store.table.column;
 
-public interface ReadableTable {
+public interface ReadableTable extends Table {
 
-	long getNumColumns();
-
-	ReadableColumnIterator getColumnIteratorAt(long columnIndex);
+	ReadableColumnCursor createReadableColumnCursor(long columnIndex);
 }

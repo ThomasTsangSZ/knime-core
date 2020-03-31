@@ -4,7 +4,7 @@ package org.knime.core.data.store.table.row;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.knime.core.data.store.table.column.ReadableColumnIterator;
+import org.knime.core.data.store.table.column.ReadableColumnCursor;
 import org.knime.core.data.store.table.column.ReadableTable;
 import org.knime.core.data.store.table.value.ReadableValueAccess;
 
@@ -12,21 +12,21 @@ import org.knime.core.data.store.table.value.ReadableValueAccess;
 public final class ColumnBackedReadableRow implements ReadableRow {
 
 	public static ColumnBackedReadableRow fromReadableTable(final ReadableTable table) {
-		final List<ReadableColumnIterator> columns = new ArrayList<>(Math.toIntExact(table.getNumColumns()));
+		final List<ReadableColumnCursor> columns = new ArrayList<>(Math.toIntExact(table.getNumColumns()));
 		for (long i = 0; i < table.getNumColumns(); i++) {
-			columns.add(table.getColumnIteratorAt(i));
+			columns.add(table.createReadableColumnCursor(i));
 		}
 		return new ColumnBackedReadableRow(columns);
 	}
 
-	private final List<ReadableColumnIterator> m_columns;
+	private final List<ReadableColumnCursor> m_columns;
 
 	private final List<ReadableValueAccess> m_dataValues;
 
-	public ColumnBackedReadableRow(final List<ReadableColumnIterator> columns) {
+	public ColumnBackedReadableRow(final List<ReadableColumnCursor> columns) {
 		m_columns = columns;
 		m_dataValues = new ArrayList<>(columns.size());
-		for (final ReadableColumnIterator column : m_columns) {
+		for (final ReadableColumnCursor column : m_columns) {
 			m_dataValues.add(column.getValueAccess());
 		}
 	}
@@ -43,7 +43,7 @@ public final class ColumnBackedReadableRow implements ReadableRow {
 
 	@Override
 	public void fwd() {
-		for (final ReadableColumnIterator column : m_columns) {
+		for (final ReadableColumnCursor column : m_columns) {
 			column.fwd();
 		}
 	}
@@ -55,7 +55,7 @@ public final class ColumnBackedReadableRow implements ReadableRow {
 
 	@Override
 	public void close() throws Exception {
-		for (final ReadableColumnIterator column : m_columns) {
+		for (final ReadableColumnCursor column : m_columns) {
 			column.close();
 		}
 	}

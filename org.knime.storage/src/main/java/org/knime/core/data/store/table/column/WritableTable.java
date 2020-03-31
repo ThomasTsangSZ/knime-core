@@ -1,9 +1,7 @@
 
 package org.knime.core.data.store.table.column;
 
-public interface WritableTable extends AutoCloseable {
+public interface WritableTable extends Table, AutoCloseable {
 
-	long getNumColumns();
-
-	WritableColumn getColumnAt(long columnIndex);
+	WritableColumn getWritableColumn(long columnIndex);
 }
