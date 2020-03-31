@@ -15,9 +15,12 @@ public final class DefaultArrowWritableColumn<V extends ValueVector> implements 
 
 	private int m_currentVectorMaxIndex = -1;
 
+	private long m_index = -1;
+
+	// TODO interface 'ArrowWritableValueAccess' for
+	// 'AbstractArrowWritableValueAccess'
 	public DefaultArrowWritableColumn(final AbstractArrowWritableValueAccess<V> access,
-		final VectorStore<V> vectorStore)
-	{
+			final VectorStore<V> vectorStore) {
 		m_access = access;
 		m_vectorStore = vectorStore;
 		switchToNextVector();
@@ -25,19 +28,17 @@ public final class DefaultArrowWritableColumn<V extends ValueVector> implements 
 
 	@Override
 	public void fwd() {
-		final int index = m_access.getIndex();
-		if (index < m_currentVectorMaxIndex) {
-			m_access.setIndex(index + 1);
-		}
-		else {
+		if (++m_index < m_currentVectorMaxIndex) {
+			m_access.incIndex();
+		} else {
 			switchToNextVector();
+			m_index = 0;
 		}
 	}
 
 	private void switchToNextVector() {
 		returnCurrentVector();
 		final V nextVector = m_vectorStore.getNextVectorForWriting();
-		m_access.setIndex(0);
 		m_access.setVector(nextVector);
 		m_currentVectorMaxIndex = nextVector.getValueCapacity() - 1;
 	}

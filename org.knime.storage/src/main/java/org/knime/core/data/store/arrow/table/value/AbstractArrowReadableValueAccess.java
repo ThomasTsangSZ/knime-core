@@ -10,12 +10,8 @@ public abstract class AbstractArrowReadableValueAccess<V extends ValueVector> im
 
 	protected V m_vector;
 
-	public final int getIndex() {
-		return m_index;
-	}
-
-	public final void setIndex(final int index) {
-		m_index = index;
+	public void incIndex() {
+		m_index++;
 	}
 
 	public final V getVector() {

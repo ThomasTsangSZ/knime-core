@@ -10,12 +10,8 @@ public abstract class AbstractArrowWritableValueAccess<V extends ValueVector> im
 
 	protected V m_vector;
 
-	public final int getIndex() {
-		return m_index;
-	}
-
-	public final void setIndex(final int index) {
-		m_index = index;
+	public void incIndex() {
+		m_index++;
 	}
 
 	public final V getVector() {
@@ -32,4 +28,5 @@ public abstract class AbstractArrowWritableValueAccess<V extends ValueVector> im
 		// use setNull instead? knime-python does it like here.
 		m_vector.setValueCount(m_index + 1);
 	}
+
 }

@@ -16,9 +16,10 @@ public final class DefaultArrowReadableColumn<V extends ValueVector> implements 
 
 	private final VectorStore<V> m_vectorStore;
 
+	// TODO: Interface 'ArrowReadableValueAccess' for
+	// 'AbstractArrowReadableValueAccess'
 	public DefaultArrowReadableColumn(final Supplier<AbstractArrowReadableValueAccess<V>> accessFactory,
-		final VectorStore<V> vectorStore)
-	{
+			final VectorStore<V> vectorStore) {
 		m_accessFactory = accessFactory;
 		m_vectorStore = vectorStore;
 	}
@@ -29,8 +30,7 @@ public final class DefaultArrowReadableColumn<V extends ValueVector> implements 
 	}
 
 	public static final class DefaultArrowReadableColumnIterator<V extends ValueVector> //
-		implements ReadableColumnIterator
-	{
+			implements ReadableColumnIterator {
 
 		private final VectorStore<V> m_vectorStore;
 
@@ -38,11 +38,12 @@ public final class DefaultArrowReadableColumn<V extends ValueVector> implements 
 
 		private long m_vectorIndex = -1;
 
-		private int m_currentVectorMaxIndex = -1;
+		private long m_currentVectorMaxIndex = -1;
+
+		private long m_index = -1;
 
 		public DefaultArrowReadableColumnIterator(final AbstractArrowReadableValueAccess<V> access,
-			final VectorStore<V> vectorStore)
-		{
+				final VectorStore<V> vectorStore) {
 			m_access = access;
 			m_vectorStore = vectorStore;
 			switchToNextVector();
@@ -50,17 +51,16 @@ public final class DefaultArrowReadableColumn<V extends ValueVector> implements 
 
 		@Override
 		public boolean canFwd() {
-			return m_access.getIndex() < m_currentVectorMaxIndex //
-				|| m_vectorStore.hasVectorForReading(m_vectorIndex + 1);
+			return m_index < m_currentVectorMaxIndex //
+					|| m_vectorStore.hasVectorForReading(m_vectorIndex + 1);
 		}
 
 		@Override
 		public void fwd() {
-			final int index = m_access.getIndex();
-			if (index < m_currentVectorMaxIndex) {
-				m_access.setIndex(index + 1);
-			}
-			else {
+			if (++m_index < m_currentVectorMaxIndex) {
+				m_access.incIndex();
+			} else {
+				m_index = 0;
 				switchToNextVector();
 			}
 		}
@@ -68,7 +68,6 @@ public final class DefaultArrowReadableColumn<V extends ValueVector> implements 
 		private void switchToNextVector() {
 			returnCurrentVector();
 			final V nextVector = m_vectorStore.getVectorForReading(++m_vectorIndex);
-			m_access.setIndex(0);
 			m_access.setVector(nextVector);
 			m_currentVectorMaxIndex = nextVector.getValueCount() - 1;
 		}
@@ -76,7 +75,7 @@ public final class DefaultArrowReadableColumn<V extends ValueVector> implements 
 		private void returnCurrentVector() {
 			final V currentVector = m_access.getVector();
 			if (currentVector != null) {
-				m_vectorStore.returnReadFromVector(m_access.getIndex(), currentVector);
+				m_vectorStore.returnReadFromVector(m_index, currentVector);
 			}
 		}
 
