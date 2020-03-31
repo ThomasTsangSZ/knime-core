@@ -10,11 +10,8 @@ import org.knime.core.data.store.table.value.WritableDoubleValueAccess;
 
 public class ArrowDoubleColumnPartitionStore extends AbstractArrowColumnPartitionStore<Float8Vector> {
 
-	private final int m_batchSize;
-
 	public ArrowDoubleColumnPartitionStore(int batchSize, BufferAllocator allocator, File baseDir) {
-		super(allocator, baseDir);
-		m_batchSize = batchSize;
+		super(allocator, baseDir, batchSize);
 	}
 
 	@Override
@@ -36,7 +33,6 @@ public class ArrowDoubleColumnPartitionStore extends AbstractArrowColumnPartitio
 		@Override
 		public void setDoubleValue(final double value) {
 			m_vector.set(m_index, value);
-			m_vector.setValueCount(m_index + 1);
 		}
 
 		@Override

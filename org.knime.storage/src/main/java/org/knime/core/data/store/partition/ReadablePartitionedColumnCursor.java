@@ -51,7 +51,7 @@ public class ReadablePartitionedColumnCursor<T> //
 
 			m_currentPartition = m_columnStoreIterator.next();
 			m_valueAccess.updatePartition(m_currentPartition);
-			m_currentBufferMaxIndex = m_currentPartition.getValueCount() - 1;
+			m_currentBufferMaxIndex = m_currentPartition.getNumValues() - 1;
 		} catch (Exception e) {
 			// TODO handle exception
 			throw new RuntimeException(e);
@@ -65,7 +65,8 @@ public class ReadablePartitionedColumnCursor<T> //
 
 	@Override
 	public void close() throws Exception {
-		if (m_currentPartition != null)
+		if (m_currentPartition != null) {
 			m_currentPartition.close();
+		}
 	}
 }

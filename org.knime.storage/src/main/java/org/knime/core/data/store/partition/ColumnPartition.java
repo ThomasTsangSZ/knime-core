@@ -5,9 +5,11 @@ public interface ColumnPartition<T> extends AutoCloseable {
 	T get();
 
 	long getPartitionIndex();
-	
-	int getValueCount();
 
-	int getValueCapacity();
+	int getCapacity();
 
+	int getNumValues();
+
+	// TODO I'd really like to not need that
+	void setNumValues(int numValues);
 }

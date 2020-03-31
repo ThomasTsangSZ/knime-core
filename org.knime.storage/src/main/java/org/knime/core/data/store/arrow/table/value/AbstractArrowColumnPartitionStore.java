@@ -18,8 +18,11 @@ abstract class AbstractArrowColumnPartitionStore<V extends FieldVector> implemen
 	private ArrowVectorToDiskWriter<V> m_writer;
 	private ArrowVectorFromDiskReader<V> m_reader;
 
-	public AbstractArrowColumnPartitionStore(BufferAllocator allocator, File baseDir) {
+	protected int m_batchSize;
+
+	public AbstractArrowColumnPartitionStore(BufferAllocator allocator, File baseDir, final int batchSize) {
 		m_allocator = allocator;
+		m_batchSize = batchSize;
 
 		// TODO
 //		m_writer = new ArrowVectorToDiskWriter<V>(baseDir, null, allocator);
@@ -49,7 +52,7 @@ abstract class AbstractArrowColumnPartitionStore<V extends FieldVector> implemen
 		// Create
 		final V vector = create(m_allocator);
 		m_numPartitions++;
-		return new ArrowColumnPartition(vector, m_numPartitions - 1);
+		return new ArrowColumnPartition(vector, m_numPartitions - 1, m_batchSize);
 	}
 
 	// TODO java_doc!
@@ -87,10 +90,13 @@ abstract class AbstractArrowColumnPartitionStore<V extends FieldVector> implemen
 
 		private final V m_vector;
 		private final long m_partitionIdx;
+		private final long m_batchSize;
+		private int m_numValues;
 
-		ArrowColumnPartition(V vector, long partitionIdx) {
+		ArrowColumnPartition(V vector, long partitionIdx, final long batchSize) {
 			m_vector = vector;
 			m_partitionIdx = partitionIdx;
+			m_batchSize = batchSize;
 		}
 
 		@Override
@@ -104,18 +110,23 @@ abstract class AbstractArrowColumnPartitionStore<V extends FieldVector> implemen
 		}
 
 		@Override
-		public int getValueCount() {
-			return m_vector.getValueCount();
-		}
-
-		@Override
-		public int getValueCapacity() {
-			return m_vector.getValueCapacity();
+		public int getCapacity() {
+			return (int) m_batchSize;
 		}
 
 		@Override
 		public long getPartitionIndex() {
 			return m_partitionIdx;
+		}
+
+		@Override
+		public int getNumValues() {
+			return m_numValues;
+		}
+
+		@Override
+		public void setNumValues(int numValues) {
+			m_numValues = numValues;
 		}
 
 	}

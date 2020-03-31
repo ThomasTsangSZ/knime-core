@@ -10,11 +10,8 @@ import org.knime.core.data.store.table.value.WritableBooleanValueAccess;
 
 public class ArrowBooleanColumnPartitionStore extends AbstractArrowColumnPartitionStore<BitVector> {
 
-	private final int m_batchSize;
-
 	public ArrowBooleanColumnPartitionStore(int batchSize, BufferAllocator allocator, File baseFile) {
-		super(allocator, baseFile);
-		m_batchSize = batchSize;
+		super(allocator, baseFile, batchSize);
 	}
 
 	@Override
@@ -41,7 +38,6 @@ public class ArrowBooleanColumnPartitionStore extends AbstractArrowColumnPartiti
 		@Override
 		public void setBooleanValue(boolean value) {
 			m_vector.set(m_index, value ? 1 : 0);
-			m_vector.setValueCount(m_index + 1);
 		}
 	}
 

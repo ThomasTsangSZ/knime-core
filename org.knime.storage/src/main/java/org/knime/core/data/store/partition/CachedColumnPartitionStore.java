@@ -193,9 +193,26 @@ public class CachedColumnPartitionStore<T> implements ColumnPartitionStore<T>, F
 		}
 	}
 
+	private void removeFromCacheAndClose(long partitionIndex) {
+		final AtomicInteger lock = m_referenceCounter.get((int) partitionIndex);
+		synchronized (lock) {
+			// decrement cache reference
+			if (lock.decrementAndGet() == 0) {
+				try {
+					CACHE.get(partitionIndex).close();
+				} catch (Exception e) {
+					// TODO handle!!!
+					throw new RuntimeException(e);
+				}
+			}
+			CACHE.remove(partitionIndex);
+		}
+	}
+
 	private class CachedColumnPartition implements ColumnPartition<T> {
 		private final ColumnPartition<T> m_partitionDelegate;
 		private final int m_partitionIndex;
+		private int m_numValues;
 
 		public CachedColumnPartition(ColumnPartition<T> delegate, long partitionIdx) {
 			m_partitionDelegate = delegate;
@@ -204,13 +221,8 @@ public class CachedColumnPartitionStore<T> implements ColumnPartitionStore<T>, F
 		}
 
 		@Override
-		public int getValueCount() {
-			return m_partitionDelegate.getValueCount();
-		}
-
-		@Override
-		public int getValueCapacity() {
-			return m_partitionDelegate.getValueCapacity();
+		public int getCapacity() {
+			return m_partitionDelegate.getCapacity();
 		}
 
 		// only close in-memory representation, however, keep disc if buffer was
@@ -240,22 +252,15 @@ public class CachedColumnPartitionStore<T> implements ColumnPartitionStore<T>, F
 		public long getPartitionIndex() {
 			return m_partitionDelegate.getPartitionIndex();
 		}
-	}
 
-	private void removeFromCacheAndClose(long partitionIndex) {
-		final AtomicInteger lock = m_referenceCounter.get((int) partitionIndex);
-		synchronized (lock) {
-			// decrement cache reference
-			if (lock.decrementAndGet() == 0) {
-				try {
-					CACHE.get(partitionIndex).close();
-				} catch (Exception e) {
-					// TODO handle!!!
-					throw new RuntimeException(e);
-				}
-			}
-			CACHE.remove(partitionIndex);
+		@Override
+		public int getNumValues() {
+			return m_numValues;
+		}
+
+		@Override
+		public void setNumValues(int numValues) {
+			m_numValues = numValues;
 		}
 	}
-
 }

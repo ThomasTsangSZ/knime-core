@@ -23,43 +23,54 @@ import com.google.common.io.Files;
 public class StorageTest {
 
 //	 in numValues per vector
-	private static final int BATCH_SIZE = 2;
+	private static final int BATCH_SIZE = 10_000_000;
 
 	// in bytes
-	private static final long OFFHEAP_SIZE = 1024_000_000;
+	private static final long OFFHEAP_SIZE = 2048_000_000;
 	private static final ColumnSchema doubleVectorSchema = () -> ColumnType.DOUBLE;
 
 	@Test
+	public void doubleArrayTest() {
+		final double[] array = new double[100_000_000];
+		for (int i = 0; i < array.length; i++) {
+			array[i] = i;
+		}
+
+		for (int i = 0; i < array.length; i++) {
+			double k = array[i];
+			Assert.assertEquals(array[i], k, 0.00000000000001);
+		}
+	}
+
+	@Test
 	public void columnwiseWriteReadSingleDoubleColumnIdentityTest() throws Exception {
-		final long numRows = 10;
+		final long numRows = 100_000_000;
 
 		try (final CachedColumnPartitionedTable table = new CachedColumnPartitionedTable(
 				new ColumnSchema[] { doubleVectorSchema }, createStore(numRows))) {
-
 			// first write
 			try (final WritableColumn column = table.getWritableColumn(0)) {
 				final WritableDoubleValueAccess value = (WritableDoubleValueAccess) column.getValueAccess();
 				for (long i = 0; i < numRows; i++) {
 					column.fwd();
-//					if (i % numRows / 100 == 0) {
-//						value.setMissing();
-//					} else {
-					value.setDoubleValue(i);
-//					}
+					if (i % numRows / 100 == 0) {
+						value.setMissing();
+					} else {
+						value.setDoubleValue(i);
+					}
 				}
 			}
-
 			// then read
 			try (final ReadableColumnCursor readableColumn = table.createReadableColumnCursor(0)) {
 				final ReadableDoubleValueAccess readableValue = (ReadableDoubleValueAccess) readableColumn
 						.getValueAccess();
 				for (long i = 0; readableColumn.canFwd(); i++) {
 					readableColumn.fwd();
-//					if (i % numRows / 100 == 0) {
-//						Assert.assertTrue(readableValue.isMissing());
-//					} else {
-					Assert.assertEquals(i, readableValue.getDoubleValue(), 0.0000001);
-//					}
+					if (i % numRows / 100 == 0) {
+						Assert.assertTrue(readableValue.isMissing());
+					} else {
+						Assert.assertEquals(i, readableValue.getDoubleValue(), 0.0000001);
+					}
 				}
 			}
 		}
@@ -77,11 +88,11 @@ public class StorageTest {
 				final WritableDoubleValueAccess value = (WritableDoubleValueAccess) row.getValueAccessAt(0);
 				for (long i = 0; i < numRows; i++) {
 					row.fwd();
-//					if (i % numRows / 100 == 0) {
-//						value.setMissing();
-//					} else {
-					value.setDoubleValue(i);
-//					}
+					if (i % numRows / 100 == 0) {
+						value.setMissing();
+					} else {
+						value.setDoubleValue(i);
+					}
 				}
 			}
 
@@ -89,11 +100,11 @@ public class StorageTest {
 				final ReadableDoubleValueAccess value = (ReadableDoubleValueAccess) row.getValueAccessAt(0);
 				for (long i = 0; row.canFwd(); i++) {
 					row.fwd();
-//					if (i % numRows / 100 == 0) {
-//						Assert.assertTrue(value.isMissing());
-//					} else {
-					Assert.assertEquals(i, value.getDoubleValue(), 0.0000001);
-//					}
+					if (i % numRows / 100 == 0) {
+						Assert.assertTrue(value.isMissing());
+					} else {
+						Assert.assertEquals(i, value.getDoubleValue(), 0.0000001);
+					}
 				}
 			}
 		}

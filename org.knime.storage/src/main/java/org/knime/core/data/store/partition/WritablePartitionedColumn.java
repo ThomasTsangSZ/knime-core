@@ -21,8 +21,6 @@ public class WritablePartitionedColumn<T> implements WritableColumn {
 
 	private long m_index = -1;
 
-	private long m_currentPartitionIndex = 0;
-
 	// TODO typing? store has to match access or line 43 will crash.
 	public WritablePartitionedColumn(ColumnPartitionStore<T> store) {
 		m_columnStore = store;
@@ -42,12 +40,11 @@ public class WritablePartitionedColumn<T> implements WritableColumn {
 
 	private void switchToNextPartition() {
 		try {
-			if (m_currentPartition != null)
-				m_currentPartition.close();
+			// closes current partition only...
+			close();
 			m_currentPartition = m_columnStore.appendPartition();
-			m_currentPartitionIndex++;
 			m_valueAccess.updatePartition(m_currentPartition);
-			m_currentPartitionMaxIndex = m_currentPartition.getValueCapacity() - 1;
+			m_currentPartitionMaxIndex = m_currentPartition.getCapacity() - 1;
 
 		} catch (Exception e) {
 			// TODO Exception handling
@@ -64,6 +61,7 @@ public class WritablePartitionedColumn<T> implements WritableColumn {
 	public void close() throws Exception {
 		if (m_currentPartition != null) {
 			m_currentPartition.close();
+			m_currentPartition.setNumValues((int) m_index);
 		}
 	}
 }

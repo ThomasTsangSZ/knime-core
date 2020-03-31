@@ -11,11 +11,8 @@ import org.knime.core.data.store.table.value.WritableStringValueAccess;
 
 public class ArrowStringColumnPartitionStore extends AbstractArrowColumnPartitionStore<VarCharVector> {
 
-	private final int m_batchSize;
-
 	public ArrowStringColumnPartitionStore(int batchSize, BufferAllocator allocator, File baseFile) {
-		super(allocator, baseFile);
-		m_batchSize = batchSize;
+		super(allocator, baseFile, batchSize);
 	}
 
 	@Override
@@ -46,7 +43,6 @@ public class ArrowStringColumnPartitionStore extends AbstractArrowColumnPartitio
 			// TODO: Is this correct? See knime-python's StringInserter which also
 			// handles possible reallocations.
 			m_vector.set(m_index, value.getBytes(StandardCharsets.UTF_8));
-			m_vector.setValueCount(m_index + 1);
 		}
 
 	}
