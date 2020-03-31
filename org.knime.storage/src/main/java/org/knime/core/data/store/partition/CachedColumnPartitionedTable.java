@@ -2,31 +2,39 @@ package org.knime.core.data.store.partition;
 
 import java.io.IOException;
 
+import org.knime.core.data.store.Store;
 import org.knime.core.data.store.table.column.ColumnSchema;
 import org.knime.core.data.store.table.column.ReadableColumnCursor;
 import org.knime.core.data.store.table.column.ReadableTable;
 import org.knime.core.data.store.table.column.WritableColumn;
 import org.knime.core.data.store.table.column.WritableTable;
 
-public class CachedColumnPartitionedTable<T> implements ReadableTable, WritableTable {
+public class CachedColumnPartitionedTable implements ReadableTable, WritableTable {
 
 	// TODO we support 'Long'-many columns.
-	private ColumnPartitionStore<T>[] m_columnPartitionStores;
-	private Store<T> m_store;
-	private WritablePartitionedColumn<T>[] m_writableColumn;
+	private final ColumnPartitionStore<?>[] m_columnPartitionStores;
+	private final WritablePartitionedColumn<?>[] m_writableColumn;
 
-	public CachedColumnPartitionedTable(final ColumnSchema[] schema, final Store<T> store) throws IOException {
+	private final Store m_store;
+
+	public CachedColumnPartitionedTable(final ColumnSchema[] schema, final Store store) throws IOException {
 		m_store = store;
+		m_columnPartitionStores = new ColumnPartitionStore[schema.length];
+		m_writableColumn = new WritablePartitionedColumn[schema.length];
 		for (int i = 0; i < schema.length; i++) {
-			m_columnPartitionStores[i] = m_store.create(schema[(int) i].getType());
-			m_writableColumn[i] = new WritablePartitionedColumn<T>(m_columnPartitionStores[i]);
+			// TODO we can do caching here... or ... somewhere else
+			m_columnPartitionStores[i] = new CachedColumnPartitionStore<>(m_store.create(schema[(int) i].getType()));
+			@SuppressWarnings("resource")
+			WritablePartitionedColumn<?> writable = new WritablePartitionedColumn<>(m_columnPartitionStores[i]);
+			m_writableColumn[i] = writable;
 		}
-
 	}
 
 	@Override
 	public ReadableColumnCursor createReadableColumnCursor(long columnIndex) {
-		return new ReadablePartitionedColumnCursor<T>(m_columnPartitionStores[(int) columnIndex]);
+		final ReadablePartitionedColumnCursor<?> cursor = new ReadablePartitionedColumnCursor<>(
+				m_columnPartitionStores[(int) columnIndex]);
+		return cursor;
 	}
 
 	@Override
@@ -41,8 +49,15 @@ public class CachedColumnPartitionedTable<T> implements ReadableTable, WritableT
 
 	@Override
 	public void close() throws Exception {
-		// TODO (Q: free all memory)?
-		// TODO what are the semantics of this 'close'
+		// TODO we have to check if someone still has a reference on this column?
+		for (WritablePartitionedColumn<?> writableColumn : m_writableColumn) {
+			writableColumn.close();
+		}
+		// TODO i'm wouldn't know what 'close()' means for this table
+		// 'close()' -> release memory
+		// 'destroy()' delete any trace of this table
+		// NB: We don't need 'closeForWriting()'. Design allows to have concurrent
+		// read/write (e.g. for streaming)
 	}
 
 }

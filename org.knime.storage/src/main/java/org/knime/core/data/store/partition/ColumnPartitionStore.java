@@ -2,16 +2,17 @@ package org.knime.core.data.store.partition;
 
 import java.io.IOException;
 
-public interface ColumnPartitionStore<T> extends AutoCloseable {
+public interface ColumnPartitionStore<T> extends AutoCloseable, Iterable<ColumnPartition<T>> {
+
+	@Override
+	ColumnPartitionIterator<T> iterator();
 
 	long getNumPartitions();
 
-	void persist(long partitionIndex) throws IOException;
+	void persist(ColumnPartition<T> partition) throws IOException;
 
-	ColumnPartition<T> getOrCreatePartition(long partitionIndex);
+	ColumnPartition<T> appendPartition();
 
-	ColumnPartitionReadableValueAccess<T> createLinkedReadAccess();
-
-	ColumnPartitionWritableValueAccess<T> createLinkedWriteAccess();
+	ColumnPartitionValueAccess<T> createAccess();
 
 }

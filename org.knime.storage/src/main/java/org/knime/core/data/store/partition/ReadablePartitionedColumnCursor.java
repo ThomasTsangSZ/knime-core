@@ -9,35 +9,30 @@ public class ReadablePartitionedColumnCursor<T> //
 	/*
 	 * Accesses to store
 	 */
-	private final ColumnPartitionReadableValueAccess<T> m_valueAccess;
-
-	private ColumnPartitionStore<T> m_columnStore;
+	private final ColumnPartitionValueAccess<T> m_valueAccess;
 
 	private ColumnPartition<T> m_currentPartition;
 
 	/*
 	 * Indices used by implementation
 	 */
-	private long m_currentPartitionIndex = -1;
-
 	private long m_currentBufferMaxIndex = -1;
 
 	private long m_index = -1;
 
+	private ColumnPartitionIterator<T> m_columnStoreIterator;
+
 	public ReadablePartitionedColumnCursor(ColumnPartitionStore<T> store) {
-		m_valueAccess = store.createLinkedReadAccess();
-		m_columnStore = store;
+		m_valueAccess = store.createAccess();
+		m_columnStoreIterator = store.iterator();
 		switchToNextBuffer();
 	}
 
 	@Override
 	public boolean canFwd() {
-		return m_index < m_currentBufferMaxIndex
+		return m_index < m_currentBufferMaxIndex - 1
 				// TODO
-				// NB: we have to call m_store.numPartitions over and over again as number of
-				// partitions can change during reading. Idea: if we introduce a "wait" while
-				// store is still open for writing, we may have streaming solved :-)
-				|| m_currentPartitionIndex + 1 < m_columnStore.getNumPartitions();
+				|| m_columnStoreIterator.hasNext();
 	}
 
 	@Override
@@ -55,7 +50,7 @@ public class ReadablePartitionedColumnCursor<T> //
 			if (m_currentPartition != null)
 				m_currentPartition.close();
 
-			m_currentPartition = m_columnStore.getOrCreatePartition(++m_currentPartitionIndex);
+			m_currentPartition = m_columnStoreIterator.next();
 			m_valueAccess.updatePartition(m_currentPartition);
 			m_currentBufferMaxIndex = m_currentPartition.getValueCount() - 1;
 		} catch (Exception e) {

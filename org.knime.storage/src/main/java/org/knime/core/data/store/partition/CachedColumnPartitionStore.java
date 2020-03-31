@@ -2,9 +2,32 @@ package org.knime.core.data.store.partition;
 
 import java.io.Flushable;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+
+/*
+ * # Writing case:
+ * - User creates table
+ * - Starts writing to it
+ * - Trigger from outside ("flush"): spill entire cache content to disk, in order!
+ * - Release entire cache
+ * - Repeat
+ * - Observer threads: greedy async. writing of cache content (without removing from cache)
+ *   to disk during all of the above, to be already done upon memory alert
+ *   - See imglib2-cache: fetcher threads
+ *   - Goal: preemptively write as much as possible
+ * # Reading case:
+ * - Entries are either already in memory or still on disk
+ * - In memory: easy, just return cache entry
+ * - On disk: load from disk, put into cache, return like in the in-memory case
+ * - Optimization:
+ * 	 - Pre-fetching next batches
+ *   - Release batches if no iterator is open that may want to read batch (or use some other
+ *     heuristic; but the former should be guaranteed)
+ */
 
 /* 
  * really stupid first implementation of a cache
@@ -24,21 +47,19 @@ public class CachedColumnPartitionStore<T> implements ColumnPartitionStore<T>, F
 	private ColumnPartitionStore<T> m_delegate;
 
 	// TODO do I need to synchronize that?
-	private AtomicInteger[] m_referenceCounter;
-	private AtomicBoolean[] m_isWritten;
+	private final List<AtomicInteger> m_referenceCounter = new ArrayList<>();
+	private final List<AtomicBoolean> m_isWritten = new ArrayList<>();
 
 	private AtomicBoolean m_isClosed;
 
 	public CachedColumnPartitionStore(final ColumnPartitionStore<T> delegate) {
 		m_delegate = delegate;
-		m_referenceCounter = new AtomicInteger[(int) delegate.getNumPartitions()];
-		m_isWritten = new AtomicBoolean[(int) delegate.getNumPartitions()];
-		for (int i = 0; i < delegate.getNumPartitions(); i++) {
-			m_referenceCounter[i] = new AtomicInteger(0);
-			m_isWritten[i] = new AtomicBoolean(false);
-		}
-
 		m_isClosed = new AtomicBoolean(false);
+
+		for (int i = 0; i < getNumPartitions(); i++) {
+			m_referenceCounter.add(new AtomicInteger());
+			m_isWritten.add(new AtomicBoolean());
+		}
 	}
 
 	@Override
@@ -51,25 +72,59 @@ public class CachedColumnPartitionStore<T> implements ColumnPartitionStore<T>, F
 	 *         has been closed.
 	 */
 	@Override
-	public ColumnPartition<T> getOrCreatePartition(long partitionIndex) {
-		if (!m_isClosed.get()) {
-			// TODO is there a better way to lock?
-			final AtomicInteger lock = m_referenceCounter[(int) partitionIndex];
-			synchronized (lock) {
-				final ColumnPartition<T> partition = CACHE.getOrDefault(partitionIndex,
-						m_delegate.getOrCreatePartition(partitionIndex));
-				// do this only if it's a new partition
-				if (!(partition instanceof CachedColumnPartitionStore.CachedColumnPartition)) {
-					lock.getAndIncrement();
-					return new CachedColumnPartition(partition, partitionIndex);
-				} else {
-					// we're already tracking.
-					return partition;
-				}
-			}
-		}
+	public ColumnPartitionIterator<T> iterator() {
 
-		return null;
+		return new ColumnPartitionIterator<T>() {
+
+			private long m_idx = 0;
+
+			private final ColumnPartitionIterator<T> m_delegateIterator = m_delegate.iterator();
+
+			@Override
+			public boolean hasNext() {
+				return m_delegateIterator.hasNext();
+			}
+
+			@Override
+			public ColumnPartition<T> next() {
+				if (!m_isClosed.get()) {
+					// TODO is there a better way to lock?
+					final AtomicInteger lock = m_referenceCounter.get((int) m_idx);
+					synchronized (lock) {
+						ColumnPartition<T> partition = CACHE.get(m_idx);
+						if (partition == null) {
+							partition = addToCache(m_idx, m_delegateIterator.next());
+							// loading from disc. not yet in cache.
+							lock.incrementAndGet();
+						} else {
+							m_delegateIterator.skip();
+						}
+						m_idx++;
+
+						// do this only if it's a new partition
+						return partition;
+					}
+				}
+				return null;
+			}
+
+			@Override
+			public void skip() {
+				m_delegateIterator.skip();
+			}
+		};
+	}
+
+	private ColumnPartition<T> addToCache(long partitionIndex, final ColumnPartition<T> partition) {
+		if (!(partition instanceof CachedColumnPartitionStore.CachedColumnPartition)) {
+			final CachedColumnPartitionStore<T>.CachedColumnPartition cached = new CachedColumnPartition(partition,
+					partitionIndex);
+			CACHE.put(partitionIndex, cached);
+			return cached;
+		} else {
+			// we're already tracking.
+			return partition;
+		}
 	}
 
 	/**
@@ -77,7 +132,7 @@ public class CachedColumnPartitionStore<T> implements ColumnPartitionStore<T>, F
 	 * this call, nothing happens.
 	 */
 	@Override
-	public void persist(long partitionIndex) throws IOException {
+	public void persist(ColumnPartition<T> partition) throws IOException {
 		if (!m_isClosed.get()) {
 			// TODO should we implement a re-try in case something goes wrong?
 
@@ -86,8 +141,9 @@ public class CachedColumnPartitionStore<T> implements ColumnPartitionStore<T>, F
 			// writing new data into the table is re-enabled (lock lifted) while still
 			// spilling old data to disk.
 			// we don't need this guy anymore. removed from cache etc.
-			if (!m_isWritten[((int) partitionIndex)].getAndSet(true)) {
-				m_delegate.persist(partitionIndex);
+			final int idx = (int) partition.getPartitionIndex();
+			if (!m_isWritten.get(idx).getAndSet(true)) {
+				m_delegate.persist(partition);
 			}
 		}
 	}
@@ -100,9 +156,38 @@ public class CachedColumnPartitionStore<T> implements ColumnPartitionStore<T>, F
 	public void flush() throws IOException {
 		if (!m_isClosed.get()) {
 			// blocking while flushing!
-			for (long i = 0; i < m_referenceCounter.length; i++) {
+			for (long i = 0; i < m_referenceCounter.size(); i++) {
 				// ... if someone is already persisting: thanks bye
-				persist(i);
+				persist(CACHE.get(i));
+				removeFromCacheAndClose(i);
+			}
+		}
+	}
+
+	@Override
+	public synchronized ColumnPartition<T> appendPartition() {
+		m_isWritten.add(new AtomicBoolean(false));
+		// immediately add a ref
+		m_referenceCounter.add(new AtomicInteger(1));
+		return addToCache(m_isWritten.size() - 1, m_delegate.appendPartition());
+	}
+
+	@Override
+	public ColumnPartitionValueAccess<T> createAccess() {
+		return m_delegate.createAccess();
+	}
+
+	/**
+	 * NB: It's not the responsibility of the columnar store to make sure it's
+	 * flushed before close.
+	 * 
+	 * All memory will be released.
+	 * 
+	 */
+	@Override
+	public void close() throws Exception {
+		if (!m_isClosed.getAndSet(true)) {
+			for (long i = 0; i < m_referenceCounter.size(); i++) {
 				removeFromCacheAndClose(i);
 			}
 		}
@@ -115,7 +200,7 @@ public class CachedColumnPartitionStore<T> implements ColumnPartitionStore<T>, F
 		public CachedColumnPartition(ColumnPartition<T> delegate, long partitionIdx) {
 			m_partitionDelegate = delegate;
 			m_partitionIndex = (int) partitionIdx;
-			m_referenceCounter[(int) m_partitionIndex].incrementAndGet();
+			m_referenceCounter.get((int) m_partitionIndex).incrementAndGet();
 		}
 
 		@Override
@@ -133,11 +218,10 @@ public class CachedColumnPartitionStore<T> implements ColumnPartitionStore<T>, F
 		@Override
 		public void close() throws Exception {
 			// Only close if all references are actually closed!
-			final AtomicInteger lock = m_referenceCounter[m_partitionIndex];
+			final AtomicInteger lock = m_referenceCounter.get(m_partitionIndex);
 			synchronized (lock) {
 				if (lock.decrementAndGet() == 0) {
-					assert (m_isWritten[m_partitionIndex].get());
-					m_delegate.close();
+					m_partitionDelegate.close();
 				}
 			}
 		}
@@ -147,26 +231,15 @@ public class CachedColumnPartitionStore<T> implements ColumnPartitionStore<T>, F
 			// TODO do we need sync here?
 			return m_partitionDelegate.get();
 		}
-	}
 
-	/**
-	 * NB: It's not the responsibility of the columnar store to make sure it's
-	 * flushed before close.
-	 * 
-	 * All memory will be released.
-	 * 
-	 */
-	@Override
-	public void close() throws Exception {
-		if (!m_isClosed.getAndSet(true)) {
-			for (long i = 0; i < m_referenceCounter.length; i++) {
-				removeFromCacheAndClose(i);
-			}
+		@Override
+		public long getPartitionIndex() {
+			return m_partitionDelegate.getPartitionIndex();
 		}
 	}
 
 	private void removeFromCacheAndClose(long partitionIndex) {
-		final AtomicInteger lock = m_referenceCounter[(int) partitionIndex];
+		final AtomicInteger lock = m_referenceCounter.get((int) partitionIndex);
 		synchronized (lock) {
 			// decrement cache reference
 			if (lock.decrementAndGet() == 0) {
@@ -181,13 +254,4 @@ public class CachedColumnPartitionStore<T> implements ColumnPartitionStore<T>, F
 		}
 	}
 
-	@Override
-	public ColumnPartitionReadableValueAccess<T> createLinkedReadAccess() {
-		return m_delegate.createLinkedReadAccess();
-	}
-
-	@Override
-	public ColumnPartitionWritableValueAccess<T> createLinkedWriteAccess() {
-		return m_delegate.createLinkedWriteAccess();
-	}
 }
