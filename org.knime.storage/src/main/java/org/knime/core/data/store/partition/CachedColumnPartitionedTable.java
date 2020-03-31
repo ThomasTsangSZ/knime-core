@@ -10,15 +10,18 @@ import org.knime.core.data.store.table.column.WritableTable;
 
 public class CachedColumnPartitionedTable<T> implements ReadableTable, WritableTable {
 
-	// TODO long list
+	// TODO we support 'Long'-many columns.
 	private ColumnPartitionStore<T>[] m_columnPartitionStores;
 	private Store<T> m_store;
+	private WritablePartitionedColumn<T>[] m_writableColumn;
 
 	public CachedColumnPartitionedTable(final ColumnSchema[] schema, final Store<T> store) throws IOException {
 		m_store = store;
 		for (int i = 0; i < schema.length; i++) {
-			m_columnPartitionStores[i] = m_store.create(schema[i].getType());
+			m_columnPartitionStores[i] = m_store.create(schema[(int) i].getType());
+			m_writableColumn[i] = new WritablePartitionedColumn<T>(m_columnPartitionStores[i]);
 		}
+
 	}
 
 	@Override
@@ -28,8 +31,7 @@ public class CachedColumnPartitionedTable<T> implements ReadableTable, WritableT
 
 	@Override
 	public WritableColumn getWritableColumn(long columnIndex) {
-		// TODO singleton!
-		return new WritablePartitionedColumn<>(m_columnPartitionStores[(int) columnIndex]);
+		return m_writableColumn[(int) columnIndex];
 	}
 
 	@Override
