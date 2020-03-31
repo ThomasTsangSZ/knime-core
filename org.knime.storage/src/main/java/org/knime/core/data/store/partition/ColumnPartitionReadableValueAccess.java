@@ -7,5 +7,5 @@ public interface ColumnPartitionReadableValueAccess<T> extends ReadableValueAcce
 
 	void incIndex();
 
-	void updatePartition(T partition);
+	void updatePartition(ColumnPartition<T> partition);
 }

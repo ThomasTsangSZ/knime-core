@@ -1,37 +1,50 @@
 package org.knime.core.data.store.arrow.table;
 
-import org.apache.arrow.vector.FieldVector;
-import org.knime.core.data.store.partition.ColumnPartition;
+import java.io.IOException;
+
+import org.apache.arrow.vector.ValueVector;
 import org.knime.core.data.store.partition.ColumnPartitionReadableValueAccess;
 import org.knime.core.data.store.partition.ColumnPartitionStore;
 import org.knime.core.data.store.partition.ColumnPartitionWritableValueAccess;
 
-public class ArrowColumnPartitionStore<V extends FieldVector> implements ColumnPartitionStore {
+public class ArrowColumnPartitionStore<V extends ValueVector> implements ColumnPartitionStore<V> {
 
-	public ArrowColumnPartitionStore(V ) {
+	private V m_vector;
 
+	public ArrowColumnPartitionStore(final V vector) {
+		m_vector = vector;
 	}
 
 	@Override
 	public long getNumPartitions() {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 
 	@Override
-	public ColumnPartition getOrCreatePartition(long partitionIndex) {
+	public void close() throws Exception {
+
+	}
+
+	@Override
+	public void persist(long partitionIndex) throws IOException {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public ArrowColumnPartition<V> getOrCreatePartition(long partitionIndex) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public ColumnPartitionReadableValueAccess getReadAccess() {
+	public ColumnPartitionReadableValueAccess<V> createLinkedReadAccess() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public ColumnPartitionWritableValueAccess getWriteAccess() {
+	public ColumnPartitionWritableValueAccess<V> createLinkedWriteAccess() {
 		// TODO Auto-generated method stub
 		return null;
 	}

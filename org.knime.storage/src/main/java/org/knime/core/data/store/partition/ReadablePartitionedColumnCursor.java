@@ -3,23 +3,29 @@ package org.knime.core.data.store.partition;
 import org.knime.core.data.store.table.column.ReadableColumnCursor;
 import org.knime.core.data.store.table.value.ReadableValueAccess;
 
-public class ReadablePartitionedColumnCursor //
+public class ReadablePartitionedColumnCursor<T> //
 		implements ReadableColumnCursor {
 
-	private final ColumnPartitionReadableValueAccess m_valueAccess;
+	/*
+	 * Accesses to store
+	 */
+	private final ColumnPartitionReadableValueAccess<T> m_valueAccess;
 
+	private ColumnPartitionStore<T> m_columnStore;
+
+	private ColumnPartition<T> m_currentPartition;
+
+	/*
+	 * Indices used by implementation
+	 */
 	private long m_currentPartitionIndex = -1;
 
 	private long m_currentBufferMaxIndex = -1;
 
 	private long m_index = -1;
 
-	private ColumnPartition m_currentPartition;
-
-	private ColumnPartitionStore m_columnStore;
-
-	public ReadablePartitionedColumnCursor(ColumnPartitionStore store, ColumnPartitionReadableValueAccess access) {
-		m_valueAccess = access;
+	public ReadablePartitionedColumnCursor(ColumnPartitionStore<T> store) {
+		m_valueAccess = store.createLinkedReadAccess();
 		m_columnStore = store;
 		switchToNextBuffer();
 	}
@@ -27,6 +33,7 @@ public class ReadablePartitionedColumnCursor //
 	@Override
 	public boolean canFwd() {
 		return m_index < m_currentBufferMaxIndex
+				// TODO
 				// NB: we have to call m_store.numPartitions over and over again as number of
 				// partitions can change during reading. Idea: if we introduce a "wait" while
 				// store is still open for writing, we may have streaming solved :-)

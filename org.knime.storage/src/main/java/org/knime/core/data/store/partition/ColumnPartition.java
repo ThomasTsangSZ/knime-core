@@ -1,10 +1,8 @@
 package org.knime.core.data.store.partition;
 
-import org.knime.core.data.store.table.column.ColumnType;
+public interface ColumnPartition<T> extends AutoCloseable {
 
-public interface ColumnPartition extends AutoCloseable {
-
-	ColumnType getType();
+	T get();
 
 	int getValueCount();
 

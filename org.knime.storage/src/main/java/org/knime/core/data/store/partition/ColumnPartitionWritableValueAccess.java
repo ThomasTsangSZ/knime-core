@@ -7,5 +7,5 @@ public interface ColumnPartitionWritableValueAccess<T> extends WritableValueAcce
 
 	void incIndex();
 
-	void updatePartition(T partition);
+	void updatePartition(ColumnPartition<T> partition);
 }

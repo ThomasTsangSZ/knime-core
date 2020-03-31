@@ -1,12 +1,12 @@
 
 package org.knime.core.data.store.arrow.table.value;
 
-import org.apache.arrow.vector.ValueVector;
+import org.apache.arrow.vector.FieldVector;
+import org.knime.core.data.store.partition.ColumnPartition;
 import org.knime.core.data.store.partition.ColumnPartitionReadableValueAccess;
 
-public abstract class AbstractArrowReadableValueAccess<V extends ValueVector> implements
-	ColumnPartitionReadableValueAccess<V>
-{
+public abstract class AbstractArrowReadableValueAccess<V extends FieldVector>
+		implements ColumnPartitionReadableValueAccess<V> {
 
 	protected int m_index = -1;
 
@@ -18,9 +18,9 @@ public abstract class AbstractArrowReadableValueAccess<V extends ValueVector> im
 	}
 
 	@Override
-	public void updatePartition(final V partition) {
+	public void updatePartition(final ColumnPartition<V> partition) {
 		m_index = 0;
-		m_vector = partition;
+		m_vector = partition.get();
 	}
 
 	@Override

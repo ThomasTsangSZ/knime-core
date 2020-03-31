@@ -3,24 +3,30 @@ package org.knime.core.data.store.partition;
 import org.knime.core.data.store.table.column.WritableColumn;
 import org.knime.core.data.store.table.value.WritableValueAccess;
 
-public class WritablePartitionedColumn implements WritableColumn {
+public class WritablePartitionedColumn<T> implements WritableColumn {
 
-	private final ColumnPartitionWritableValueAccess m_valueAccess;
+	/*
+	 * Accessors to store
+	 */
+	private final ColumnPartitionWritableValueAccess<T> m_valueAccess;
 
+	private ColumnPartitionStore<T> m_columnStore;
+
+	private ColumnPartition<T> m_currentPartition;
+
+	/*
+	 * Indices used by the implementation
+	 */
 	private int m_currentPartitionMaxIndex = -1;
 
 	private long m_index = -1;
 
 	private long m_currentPartitionIndex = 0;
 
-	private ColumnPartition m_currentPartition;
-
-	private ColumnPartitionStore m_columnPartitionStore;
-
-	// TODO typing? store has to match access or line 43 will crash. 
-	public WritablePartitionedColumn(ColumnPartitionStore store, ColumnPartitionWritableValueAccess access) {
-		m_valueAccess = access;
-		m_columnPartitionStore = store;
+	// TODO typing? store has to match access or line 43 will crash.
+	public WritablePartitionedColumn(ColumnPartitionStore<T> store) {
+		m_columnStore = store;
+		m_valueAccess = store.createLinkedWriteAccess();
 
 		switchToNextPartition();
 	}
@@ -39,7 +45,7 @@ public class WritablePartitionedColumn implements WritableColumn {
 		try {
 			if (m_currentPartition != null)
 				m_currentPartition.close();
-			m_currentPartition = m_columnPartitionStore.getOrCreatePartition(m_currentPartitionIndex++);
+			m_currentPartition = m_columnStore.getOrCreatePartition(m_currentPartitionIndex++);
 			m_valueAccess.updatePartition(m_currentPartition);
 			m_currentPartitionMaxIndex = m_currentPartition.getValueCapacity() - 1;
 
