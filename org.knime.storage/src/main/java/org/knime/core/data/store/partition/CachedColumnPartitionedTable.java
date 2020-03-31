@@ -50,9 +50,12 @@ public class CachedColumnPartitionedTable implements ReadableTable, WritableTabl
 	@Override
 	public void close() throws Exception {
 		// TODO we have to check if someone still has a reference on this column?
-		for (WritablePartitionedColumn<?> writableColumn : m_writableColumn) {
-			writableColumn.close();
+		for (ColumnPartitionStore<?> store : m_columnPartitionStores) {
+			store.close();
 		}
+
+		m_store.close();
+
 		// TODO i'm wouldn't know what 'close()' means for this table
 		// 'close()' -> release memory
 		// 'destroy()' delete any trace of this table

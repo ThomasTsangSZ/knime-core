@@ -1,6 +1,8 @@
 package org.knime.core.data.store.arrow.table;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.memory.RootAllocator;
@@ -15,7 +17,9 @@ public class ArrowStore implements Store {
 
 	private File m_baseDirectory;
 	private int m_batchSize;
-	private RootAllocator m_rootAllocator;
+
+	private final RootAllocator m_rootAllocator;
+	private final List<ColumnPartitionStore<?>> m_createdPartitionStores = new ArrayList<>();
 
 	public ArrowStore(File baseDirectory, int batchSize, long maxAllocationInBytes) {
 		m_baseDirectory = baseDirectory;
@@ -31,13 +35,25 @@ public class ArrowStore implements Store {
 				m_rootAllocator.getLimit());
 		switch (type) {
 		case BOOLEAN:
-			return new ArrowBooleanColumnPartitionStore(m_batchSize, childAllocator, m_baseDirectory);
+			return add(new ArrowBooleanColumnPartitionStore(m_batchSize, childAllocator, m_baseDirectory));
 		case DOUBLE:
-			return new ArrowDoubleColumnPartitionStore(m_batchSize, childAllocator, m_baseDirectory);
+			return add(new ArrowDoubleColumnPartitionStore(m_batchSize, childAllocator, m_baseDirectory));
 		case STRING:
-			return new ArrowStringColumnPartitionStore(m_batchSize, childAllocator, m_baseDirectory);
+			return add(new ArrowStringColumnPartitionStore(m_batchSize, childAllocator, m_baseDirectory));
 		default:
 			throw new UnsupportedOperationException("not yet implemented");
+		}
+	}
+
+	private ColumnPartitionStore<?> add(ColumnPartitionStore<?> partitionStore) {
+		m_createdPartitionStores.add(partitionStore);
+		return partitionStore;
+	}
+
+	@Override
+	public void close() throws Exception {
+		for (ColumnPartitionStore<?> colStore : m_createdPartitionStores) {
+			colStore.close();
 		}
 	}
 }

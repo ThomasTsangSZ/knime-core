@@ -37,12 +37,11 @@ public class ReadablePartitionedColumnCursor<T> //
 
 	@Override
 	public void fwd() {
-		if (++m_index < m_currentBufferMaxIndex) {
-			m_valueAccess.incIndex();
-		} else {
+		if (++m_index > m_currentBufferMaxIndex) {
 			m_index = 0;
 			switchToNextBuffer();
 		}
+		m_valueAccess.incIndex();
 	}
 
 	private void switchToNextBuffer() {
@@ -66,6 +65,7 @@ public class ReadablePartitionedColumnCursor<T> //
 
 	@Override
 	public void close() throws Exception {
-		m_currentPartition.close();
+		if (m_currentPartition != null)
+			m_currentPartition.close();
 	}
 }

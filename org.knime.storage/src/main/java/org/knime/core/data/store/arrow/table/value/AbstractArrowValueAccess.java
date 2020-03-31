@@ -18,7 +18,7 @@ public abstract class AbstractArrowValueAccess<V extends FieldVector> implements
 
 	@Override
 	public void updatePartition(final ColumnPartition<V> partition) {
-		m_index = 0;
+		m_index = -1;
 		m_vector = partition.get();
 	}
 

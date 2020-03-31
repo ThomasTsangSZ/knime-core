@@ -10,7 +10,7 @@ public class WritablePartitionedColumn<T> implements WritableColumn {
 	 */
 	private final ColumnPartitionValueAccess<T> m_valueAccess;
 
-	private ColumnPartitionStore<T> m_columnStore;
+	private final ColumnPartitionStore<T> m_columnStore;
 
 	private ColumnPartition<T> m_currentPartition;
 
@@ -33,12 +33,11 @@ public class WritablePartitionedColumn<T> implements WritableColumn {
 
 	@Override
 	public void fwd() {
-		if (++m_index < m_currentPartitionMaxIndex) {
-			m_valueAccess.incIndex();
-		} else {
+		if (++m_index > m_currentPartitionMaxIndex) {
 			switchToNextPartition();
 			m_index = 0;
 		}
+		m_valueAccess.incIndex();
 	}
 
 	private void switchToNextPartition() {

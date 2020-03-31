@@ -95,10 +95,10 @@ public class CachedColumnPartitionStore<T> implements ColumnPartitionStore<T>, F
 						if (partition == null) {
 							partition = addToCache(m_idx, m_delegateIterator.next());
 							// loading from disc. not yet in cache.
-							lock.incrementAndGet();
 						} else {
 							m_delegateIterator.skip();
 						}
+						lock.incrementAndGet();
 						m_idx++;
 
 						// do this only if it's a new partition
@@ -220,7 +220,11 @@ public class CachedColumnPartitionStore<T> implements ColumnPartitionStore<T>, F
 			// Only close if all references are actually closed!
 			final AtomicInteger lock = m_referenceCounter.get(m_partitionIndex);
 			synchronized (lock) {
-				if (lock.decrementAndGet() == 0) {
+
+				// TODO we need the '<0' because it could be called from outside
+				// (#removeFromCacheAndClose). We should fix that
+				// by adding lock / written indicators into this object
+				if (lock.decrementAndGet() < 0) {
 					m_partitionDelegate.close();
 				}
 			}

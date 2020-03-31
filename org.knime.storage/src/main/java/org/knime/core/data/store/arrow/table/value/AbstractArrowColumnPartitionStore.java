@@ -69,8 +69,8 @@ abstract class AbstractArrowColumnPartitionStore<V extends FieldVector> implemen
 
 			@Override
 			public ColumnPartition<V> next() {
-				m_idx++;
-				return m_reader.read(m_idx);
+				// all good, let's GO!
+				return m_reader.read(m_idx++);
 			}
 
 			@Override
