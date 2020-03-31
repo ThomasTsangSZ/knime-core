@@ -1,6 +1,8 @@
 
 package org.knime.core.data.store.knime;
 
+import java.io.IOException;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.knime.core.data.store.arrow.table.ArrowStore;
@@ -98,7 +100,7 @@ public class StorageTest {
 	 *
 	 */
 	@Test
-	public void pushViaKNIMEAPI() {
+	public void pushViaKNIMEAPI() throws IOException {
 		final DataTableSpec spec = null;
 		final DataContainer container = new DataContainer() {
 
