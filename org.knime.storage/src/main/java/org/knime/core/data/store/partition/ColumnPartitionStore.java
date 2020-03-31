@@ -1,7 +1,12 @@
 package org.knime.core.data.store.partition;
 
+import java.io.IOException;
+
 public interface ColumnPartitionStore extends AutoCloseable {
+
 	long getNumPartitions();
+
+	void persist(long partitionIndex) throws IOException;
 
 	ColumnPartition getOrCreatePartition(long partitionIndex);
 

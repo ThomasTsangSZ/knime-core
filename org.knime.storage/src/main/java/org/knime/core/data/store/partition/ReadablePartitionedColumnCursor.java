@@ -14,7 +14,7 @@ public class ReadablePartitionedColumnCursor //
 
 	private long m_index = -1;
 
-	private ColumnPartition m_currentBuffer;
+	private ColumnPartition m_currentPartition;
 
 	private ColumnPartitionStore m_columnStore;
 
@@ -45,12 +45,12 @@ public class ReadablePartitionedColumnCursor //
 
 	private void switchToNextBuffer() {
 		try {
-			if (m_currentBuffer != null)
-				m_currentBuffer.close();
+			if (m_currentPartition != null)
+				m_currentPartition.close();
 
-			m_currentBuffer = m_columnStore.getOrCreatePartition(++m_currentPartitionIndex);
-			m_valueAccess.updatePartition(m_currentBuffer);
-			m_currentBufferMaxIndex = m_currentBuffer.getValueCount() - 1;
+			m_currentPartition = m_columnStore.getOrCreatePartition(++m_currentPartitionIndex);
+			m_valueAccess.updatePartition(m_currentPartition);
+			m_currentBufferMaxIndex = m_currentPartition.getValueCount() - 1;
 		} catch (Exception e) {
 			// TODO handle exception
 			throw new RuntimeException(e);
@@ -64,6 +64,6 @@ public class ReadablePartitionedColumnCursor //
 
 	@Override
 	public void close() throws Exception {
-		m_currentBuffer.close();
+		m_currentPartition.close();
 	}
 }
