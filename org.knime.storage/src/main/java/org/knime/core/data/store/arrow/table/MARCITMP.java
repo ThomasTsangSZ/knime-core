@@ -1,4 +1,4 @@
-package org.knime.core.data.store.arrow.table;
+//package org.knime.core.data.store.arrow.table;
 //
 //package org.knime.core.data.store.buffer;
 //
