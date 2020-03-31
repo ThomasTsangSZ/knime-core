@@ -1,3 +1,4 @@
+////
 //
 //package org.knime.core.data.store.arrow.table;
 //
@@ -6,8 +7,8 @@
 //import java.nio.file.Files;
 //
 //import org.apache.arrow.memory.RootAllocator;
-//import org.knime.core.data.store.VecAccessible;
 //import org.knime.core.data.store.chunk.ChunkStore;
+//import org.knime.core.data.store.chunk.VecAccessible;
 //import org.knime.core.data.store.table.column.ColumnSchema;
 //
 //// TODO maybe we want to actually split into read/write later.

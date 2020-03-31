@@ -1,4 +1,5 @@
-package org.knime.core.data.store.arrow.table;
+//package org.knime.core.data.store.arrow.table;
+//
 ///*
 // * ------------------------------------------------------------------------
 // *
@@ -79,7 +80,6 @@ package org.knime.core.data.store.arrow.table;
 //import org.knime.core.data.store.arrow.ArrowBooleanWriterFactory.ArrowBooleanWriter;
 //
 ///**
-// *
 // * @author dietzc
 // * @param <K>
 // */
@@ -106,9 +106,9 @@ package org.knime.core.data.store.arrow.table;
 //		READER_FACTORIES.put(PrimitiveType.STRING, new ArrowStringReaderFactory());
 //	}
 //
-//	private PrimitiveSpec m_spec;
+//	private final PrimitiveSpec m_spec;
 //
-//	private RootAllocator m_rootAllocator;
+//	private final RootAllocator m_rootAllocator;
 //
 //	private File m_destFile;
 //
@@ -118,17 +118,21 @@ package org.knime.core.data.store.arrow.table;
 //	// TODO this cache is currently a "per table cache". No centralize effort to
 //	// coordinate caches of multiple tables, yet. Integrate cache life-cycle
 //	// management by Marc B. (Buffer.LIFECYCLE)
-//	// TODO connect this to memory alert system and ALSO track off-heap cache usage.
+//	// TODO connect this to memory alert system and ALSO track off-heap cache
+//	// usage.
 //	// TODO need to close batch "onMemoryRelease"
 //
 //	// TODO primtive spec. Chunk first class citizen (e.g. actually API later to
 //	// generalize buffering?)
-//	// TODO maybe later we want to get rid of File for something more generic, e.g.
+//	// TODO maybe later we want to get rid of File for something more generic,
+//	// e.g.
 //	// URI or "Connection" or ...
 //	// TODO we likely don't need the entire spec here...; actually don't need
-//	// KNIME-specific spec at all since we're only dealing with standard Java types
+//	// KNIME-specific spec at all since we're only dealing with standard Java
+//	// types
 //	// TODO later we can add serializers of all sorts to the table..
-//	// TODO we also want to be able to identify consecutive primitive types of same
+//	// TODO we also want to be able to identify consecutive primitive types of
+//	// same
 //	// type in the table which are then stored as an array in arrow, rather than
 //	// individual columns (later).
 //	public ArrowStoreOld(final PrimitiveSpec spec) {
@@ -145,7 +149,8 @@ package org.knime.core.data.store.arrow.table;
 //		m_isWriting = true;
 //		try {
 //			return new ArrowTableStoreWriteAccess();
-//		} catch (final FileNotFoundException ex) {
+//		}
+//		catch (final FileNotFoundException ex) {
 //			// TODO: What to do?
 //			throw new UncheckedIOException(ex);
 //		}
@@ -159,7 +164,8 @@ package org.knime.core.data.store.arrow.table;
 //		}
 //		try {
 //			return new ArrowTableStoreReadAccess();
-//		} catch (final IOException ex) {
+//		}
+//		catch (final IOException ex) {
 //			// TODO: What to do?
 //			throw new UncheckedIOException(ex);
 //		}
@@ -192,7 +198,7 @@ package org.knime.core.data.store.arrow.table;
 //		// TODO: Only supports single file (integer row count) for now
 //		private int m_rowIndex = 0;
 //
-//		private VectorUnloader m_unloader;
+//		private final VectorUnloader m_unloader;
 //
 //		public ArrowTableStoreWriteAccess() throws FileNotFoundException {
 //			m_unloader = new VectorUnloader(m_schemaRoot);
@@ -213,8 +219,8 @@ package org.knime.core.data.store.arrow.table;
 //			try {
 //				// PROBLEM: This guy still has pointers to same vectors as schema root.
 //				// Subsequent writes to schema root will overwrite this record.
-//				VectorSchemaRoot root = new VectorSchemaRoot(fieldVectorFromSpec(spec));
-//				VectorLoader loader = new VectorLoader(root);
+//				final VectorSchemaRoot root = new VectorSchemaRoot(fieldVectorFromSpec(spec));
+//				final VectorLoader loader = new VectorLoader(root);
 //				try (RandomAccessFile ra = new RandomAccessFile(m_destFile, "w");
 //						FileChannel channel = ra.getChannel();
 //						ArrowFileWriter writer = new ArrowFileWriter(root, null, channel)) {
@@ -223,9 +229,9 @@ package org.knime.core.data.store.arrow.table;
 //
 //					// write into file
 //					writer.writeBatch();
-//				
+//
 //				m_schemaRoot.allocateNew();
-//			} catch (Exception e) {
+//			} catch (final Exception e) {
 //				// TODO later
 //				throw new RuntimeException(e);
 //			}
@@ -248,10 +254,12 @@ package org.knime.core.data.store.arrow.table;
 //		@Override
 //		public void accept(final PrimitiveRow t) {
 //			flushIfRequired();
-//			// TODO do we want getNumColumns on row level? This should rather be part of a
+//			// TODO do we want getNumColumns on row level? This should rather be part
+//			// of a
 //			// "PrimitiveSpec"
-//			long numColumns = t.getNumColumns();
-//			// TODO implement for all types. Likely we pass proxy down to write and write
+//			final long numColumns = t.getNumColumns();
+//			// TODO implement for all types. Likely we pass proxy down to write and
+//			// write
 //			// can do whatever writer wants here...
 //			for (int i = 0; i < numColumns; i++) {
 //				((ArrowBooleanWriter) m_writers[i]).writeBoolean(m_rowIndex, t.getBoolean(i));
@@ -273,12 +281,13 @@ package org.knime.core.data.store.arrow.table;
 //		// TODO: Only supports single file (integer row count) for now
 //		private int m_rowIndex = -1;
 //
-//		private VectorLoader m_loader;
+//		private final VectorLoader m_loader;
 //
 //		public ArrowTableStoreReadAccess() throws IOException {
 //			@SuppressWarnings("resource") // Closed via reader and channel.
 //			final RandomAccessFile raFile = new RandomAccessFile(m_destFile, "r");
 //			m_fileReader = new ArrowFileReader(raFile.getChannel(), m_rootAllocator) {
+//
 //				@Override
 //				protected void loadRecordBatch(final ArrowRecordBatch batch) {
 //					m_currentBatch = batch;
@@ -297,16 +306,17 @@ package org.knime.core.data.store.arrow.table;
 //		}
 //
 //		private <I extends ValueVector> ArrowReader<?> createReader(final ArrowReaderFactory<I, ?> readerFactory,
-//				final FieldVector vector) {
+//			final FieldVector vector)
+//		{
 //			final Class<?> readerSourceType = readerFactory.getSourceType();
 //			if (readerSourceType.isInstance(vector)) {
 //				@SuppressWarnings("unchecked") // Type was checked dynamically.
 //				final I castedVector = (I) vector;
 //				return readerFactory.create(castedVector);
-//			} else {
-//				throw new IllegalStateException(
-//						"Type mismatch. Reader expects source of type: " + readerSourceType.getTypeName()
-//								+ ", but vector is of type: " + vector.getClass().getTypeName());
+//			}
+//			else {
+//				throw new IllegalStateException("Type mismatch. Reader expects source of type: " + readerSourceType
+//					.getTypeName() + ", but vector is of type: " + vector.getClass().getTypeName());
 //			}
 //		}
 //
@@ -322,11 +332,14 @@ package org.knime.core.data.store.arrow.table;
 //				final int batchIdx = m_rowIndex / BATCH_SIZE;
 //				final ArrowRecordBatch batch = CACHE.getIfPresent(batchIdx);
 //
-//				// TODO implement that by extending arrowreader etc... own implementations help
-//				// TODO ALL CACHE ACCESS HAS TO BE THREAD-SAFE (don't put twice etc -> handled
+//				// TODO implement that by extending arrowreader etc... own
+//				// implementations help
+//				// TODO ALL CACHE ACCESS HAS TO BE THREAD-SAFE (don't put twice etc ->
+//				// handled
 //				// by guava?)
 //				// I can directly load into schema. because it was requested.
-//				// but then I need to make sure to get ArrowRecordBatch out of schema to cache.
+//				// but then I need to make sure to get ArrowRecordBatch out of schema to
+//				// cache.
 //				m_fileReader.loadRecordBatch(m_fileReader.getRecordBlocks().get(batchIdx));
 //				m_currentBatch = null;
 //				m_rowIndex++;
@@ -363,7 +376,8 @@ package org.knime.core.data.store.arrow.table;
 //						return false;
 //					}
 //				};
-//			} catch (IOException ex) {
+//			}
+//			catch (final IOException ex) {
 //				// TODO move to next()
 //				throw new RuntimeException(ex);
 //			}
@@ -371,7 +385,8 @@ package org.knime.core.data.store.arrow.table;
 //
 //		// get-Methods:
 //		// TODO: Get rid of element-wise (potentially unsafe) casts?
-//		// TODO: Do we really need a long column index? m_readers array only supports
+//		// TODO: Do we really need a long column index? m_readers array only
+//		// supports
 //		// integer index.
 //
 //		@Override

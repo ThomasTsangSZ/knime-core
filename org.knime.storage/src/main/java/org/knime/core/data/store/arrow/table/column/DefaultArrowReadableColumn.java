@@ -4,7 +4,6 @@ package org.knime.core.data.store.arrow.table.column;
 import java.util.function.Supplier;
 
 import org.apache.arrow.vector.ValueVector;
-import org.knime.core.data.store.arrow.table.ArrowUtils;
 import org.knime.core.data.store.arrow.table.VectorStore;
 import org.knime.core.data.store.arrow.table.value.AbstractArrowReadableValueAccess;
 import org.knime.core.data.store.table.column.ReadableColumn;
@@ -67,18 +66,17 @@ public final class DefaultArrowReadableColumn<V extends ValueVector> implements 
 		}
 
 		private void switchToNextVector() {
-			releaseCurrentVector();
+			returnCurrentVector();
 			final V nextVector = m_vectorStore.getVectorForReading(++m_vectorIndex);
-			ArrowUtils.retainVector(nextVector);
 			m_access.setIndex(0);
 			m_access.setVector(nextVector);
 			m_currentVectorMaxIndex = nextVector.getValueCount() - 1;
 		}
 
-		private void releaseCurrentVector() {
+		private void returnCurrentVector() {
 			final V currentVector = m_access.getVector();
 			if (currentVector != null) {
-				ArrowUtils.releaseVector(currentVector);
+				m_vectorStore.returnReadFromVector(m_access.getIndex(), currentVector);
 			}
 		}
 
@@ -89,7 +87,7 @@ public final class DefaultArrowReadableColumn<V extends ValueVector> implements 
 
 		@Override
 		public void close() throws Exception {
-			releaseCurrentVector();
+			returnCurrentVector();
 		}
 	}
 }

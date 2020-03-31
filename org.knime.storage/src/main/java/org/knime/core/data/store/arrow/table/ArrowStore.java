@@ -1,6 +1,10 @@
 
 package org.knime.core.data.store.arrow.table;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.BitVector;
@@ -26,6 +30,8 @@ public class ArrowStore implements Store {
 	// TODO: Maybe adaptive later? Is the current value a reasonable default?
 	private static final int BATCH_SIZE = 1024;
 
+	private final File m_baseDirectory;
+
 	private final BufferAllocator m_allocator;
 
 	private final VectorStore<?>[] m_vectorStores;
@@ -37,7 +43,11 @@ public class ArrowStore implements Store {
 	// TODO: Handle wide tables more efficiently.
 	// - Instantiate vector stores and columns on demand
 	// - Access column schema schema on demand
-	public ArrowStore(final ColumnSchema[] schemas) {
+	public ArrowStore(final ColumnSchema[] schemas) throws IOException {
+		// TODO: Test directory for now.
+		m_baseDirectory = Files.createTempDirectory("knime-new-table-api-test").toFile();
+		m_baseDirectory.deleteOnExit();
+
 		// TODO: Likely we want to have a child allocator, passed from some central
 		// memory management.
 		m_allocator = new RootAllocator();
@@ -51,7 +61,9 @@ public class ArrowStore implements Store {
 			final ColumnType type = schemas[i].getType();
 			switch (type) {
 				case BOOLEAN: {
-					final VectorStore<BitVector> vectorStore = new CachedVectorStore<BitVector>() {
+					final VectorStore<BitVector> vectorStore = new CachedVectorStore<BitVector>(m_baseDirectory, i,
+						/* TODO */ null, /* TODO */ m_allocator)
+					{
 
 						@Override
 						protected BitVector createNewChunk() {
@@ -68,7 +80,9 @@ public class ArrowStore implements Store {
 					break;
 				}
 				case DOUBLE: {
-					final VectorStore<Float8Vector> vectorStore = new CachedVectorStore<Float8Vector>() {
+					final VectorStore<Float8Vector> vectorStore = new CachedVectorStore<Float8Vector>(m_baseDirectory, i,
+						/* TODO */ null, /* TODO */ m_allocator)
+					{
 
 						@Override
 						protected Float8Vector createNewChunk() {
@@ -85,7 +99,9 @@ public class ArrowStore implements Store {
 					break;
 				}
 				case STRING: {
-					final VectorStore<VarCharVector> vectorStore = new CachedVectorStore<VarCharVector>() {
+					final VectorStore<VarCharVector> vectorStore = new CachedVectorStore<VarCharVector>(m_baseDirectory, i,
+						/* TODO */ null, /* TODO */ m_allocator)
+					{
 
 						@Override
 						protected VarCharVector createNewChunk() {
