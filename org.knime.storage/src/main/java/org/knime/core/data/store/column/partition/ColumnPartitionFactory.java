@@ -1,5 +1,5 @@
 package org.knime.core.data.store.column.partition;
 
 public interface ColumnPartitionFactory<T> {
-	ColumnPartition<T> appendPartition();
+	ColumnPartition<T> createPartition();
 }

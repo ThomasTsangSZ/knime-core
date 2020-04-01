@@ -11,16 +11,22 @@
 - Expose columnar API to end-user
 
 ### API baustellen:
-- next() rausziehen
-- MultiVecValues (oder wie auch immer der shit dann heißt), die ein eigenes schema haben). Eigtl. ist das nix anderes als nen chunk :smile: 
-- Domain Calculation
-- DuplicateChecker + RowId.
+- Arrow Package (encapsulate store and cache)
+- Life-cycle management (close() vs. destroy() vs. ... finishWriting() 'can I read before I've serialized the entire table')
+- Thread-safety (multi-read, cache,...). Locking per partition.
+- Pre-fetching / pre-writing (async)
 
-### Impl Baustellen:
-- Chunking
-- Caching
-- Disc IO
-- Testing
+- Serialisierung - how do I restore state of a store or rather entire table (use-case: (i) knime has stored store or (ii) store created without prior writing).
+- MultiVecValue & Custom data types (e.g. Date&Time, Text, Struct, PNG Images). Support for serializers. Forseeable problem: avoid constant serialization and deserialization into byte[]
+- Domain Calculation
+
+- DuplicateChecker for RowId
+- Support for FileStores / BlobStores
+
+- Off heap memory management
+- ORC Backend / Parquet Backend?
+- Test idea: with intermediate buffers
+
 
 ### KNIME baustellen:
 - Serialisierung von Stores

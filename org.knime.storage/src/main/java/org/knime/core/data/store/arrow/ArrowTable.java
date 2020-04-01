@@ -28,10 +28,11 @@ import org.knime.core.data.store.table.WritableTable;
 
 // TODO many things could be factored out.
 // TODO we could factor out the store etc to be more flexible (later)
+// TODO why does arrow need to know about tables at all? :-)
 public class ArrowTable implements ReadableTable, WritableTable {
 
 	private final ArrowTableStore m_store;
-	private final List<ArrowCachedColumnAccess<? extends FieldVector>> m_columnAccesses = new ArrayList<>();
+	private final List<CachedColumnAccess<? extends FieldVector>> m_columnAccesses = new ArrayList<>();
 
 	public ArrowTable(File baseDir, final ColumnSchema[] schema, int batchSize) throws IOException {
 		m_store = new ArrowTableStore(baseDir, schema, batchSize);
@@ -79,7 +80,7 @@ public class ArrowTable implements ReadableTable, WritableTable {
 	}
 
 	public void flush() throws IOException {
-		for (final ArrowCachedColumnAccess<?> cached : m_columnAccesses) {
+		for (final CachedColumnAccess<?> cached : m_columnAccesses) {
 			cached.flush();
 		}
 	}
@@ -98,7 +99,7 @@ public class ArrowTable implements ReadableTable, WritableTable {
 			m_batchSize = batchSize;
 
 			for (int i = 0; i < m_schema.length; i++) {
-				m_columnAccesses.add(new ArrowCachedColumnAccess<>(addColumn(m_schema[i].getType())));
+				m_columnAccesses.add(new CachedColumnAccess<>(addColumn(m_schema[i].getType())));
 			}
 		}
 

@@ -39,7 +39,7 @@ import org.knime.core.data.store.column.partition.ColumnPartitionValueAccess;
 
 // TODO Cache is behaving wrong:
 // - 1) writers are never closed. When can we close them?
-class ArrowCachedColumnAccess<T> implements ArrowColumnAccess<T>, Flushable {
+class CachedColumnAccess<T> implements ArrowColumnAccess<T>, Flushable {
 
 	// TODO: We probably want to replace this by a more powerful (= actual) cache
 	// implementation.
@@ -55,7 +55,7 @@ class ArrowCachedColumnAccess<T> implements ArrowColumnAccess<T>, Flushable {
 
 	private int m_numPartitions;
 
-	public ArrowCachedColumnAccess(final ArrowColumnAccess<T> delegate) {
+	public CachedColumnAccess(final ArrowColumnAccess<T> delegate) {
 		m_delegate = delegate;
 	}
 
@@ -120,7 +120,7 @@ class ArrowCachedColumnAccess<T> implements ArrowColumnAccess<T>, Flushable {
 	}
 
 	private CachedColumnPartition add(long partitionIndex, final ColumnPartition<T> partition) {
-		if (!(partition instanceof ArrowCachedColumnAccess.CachedColumnPartition)) {
+		if (!(partition instanceof CachedColumnAccess.CachedColumnPartition)) {
 			final CachedColumnPartition cached = new CachedColumnPartition(partition);
 			// Make sure cache is blocking closing
 			cached.retain();
@@ -128,7 +128,7 @@ class ArrowCachedColumnAccess<T> implements ArrowColumnAccess<T>, Flushable {
 			return cached;
 		} else {
 			// we're already tracking.
-			return (ArrowCachedColumnAccess<T>.CachedColumnPartition) partition;
+			return (CachedColumnAccess<T>.CachedColumnPartition) partition;
 		}
 	}
 
@@ -171,9 +171,9 @@ class ArrowCachedColumnAccess<T> implements ArrowColumnAccess<T>, Flushable {
 	}
 
 	@Override
-	public synchronized ColumnPartition<T> appendPartition() {
+	public synchronized ColumnPartition<T> createPartition() {
 		// immediately add a ref
-		return add(m_numPartitions++, m_delegate.appendPartition());
+		return add(m_numPartitions++, m_delegate.createPartition());
 	}
 
 	@Override

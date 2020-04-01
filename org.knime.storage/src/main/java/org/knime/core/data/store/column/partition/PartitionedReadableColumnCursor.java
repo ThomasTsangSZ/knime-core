@@ -23,8 +23,8 @@ public class PartitionedReadableColumnCursor<T> //
 	private long m_index = -1;
 
 	public PartitionedReadableColumnCursor(final ColumnPartitionReader<T> reader,
-			final ColumnPartitionValueAccess<T> linkedValue) {
-		m_linkedAccess = linkedValue;
+			final ColumnPartitionValueAccess<T> linkedAccess) {
+		m_linkedAccess = linkedAccess;
 		m_reader = reader;
 		switchToNextBuffer();
 	}

@@ -73,10 +73,10 @@ class DefaultArrowColumnAccess<T extends FieldVector> implements ArrowColumnAcce
 	}
 
 	@Override
-	public ColumnPartition<T> appendPartition() {
+	public ColumnPartition<T> createPartition() {
 		// TODO should be synchronized with getNumPartitions (I think)
 		m_createdPartition++;
-		return m_factory.appendPartition();
+		return m_factory.createPartition();
 	}
 
 	@Override

@@ -42,7 +42,7 @@ public class PartitionedWritableColumn<T> implements WritableColumn {
 		try {
 			// closes current partition only...
 			close();
-			m_currentPartition = m_factory.appendPartition();
+			m_currentPartition = m_factory.createPartition();
 			m_linkedAccess.updatePartition(m_currentPartition);
 			m_currentPartitionMaxIndex = m_currentPartition.getCapacity() - 1;
 

@@ -16,7 +16,7 @@ abstract class AbstractArrowColumnPartitionFactory<V extends FieldVector> implem
 	}
 
 	@Override
-	public ColumnPartition<V> appendPartition() {
+	public ColumnPartition<V> createPartition() {
 		return new ArrowColumnPartition<V>(create(m_alloc, m_batchSize));
 	}
 
