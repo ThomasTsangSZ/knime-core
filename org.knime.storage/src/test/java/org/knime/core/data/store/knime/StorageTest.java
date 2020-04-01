@@ -24,17 +24,16 @@ public class StorageTest {
 	 */
 
 	// in numValues per vector
-	private static final int BATCH_SIZE = 5_000_00;
+	private static final int BATCH_SIZE = 10_000_000;
 
 	// in bytes
 	private static final long OFFHEAP_SIZE = 2048_000_000;
 
 	// num rows used for testing
-	private static final long NUM_ROWS = 1_000_000;
+	private static final long NUM_ROWS = 100_000_000;
 
 	// some schema
-	private static final ColumnSchema[] SCHEMAS = new ColumnSchema[] { () -> ColumnType.DOUBLE,
-			() -> ColumnType.DOUBLE };
+	private static final ColumnSchema[] SCHEMAS = new ColumnSchema[] { () -> ColumnType.DOUBLE };
 
 	@Test
 	public void doubleArrayTest() {
@@ -53,58 +52,23 @@ public class StorageTest {
 	public void columnwiseWriteReadSingleDoubleColumnIdentityTest() throws Exception {
 
 		try (final ArrowTable table = ArrowUtils.createArrowTable(BATCH_SIZE, OFFHEAP_SIZE, SCHEMAS)) {
-
-			long time = System.currentTimeMillis();
 			// first column write
-			try (final WritableColumn col0 = table.getWritableColumn(0);
-					final WritableColumn col1 = table.getWritableColumn(1)) {
+			try (final WritableColumn col0 = table.getWritableColumn(0)) {
 				final WritableDoubleValueAccess val0 = (WritableDoubleValueAccess) col0.getValueAccess();
-				final WritableDoubleValueAccess val1 = (WritableDoubleValueAccess) col1.getValueAccess();
 				for (long i = 0; i < NUM_ROWS; i++) {
+					// TODO it would be cool to do col0.fwd().setDouble('val') or
+					// col1.fwd().getDouble();
 					col0.fwd();
-					col1.fwd();
-					if (i % 100 == 0) {
-						val0.setMissing();
-						val1.setDoubleValue(i);
-					} else {
-						val0.setDoubleValue(i);
-						val1.setMissing();
-					}
+					val0.setDoubleValue(i);
 				}
 			}
 
 			// then read
-			try (final ReadableColumnCursor col0 = table.getReadableColumn(0).cursor();
-					final ReadableColumnCursor col1 = table.getReadableColumn(1).cursor()) {
+			try (final ReadableColumnCursor col0 = table.getReadableColumn(0).cursor()) {
 				final ReadableDoubleValueAccess val0 = (ReadableDoubleValueAccess) col0.getValueAccess();
-				final ReadableDoubleValueAccess val1 = (ReadableDoubleValueAccess) col1.getValueAccess();
 				for (long i = 0; col0.canFwd(); i++) {
 					col0.fwd();
-					col1.fwd();
-					if (i % 100 == 0) {
-						Assert.assertTrue(val0.isMissing());
-						Assert.assertEquals(i, val1.getDoubleValue(), 0.0000001);
-					} else {
-						Assert.assertEquals(i, val0.getDoubleValue(), 0.0000001);
-						Assert.assertTrue(val1.isMissing());
-					}
-				}
-			}
-			System.out.println((System.currentTimeMillis() - time));
-
-			// And read again row-wise
-			try (final ReadableRow row = ColumnBackedReadableRow.fromReadableTable(table)) {
-				final ReadableDoubleValueAccess val0 = (ReadableDoubleValueAccess) row.getValueAccessAt(0);
-				final ReadableDoubleValueAccess val1 = (ReadableDoubleValueAccess) row.getValueAccessAt(1);
-				for (long i = 0; row.canFwd(); i++) {
-					row.fwd();
-					if (i % 100 == 0) {
-						Assert.assertTrue(val0.isMissing());
-						Assert.assertEquals(i, val1.getDoubleValue(), 0.0000001);
-					} else {
-						Assert.assertEquals(i, val0.getDoubleValue(), 0.0000001);
-						Assert.assertTrue(val1.isMissing());
-					}
+					Assert.assertEquals(i, val0.getDoubleValue(), 0.0000001);
 				}
 			}
 		}
@@ -117,31 +81,17 @@ public class StorageTest {
 
 			try (final WritableRow row = ColumnBackedWritableRow.fromWritableTable(table)) {
 				final WritableDoubleValueAccess val0 = (WritableDoubleValueAccess) row.getValueAccessAt(0);
-				final WritableDoubleValueAccess val1 = (WritableDoubleValueAccess) row.getValueAccessAt(1);
 				for (long i = 0; i < NUM_ROWS; i++) {
 					row.fwd();
-					if (i % NUM_ROWS == 0) {
-						val0.setMissing();
-						val1.setDoubleValue(i);
-					} else {
-						val0.setDoubleValue(i);
-						val1.setMissing();
-					}
+					val0.setDoubleValue(i);
 				}
 			}
 
 			try (final ReadableRow row = ColumnBackedReadableRow.fromReadableTable(table)) {
 				final ReadableDoubleValueAccess val0 = (ReadableDoubleValueAccess) row.getValueAccessAt(0);
-				final ReadableDoubleValueAccess val1 = (ReadableDoubleValueAccess) row.getValueAccessAt(1);
 				for (long i = 0; row.canFwd(); i++) {
 					row.fwd();
-					if (i % NUM_ROWS == 0) {
-						Assert.assertTrue(val0.isMissing());
-						Assert.assertEquals(i, val1.getDoubleValue(), 0.0000001);
-					} else {
-						Assert.assertEquals(i, val0.getDoubleValue(), 0.0000001);
-						Assert.assertTrue(val1.isMissing());
-					}
+					Assert.assertEquals(i, val0.getDoubleValue(), 0.0000001);
 				}
 			}
 		}
