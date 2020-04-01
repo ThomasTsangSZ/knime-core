@@ -2,10 +2,7 @@ package org.knime.core.data.store.arrow;
 
 import java.io.Flushable;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.knime.core.data.store.column.partition.ColumnPartition;
@@ -39,6 +36,9 @@ import org.knime.core.data.store.column.partition.ColumnPartitionValueAccess;
  */
 // TODO Make all of the crap here thread-safe :-)
 // TODO all of this is arrow independent...
+
+// TODO Cache is behaving wrong:
+// - 1) writers are never closed. When can we close them?
 class ArrowCachedColumnAccess<T> implements ArrowColumnAccess<T>, Flushable {
 
 	// TODO: We probably want to replace this by a more powerful (= actual) cache
@@ -47,24 +47,16 @@ class ArrowCachedColumnAccess<T> implements ArrowColumnAccess<T>, Flushable {
 	// a SoftReference cache. E.g., by wrapping a vector in an object that
 	// releases the vector's buffers in its finalize method and putting such
 	// wrappers in the cache.
-	private final ConcurrentHashMap<Long, ColumnPartition<T>> CACHE = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<Long, CachedColumnPartition> CACHE = new ConcurrentHashMap<>();
 
 	private ArrowColumnAccess<T> m_delegate;
 
-	// TODO do I need to synchronize that?
-	private final List<AtomicInteger> m_referenceCounter = new ArrayList<>();
-	private final List<AtomicBoolean> m_isWritten = new ArrayList<>();
+	private long m_lastWritten = -1;
 
-	private AtomicBoolean m_isClosed;
+	private int m_numPartitions;
 
 	public ArrowCachedColumnAccess(final ArrowColumnAccess<T> delegate) {
 		m_delegate = delegate;
-		m_isClosed = new AtomicBoolean(false);
-
-		for (int i = 0; i < delegate.getNumPartitions(); i++) {
-			m_referenceCounter.add(new AtomicInteger());
-			m_isWritten.add(new AtomicBoolean());
-		}
 	}
 
 	@Override
@@ -75,7 +67,7 @@ class ArrowCachedColumnAccess<T> implements ArrowColumnAccess<T>, Flushable {
 
 	@Override
 	public long getNumPartitions() {
-		return m_delegate.getNumPartitions();
+		return m_numPartitions;
 	}
 
 	/**
@@ -97,25 +89,21 @@ class ArrowCachedColumnAccess<T> implements ArrowColumnAccess<T>, Flushable {
 
 			@Override
 			public ColumnPartition<T> next() {
-				if (!m_isClosed.get()) {
-					// TODO is there a better way to lock?
-					final AtomicInteger lock = m_referenceCounter.get((int) m_idx);
-					synchronized (lock) {
-						ColumnPartition<T> partition = CACHE.get(m_idx);
-						if (partition == null) {
-							partition = addToCache(m_idx, m_delegateIterator.next());
-							// loading from disc. not yet in cache.
-						} else {
-							m_delegateIterator.skip();
-						}
-						lock.incrementAndGet();
-						m_idx++;
-
-						// do this only if it's a new partition
-						return partition;
+				// TODO is there a better way to lock?
+				synchronized (CACHE) {
+					CachedColumnPartition partition = CACHE.get(m_idx);
+					if (partition == null) {
+						partition = add(m_idx, m_delegateIterator.next());
+						// loading from disc. not yet in cache.
+					} else {
+						m_delegateIterator.skip();
 					}
+					partition.retain();
+					m_idx++;
+
+					// do this only if it's a new partition
+					return partition;
 				}
-				return null;
 			}
 
 			@Override
@@ -131,15 +119,15 @@ class ArrowCachedColumnAccess<T> implements ArrowColumnAccess<T>, Flushable {
 		};
 	}
 
-	private ColumnPartition<T> addToCache(long partitionIndex, final ColumnPartition<T> partition) {
+	private CachedColumnPartition add(long partitionIndex, final ColumnPartition<T> partition) {
 		if (!(partition instanceof ArrowCachedColumnAccess.CachedColumnPartition)) {
-			final ArrowCachedColumnAccess<T>.CachedColumnPartition cached = new CachedColumnPartition(partition,
-					partitionIndex);
+			final CachedColumnPartition cached = new CachedColumnPartition(partition);
+			// Make sure cache is blocking closing
 			CACHE.put(partitionIndex, cached);
 			return cached;
 		} else {
 			// we're already tracking.
-			return partition;
+			return (ArrowCachedColumnAccess<T>.CachedColumnPartition) partition;
 		}
 	}
 
@@ -149,20 +137,12 @@ class ArrowCachedColumnAccess<T> implements ArrowColumnAccess<T>, Flushable {
 	 */
 	@Override
 	public synchronized void write(ColumnPartition<T> partition) throws IOException {
-		if (!m_isClosed.get()) {
-			// TODO should we implement a re-try in case something goes wrong?
-
-			// TODO HARD ASSUMPTION IS SEQUEANTIL WRITE
-
-			// TODO: Do this sync or async? Async would be faster but could cause
-			// memory problems if flush was called due to a memory alert, since then
-			// writing new data into the table is re-enabled (lock lifted) while still
-			// spilling old data to disk.
-			// we don't need this guy anymore. removed from cache etc.
-			if (!m_isWritten.get((int) (m_delegate.getNumPartitions() - 1)).getAndSet(true)) {
-				m_delegate.write(partition);
-			}
-		}
+		// TODO: Do this sync or async? Async would be faster but could cause
+		// memory problems if flush was called due to a memory alert, since then
+		// writing new data into the table is re-enabled (lock lifted) while still
+		// spilling old data to disk.
+		// we don't need this guy anymore. removed from cache etc.
+		m_delegate.write(partition);
 	}
 
 	/**
@@ -171,22 +151,28 @@ class ArrowCachedColumnAccess<T> implements ArrowColumnAccess<T>, Flushable {
 	 */
 	@Override
 	public void flush() throws IOException {
-		if (!m_isClosed.get()) {
-			// blocking while flushing!
-			for (long i = 0; i < m_referenceCounter.size(); i++) {
-				// ... if someone is already persisting: thanks bye
-				write(CACHE.get(i));
-				removeFromCacheAndClose(i);
+		// blocking while flushing!
+		// BETTER SYNCHRONIZATION?
+		try {
+			synchronized (CACHE) {
+				// TODO this will work even if we already have written e.g. partitions 0-10.
+				// However at the cost of "isWritten" check for 0-10 :-( (later)
+				for (long i = m_lastWritten + 1; i < CACHE.size(); i++) {
+					// Sequential write.
+					write(CACHE.get(i));
+					removeFromCacheAndClose(i);
+					m_lastWritten = i;
+				}
 			}
+		} catch (Exception e) {
+			throw new IOException(e);
 		}
 	}
 
 	@Override
 	public synchronized ColumnPartition<T> appendPartition() {
-		m_isWritten.add(new AtomicBoolean(false));
 		// immediately add a ref
-		m_referenceCounter.add(new AtomicInteger(1));
-		return addToCache(m_isWritten.size() - 1, m_delegate.appendPartition());
+		return add(++m_numPartitions, m_delegate.appendPartition());
 	}
 
 	@Override
@@ -203,38 +189,31 @@ class ArrowCachedColumnAccess<T> implements ArrowColumnAccess<T>, Flushable {
 	 */
 	@Override
 	public void close() throws Exception {
-		if (!m_isClosed.getAndSet(true)) {
-			for (long i = 0; i < m_referenceCounter.size(); i++) {
-				removeFromCacheAndClose(i);
-			}
+		for (long i = 0; i < CACHE.size(); i++) {
+			removeFromCacheAndClose(i);
 		}
 	}
 
-	private void removeFromCacheAndClose(long partitionIndex) {
-		final AtomicInteger lock = m_referenceCounter.get((int) partitionIndex);
-		synchronized (lock) {
-			// decrement cache reference
-			if (lock.decrementAndGet() == 0) {
-				try {
-					CACHE.get(partitionIndex).close();
-				} catch (Exception e) {
-					// TODO handle!!!
-					throw new RuntimeException(e);
-				}
-			}
+	private void removeFromCacheAndClose(long partitionIndex) throws Exception {
+		final CachedColumnPartition partition = CACHE.get(partitionIndex);
+		synchronized (partition) {
+			// release from cache
+			partition.release();
 			CACHE.remove(partitionIndex);
 		}
 	}
 
+	// TODO check thread-safety
 	private class CachedColumnPartition implements ColumnPartition<T> {
 		private final ColumnPartition<T> m_partitionDelegate;
-		private final int m_partitionIndex;
 		private int m_numValues;
+		private AtomicInteger m_lock;
 
-		public CachedColumnPartition(ColumnPartition<T> delegate, long partitionIdx) {
+		public CachedColumnPartition(ColumnPartition<T> delegate) {
 			m_partitionDelegate = delegate;
-			m_partitionIndex = (int) partitionIdx;
-			m_referenceCounter.get((int) m_partitionIndex).incrementAndGet();
+
+			// whoever requested it now retained the partition
+			m_lock = new AtomicInteger(1);
 		}
 
 		@Override
@@ -247,13 +226,12 @@ class ArrowCachedColumnAccess<T> implements ArrowColumnAccess<T>, Flushable {
 		@Override
 		public void close() throws Exception {
 			// Only close if all references are actually closed!
-			final AtomicInteger lock = m_referenceCounter.get(m_partitionIndex);
-			synchronized (lock) {
+			synchronized (m_lock) {
 
 				// TODO we need the '<0' because it could be called from outside
 				// (#removeFromCacheAndClose). We should fix that
 				// by adding lock / written indicators into this object
-				if (lock.decrementAndGet() < 0) {
+				if (m_lock.decrementAndGet() <= 0) {
 					m_partitionDelegate.close();
 				}
 			}
@@ -274,5 +252,18 @@ class ArrowCachedColumnAccess<T> implements ArrowColumnAccess<T>, Flushable {
 		public void setNumValues(int numValues) {
 			m_numValues = numValues;
 		}
+
+		public void retain() {
+			m_lock.incrementAndGet();
+		}
+
+		public void release() throws Exception {
+			m_lock.decrementAndGet();
+
+			// try close
+			// TODO thread-safety
+			close();
+		}
+
 	}
 }

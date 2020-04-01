@@ -74,7 +74,6 @@ public class ArrowTable implements ReadableTable, WritableTable {
 	// read/write (e.g. for streaming)
 	@Override
 	public void close() throws Exception {
-		// TODO we have to check if someone still has a reference on this column?
 		m_store.close();
 
 	}

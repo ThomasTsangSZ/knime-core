@@ -31,17 +31,19 @@ import org.knime.core.data.store.column.partition.ColumnPartitionValueAccess;
 import io.netty.buffer.ArrowBuf;
 
 // TODO make sure multi-threaded access is possible.
+// TODO factor store out (easier maintenance, single serialization required in case of a store etc).
+// TODO ideally this guy is state-free.
 class DefaultArrowColumnAccess<T extends FieldVector> implements ArrowColumnAccess<T> {
 
 	private ColumnPartitionFactory<T> m_factory;
 	private Supplier<ColumnPartitionValueAccess<T>> m_linkedType;
 	private Schema m_schema;
 	private BufferAllocator m_allocator;
-	private File m_file;
 	private DefaultArrowColumnAccess<T>.ArrowVectorToDiskWriter m_writer;
 
 	// partition counter
-	private long m_createdPartitions = 0;
+	private long m_createdPartition = 0;
+	private File m_file;
 
 	public DefaultArrowColumnAccess(final File baseDir, final ArrowType type, final BufferAllocator allocator,
 			ColumnPartitionFactory<T> factory, Supplier<ColumnPartitionValueAccess<T>> linkedType) {
@@ -73,7 +75,7 @@ class DefaultArrowColumnAccess<T extends FieldVector> implements ArrowColumnAcce
 	@Override
 	public ColumnPartition<T> appendPartition() {
 		// TODO should be synchronized with getNumPartitions (I think)
-		m_createdPartitions++;
+		m_createdPartition++;
 		return m_factory.appendPartition();
 	}
 
@@ -90,8 +92,12 @@ class DefaultArrowColumnAccess<T extends FieldVector> implements ArrowColumnAcce
 
 	@Override
 	public long getNumPartitions() {
-		return m_createdPartitions;
+		return m_createdPartition;
 	}
+	
+	/*
+	 * TODO TODO TODO This should NOT live in a column!!!
+	 */
 
 	// TODO we assume read after write with this implementation.
 	// TODO this might not be the case when a reader starts reading from a cache
@@ -103,7 +109,7 @@ class DefaultArrowColumnAccess<T extends FieldVector> implements ArrowColumnAcce
 		private ArrowFileReader m_reader;
 		private List<ArrowBlock> m_recordBlocks;
 
-		private int m_currendRecord;
+		private int m_currentPartition;
 
 		@Override
 		public void close() throws Exception {
@@ -113,11 +119,15 @@ class DefaultArrowColumnAccess<T extends FieldVector> implements ArrowColumnAcce
 			}
 		}
 
-		@SuppressWarnings("resource")
 		@Override
 		public boolean hasNext() {
-			// TODO I've the strong suspicion that his is really uncool to do this in
-			// 'hasNext'
+			// TODO we have to get this value from somewhere if we open a store without
+			// having read before...
+			return m_currentPartition < m_createdPartition;
+		}
+
+		@Override
+		public ColumnPartition<T> next() {
 			try {
 				if (m_reader == null) {
 					m_reader = new ArrowFileReader(new RandomAccessFile(m_file, "rw").getChannel(), m_allocator);
@@ -125,17 +135,7 @@ class DefaultArrowColumnAccess<T extends FieldVector> implements ArrowColumnAcce
 					m_recordBlocks = m_reader.getRecordBlocks();
 					m_reader.loadNextBatch();
 				}
-				return m_currendRecord < m_recordBlocks.size();
-			} catch (IOException e) {
-				e.printStackTrace();
-				return false;
-			}
-		}
-
-		@Override
-		public ColumnPartition<T> next() {
-			try {
-				m_reader.loadRecordBatch(m_recordBlocks.get(m_currendRecord));
+				m_reader.loadRecordBatch(m_recordBlocks.get(m_currentPartition));
 				@SuppressWarnings("unchecked")
 				final T vector = (T) m_root.getVector(0);
 				ArrowUtils.retainVector(vector);
@@ -153,7 +153,7 @@ class DefaultArrowColumnAccess<T extends FieldVector> implements ArrowColumnAcce
 
 		@Override
 		public void skip() {
-			m_currendRecord++;
+			m_currentPartition++;
 		}
 	}
 
@@ -161,7 +161,6 @@ class DefaultArrowColumnAccess<T extends FieldVector> implements ArrowColumnAcce
 
 		/* Lazily initialized */
 		private ArrowFileWriter m_writer;
-		private File m_file;
 		private VectorSchemaRoot m_root;
 
 		@SuppressWarnings("resource")
@@ -182,6 +181,8 @@ class DefaultArrowColumnAccess<T extends FieldVector> implements ArrowColumnAcce
 			// again
 			try (final ArrowRecordBatch batch = new ArrowRecordBatch(partition.getNumValues(), nodes, buffers)) {
 				m_writer.writeBatch();
+			}catch(Exception e) {
+				e.printStackTrace();
 			}
 		}
 
