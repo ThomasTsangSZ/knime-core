@@ -5,7 +5,7 @@ import org.apache.arrow.vector.FieldVector;
 import org.knime.core.data.store.column.partition.ColumnPartition;
 import org.knime.core.data.store.column.partition.ColumnPartitionValueAccess;
 
-public abstract class AbstractArrowValueAccess<V extends FieldVector> implements ColumnPartitionValueAccess<V> {
+abstract class AbstractArrowValueAccess<V extends FieldVector> implements ColumnPartitionValueAccess<V> {
 
 	protected int m_index = -1;
 

@@ -141,7 +141,7 @@ public class CachedColumnPartitionStore<T> implements ColumnPartitionStore<T>, F
 			// writing new data into the table is re-enabled (lock lifted) while still
 			// spilling old data to disk.
 			// we don't need this guy anymore. removed from cache etc.
-			final int idx = (int) partition.getPartitionIndex();
+			final int idx = (int) partition.getIndex();
 			if (!m_isWritten.get(idx).getAndSet(true)) {
 				m_delegate.persist(partition);
 			}
@@ -249,8 +249,8 @@ public class CachedColumnPartitionStore<T> implements ColumnPartitionStore<T>, F
 		}
 
 		@Override
-		public long getPartitionIndex() {
-			return m_partitionDelegate.getPartitionIndex();
+		public long getIndex() {
+			return m_partitionDelegate.getIndex();
 		}
 
 		@Override

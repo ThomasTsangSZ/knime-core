@@ -4,7 +4,7 @@ public interface ColumnPartition<T> extends AutoCloseable {
 
 	T get();
 
-	long getPartitionIndex();
+	long getIndex();
 
 	int getCapacity();
 
