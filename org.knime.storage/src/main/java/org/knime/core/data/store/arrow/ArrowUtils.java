@@ -1,9 +1,9 @@
 
 package org.knime.core.data.store.arrow;
 
-import io.netty.buffer.ArrowBuf;
-
 import org.apache.arrow.vector.ValueVector;
+
+import io.netty.buffer.ArrowBuf;
 
 public final class ArrowUtils {
 
