@@ -7,24 +7,25 @@ public class PartitionedReadableColumnCursor<T> //
 		implements ReadableColumnCursor {
 
 	/*
-	 * Accesses to store
+	 * Constants
 	 */
-	private final ColumnPartitionValueAccess<T> m_valueAccess;
+	private final ColumnPartitionValueAccess<T> m_linkedAccess;
 
-	private ColumnPartition<T> m_currentPartition;
+	private final ColumnPartitionReader<T> m_reader;
 
 	/*
 	 * Indices used by implementation
 	 */
+	private ColumnPartition<T> m_currentPartition;
+
 	private long m_currentBufferMaxIndex = -1;
 
 	private long m_index = -1;
 
-	private ColumnPartitionIterator<T> m_columnStoreIterator;
-
-	public PartitionedReadableColumnCursor(ColumnPartitionStore<T> store) {
-		m_valueAccess = store.createAccess();
-		m_columnStoreIterator = store.iterator();
+	public PartitionedReadableColumnCursor(final ColumnPartitionReader<T> reader,
+			final ColumnPartitionValueAccess<T> linkedValue) {
+		m_linkedAccess = linkedValue;
+		m_reader = reader;
 		switchToNextBuffer();
 	}
 
@@ -32,7 +33,7 @@ public class PartitionedReadableColumnCursor<T> //
 	public boolean canFwd() {
 		return m_index < m_currentBufferMaxIndex - 1
 				// TODO
-				|| m_columnStoreIterator.hasNext();
+				|| m_reader.hasNext();
 	}
 
 	@Override
@@ -41,7 +42,7 @@ public class PartitionedReadableColumnCursor<T> //
 			m_index = 0;
 			switchToNextBuffer();
 		}
-		m_valueAccess.incIndex();
+		m_linkedAccess.incIndex();
 	}
 
 	private void switchToNextBuffer() {
@@ -49,8 +50,8 @@ public class PartitionedReadableColumnCursor<T> //
 			if (m_currentPartition != null)
 				m_currentPartition.close();
 
-			m_currentPartition = m_columnStoreIterator.next();
-			m_valueAccess.updatePartition(m_currentPartition);
+			m_currentPartition = m_reader.next();
+			m_linkedAccess.updatePartition(m_currentPartition);
 			m_currentBufferMaxIndex = m_currentPartition.getNumValues() - 1;
 		} catch (Exception e) {
 			// TODO handle exception
@@ -60,7 +61,7 @@ public class PartitionedReadableColumnCursor<T> //
 
 	@Override
 	public ReadableValueAccess getValueAccess() {
-		return m_valueAccess;
+		return m_linkedAccess;
 	}
 
 	@Override
@@ -68,5 +69,6 @@ public class PartitionedReadableColumnCursor<T> //
 		if (m_currentPartition != null) {
 			m_currentPartition.close();
 		}
+		m_reader.close();
 	}
 }

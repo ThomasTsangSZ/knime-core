@@ -1,18 +1,14 @@
 package org.knime.core.data.store;
 
-import java.io.File;
-
 import org.junit.Assert;
-import org.knime.core.data.store.arrow.ArrowStore;
 import org.knime.core.data.store.arrow.ArrowTable;
+import org.knime.core.data.store.arrow.ArrowUtils;
 import org.knime.core.data.store.column.ColumnSchema;
 import org.knime.core.data.store.column.ColumnType;
 import org.knime.core.data.store.column.ReadableColumnCursor;
 import org.knime.core.data.store.column.WritableColumn;
 import org.knime.core.data.store.column.value.ReadableDoubleValueAccess;
 import org.knime.core.data.store.column.value.WritableDoubleValueAccess;
-
-import com.google.common.io.Files;
 
 public class Main {
 
@@ -36,8 +32,7 @@ public class Main {
 		final long numRows = 100_000_000;
 
 		for (int z = 0; z < 100; z++) {
-			try (final ArrowTable table = new ArrowTable(
-					new ColumnSchema[] { doubleVectorSchema }, createStore(numRows))) {
+			try (final ArrowTable table = ArrowUtils.createArrowTable(BATCH_SIZE, OFFHEAP_SIZE, doubleVectorSchema)) {
 
 				long time = System.currentTimeMillis();
 				// first write
@@ -68,11 +63,5 @@ public class Main {
 				System.out.println((System.currentTimeMillis() - time));
 			}
 		}
-	}
-
-	private ArrowStore createStore(long numRows) {
-		final File baseDir = Files.createTempDir();
-		baseDir.deleteOnExit();
-		return new ArrowStore(baseDir, BATCH_SIZE, OFFHEAP_SIZE);
 	}
 }

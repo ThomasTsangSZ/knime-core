@@ -8,11 +8,11 @@ public class PartitionedWritableColumn<T> implements WritableColumn {
 	/*
 	 * Accessors to store
 	 */
-	private final ColumnPartitionValueAccess<T> m_valueAccess;
-
-	private final ColumnPartitionStore<T> m_columnStore;
+	private final ColumnPartitionValueAccess<T> m_linkedAccess;
 
 	private ColumnPartition<T> m_currentPartition;
+
+	private ColumnPartitionFactory<T> m_factory;
 
 	/*
 	 * Indices used by the implementation
@@ -22,9 +22,9 @@ public class PartitionedWritableColumn<T> implements WritableColumn {
 	private long m_index = -1;
 
 	// TODO typing? store has to match access or line 43 will crash.
-	public PartitionedWritableColumn(ColumnPartitionStore<T> store) {
-		m_columnStore = store;
-		m_valueAccess = store.createAccess();
+	public PartitionedWritableColumn(ColumnPartitionFactory<T> factory, ColumnPartitionValueAccess<T> linkedAccess) {
+		m_factory = factory;
+		m_linkedAccess = linkedAccess;
 
 		switchToNextPartition();
 	}
@@ -35,15 +35,15 @@ public class PartitionedWritableColumn<T> implements WritableColumn {
 			switchToNextPartition();
 			m_index = 0;
 		}
-		m_valueAccess.incIndex();
+		m_linkedAccess.incIndex();
 	}
 
 	private void switchToNextPartition() {
 		try {
 			// closes current partition only...
 			close();
-			m_currentPartition = m_columnStore.appendPartition();
-			m_valueAccess.updatePartition(m_currentPartition);
+			m_currentPartition = m_factory.appendPartition();
+			m_linkedAccess.updatePartition(m_currentPartition);
 			m_currentPartitionMaxIndex = m_currentPartition.getCapacity() - 1;
 
 		} catch (Exception e) {
@@ -54,7 +54,7 @@ public class PartitionedWritableColumn<T> implements WritableColumn {
 
 	@Override
 	public WritableValueAccess getValueAccess() {
-		return m_valueAccess;
+		return m_linkedAccess;
 	}
 
 	@Override

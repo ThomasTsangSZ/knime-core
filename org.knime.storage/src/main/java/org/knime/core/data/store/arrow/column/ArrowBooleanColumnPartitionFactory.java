@@ -1,32 +1,24 @@
 package org.knime.core.data.store.arrow.column;
 
-import java.io.File;
-
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.BitVector;
-import org.knime.core.data.store.column.partition.ColumnPartitionValueAccess;
 import org.knime.core.data.store.column.value.ReadableBooleanValueAccess;
 import org.knime.core.data.store.column.value.WritableBooleanValueAccess;
 
-public class ArrowBooleanColumnPartitionStore extends AbstractArrowColumnPartitionStore<BitVector> {
+public class ArrowBooleanColumnPartitionFactory extends AbstractArrowColumnPartitionFactory<BitVector> {
 
-	public ArrowBooleanColumnPartitionStore(int batchSize, BufferAllocator allocator, File baseFile) {
-		super(allocator, baseFile, batchSize);
+	public ArrowBooleanColumnPartitionFactory(BufferAllocator allocator, int size) {
+		super(allocator, size);
 	}
 
 	@Override
-	BitVector create(BufferAllocator alloc) {
+	BitVector create(BufferAllocator alloc, int maxSize) {
 		final BitVector vector = new BitVector((String) null, alloc);
-		vector.allocateNew(m_batchSize);
+		vector.allocateNew(maxSize);
 		return vector;
 	}
 
-	@Override
-	public ColumnPartitionValueAccess<BitVector> createAccess() {
-		return new ArrowBooleanValueAccess();
-	}
-
-	final class ArrowBooleanValueAccess //
+	public static final class ArrowBooleanValueAccess //
 			extends AbstractArrowValueAccess<BitVector> //
 			implements WritableBooleanValueAccess, ReadableBooleanValueAccess {
 

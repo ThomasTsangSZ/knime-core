@@ -1,33 +1,27 @@
 package org.knime.core.data.store.arrow.column;
 
-import java.io.File;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.VarCharVector;
-import org.knime.core.data.store.column.partition.ColumnPartitionValueAccess;
 import org.knime.core.data.store.column.value.ReadableStringValueAccess;
 import org.knime.core.data.store.column.value.WritableStringValueAccess;
 
-public class ArrowStringColumnPartitionStore extends AbstractArrowColumnPartitionStore<VarCharVector> {
+public class ArrowStringColumnPartitionFactory extends AbstractArrowColumnPartitionFactory<VarCharVector> {
 
-	public ArrowStringColumnPartitionStore(int batchSize, BufferAllocator allocator, File baseFile) {
-		super(allocator, baseFile, batchSize);
+	public ArrowStringColumnPartitionFactory(BufferAllocator allocator, int batchSize) {
+		super(allocator, batchSize);
 	}
 
 	@Override
-	VarCharVector create(BufferAllocator alloc) {
+	VarCharVector create(BufferAllocator alloc, int size) {
 		final VarCharVector vector = new VarCharVector((String) null, alloc);
-		vector.allocateNew(64l * m_batchSize, m_batchSize);
+		// TODO heuristic
+		vector.allocateNew(64l * size, size);
 		return vector;
 	}
 
-	@Override
-	public ColumnPartitionValueAccess<VarCharVector> createAccess() {
-		return new ArrowStringValueAccess();
-	}
-
-	final class ArrowStringValueAccess //
+	public static final class ArrowStringValueAccess //
 			extends AbstractArrowValueAccess<VarCharVector> //
 			implements WritableStringValueAccess, ReadableStringValueAccess {
 

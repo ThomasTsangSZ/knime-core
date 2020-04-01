@@ -28,10 +28,10 @@ public final class ArrowUtils {
 		}
 	}
 
-	public static ArrowTable createArrowTable(int batchSize, long offHeapSize, ColumnSchema[] schemas)
-			throws IOException {
+	public static ArrowTable createArrowTable(final int batchSize, final long offHeapSize,
+			final ColumnSchema... schemas) throws IOException {
 		final File baseDir = Files.createTempDir();
 		baseDir.deleteOnExit();
-		return new ArrowTable(schemas, new ArrowStore(baseDir, batchSize, offHeapSize));
+		return new ArrowTable(baseDir, schemas, batchSize);
 	}
 }

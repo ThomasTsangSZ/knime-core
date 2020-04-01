@@ -1,38 +1,41 @@
 package org.knime.core.data.store.arrow;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.knime.core.data.store.Store;
+import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.memory.RootAllocator;
+import org.apache.arrow.vector.FieldVector;
+import org.apache.arrow.vector.types.FloatingPointPrecision;
+import org.apache.arrow.vector.types.pojo.ArrowType;
+import org.knime.core.data.store.arrow.column.ArrowBooleanColumnPartitionFactory;
+import org.knime.core.data.store.arrow.column.ArrowBooleanColumnPartitionFactory.ArrowBooleanValueAccess;
+import org.knime.core.data.store.arrow.column.ArrowDoubleColumnPartitionFactory;
+import org.knime.core.data.store.arrow.column.ArrowDoubleColumnPartitionFactory.ArrowDoubleValueAccess;
+import org.knime.core.data.store.arrow.column.ArrowStringColumnPartitionFactory;
+import org.knime.core.data.store.arrow.column.ArrowStringColumnPartitionFactory.ArrowStringValueAccess;
 import org.knime.core.data.store.column.ColumnSchema;
+import org.knime.core.data.store.column.ColumnType;
 import org.knime.core.data.store.column.ReadableColumn;
 import org.knime.core.data.store.column.ReadableColumnCursor;
 import org.knime.core.data.store.column.WritableColumn;
-import org.knime.core.data.store.column.partition.CachedColumnPartitionStore;
-import org.knime.core.data.store.column.partition.ColumnPartitionStore;
+import org.knime.core.data.store.column.access.CachedColumnAccess;
+import org.knime.core.data.store.column.access.ColumnAccess;
 import org.knime.core.data.store.column.partition.PartitionedReadableColumnCursor;
 import org.knime.core.data.store.column.partition.PartitionedWritableColumn;
 import org.knime.core.data.store.table.ReadableTable;
 import org.knime.core.data.store.table.WritableTable;
 
+// TODO many things could be factored out.
+// TODO we could factor out the store etc to be more flexible (later)
 public class ArrowTable implements ReadableTable, WritableTable {
 
-	// TODO we support 'Long'-many columns.
-	private final ColumnPartitionStore<?>[] m_columnPartitionStores;
-	private final PartitionedWritableColumn<?>[] m_writableColumn;
+	private final ArrowTableStore m_store;
 
-	private final Store m_store;
-
-	public ArrowTable(final ColumnSchema[] schema, final ArrowStore store) throws IOException {
-		m_store = store;
-		m_columnPartitionStores = new ColumnPartitionStore[schema.length];
-		m_writableColumn = new PartitionedWritableColumn[schema.length];
-		for (int i = 0; i < schema.length; i++) {
-			// TODO we can do caching here... or ... somewhere else
-			m_columnPartitionStores[i] = new CachedColumnPartitionStore<>(m_store.create(schema[(int) i].getType()));
-			@SuppressWarnings("resource")
-			PartitionedWritableColumn<?> writable = new PartitionedWritableColumn<>(m_columnPartitionStores[i]);
-			m_writableColumn[i] = writable;
-		}
+	public ArrowTable(File baseDir, final ColumnSchema[] schema, int batchSize) throws IOException {
+		m_store = new ArrowTableStore(baseDir, schema, batchSize);
 	}
 
 	@Override
@@ -40,35 +43,105 @@ public class ArrowTable implements ReadableTable, WritableTable {
 		return new ReadableColumn() {
 			@Override
 			public ReadableColumnCursor cursor() {
-				return new PartitionedReadableColumnCursor<>(m_columnPartitionStores[(int) columnIndex]);
+				// NB: Stupid Java
+				return createReadableColumnCursor(m_store.getColumnStoreAt((int) columnIndex));
 			}
 		};
 	}
 
 	@Override
 	public WritableColumn getWritableColumn(long columnIndex) {
-		return m_writableColumn[(int) columnIndex];
+		final ColumnAccess<? extends FieldVector> access = m_store.getColumnStoreAt((int) columnIndex);
+		return createWritableColumn(access);
+	}
+
+	private <T extends FieldVector> WritableColumn createWritableColumn(ColumnAccess<T> access) {
+		return new PartitionedWritableColumn<>(access, access.createLinkedType());
+	}
+
+	private <T extends FieldVector> ReadableColumnCursor createReadableColumnCursor(ColumnAccess<T> columnStore) {
+		return new PartitionedReadableColumnCursor<>(columnStore.create(), columnStore.createLinkedType());
 	}
 
 	@Override
 	public long getNumColumns() {
-		return m_columnPartitionStores.length;
+		return m_store.getNumColumns();
 	}
 
+	// TODO i'm wouldn't know what 'close()' means for this table
+	// 'close()' -> release memory
+	// 'destroy()' delete any trace of this table
+	// NB: We don't need 'closeForWriting()'. Design allows to have concurrent
+	// read/write (e.g. for streaming)
 	@Override
 	public void close() throws Exception {
 		// TODO we have to check if someone still has a reference on this column?
-		for (ColumnPartitionStore<?> store : m_columnPartitionStores) {
-			store.close();
-		}
-
 		m_store.close();
 
-		// TODO i'm wouldn't know what 'close()' means for this table
-		// 'close()' -> release memory
-		// 'destroy()' delete any trace of this table
-		// NB: We don't need 'closeForWriting()'. Design allows to have concurrent
-		// read/write (e.g. for streaming)
+	}
+
+	class ArrowTableStore {
+
+		private final File m_baseDir;
+		private final List<ColumnAccess<? extends FieldVector>> m_columnAccesses = new ArrayList<>();
+		private final RootAllocator m_rootAllocator;
+		private ColumnSchema[] m_schema;
+		private int m_batchSize;
+
+		public ArrowTableStore(File baseDir, final ColumnSchema[] schema, int batchSize) {
+			m_rootAllocator = new RootAllocator();
+			m_baseDir = baseDir;
+			m_schema = schema;
+			m_batchSize = batchSize;
+
+			for (int i = 0; i < m_schema.length; i++) {
+				m_columnAccesses.add(new CachedColumnAccess<>(addColumn(m_schema[i].getType())));
+			}
+		}
+
+		private ColumnAccess<? extends FieldVector> addColumn(ColumnType type) {
+			final BufferAllocator childAllocator = m_rootAllocator.newChildAllocator("ChildAllocator", 0,
+					m_rootAllocator.getLimit());
+			switch (type) {
+			case BOOLEAN:
+				return new ArrowColumnAccess<>(m_baseDir, new ArrowType.Binary(), childAllocator,
+						new ArrowBooleanColumnPartitionFactory(childAllocator, m_batchSize),
+						() -> new ArrowBooleanValueAccess());
+			case DOUBLE:
+				return new ArrowColumnAccess<>(m_baseDir, new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE),
+						childAllocator, new ArrowDoubleColumnPartitionFactory(childAllocator, m_batchSize),
+						() -> new ArrowDoubleValueAccess());
+			case STRING:
+				return new ArrowColumnAccess<>(m_baseDir, new ArrowType.Utf8(), childAllocator,
+						new ArrowStringColumnPartitionFactory(childAllocator, m_batchSize),
+						() -> new ArrowStringValueAccess());
+			default:
+				throw new UnsupportedOperationException("not yet implemented");
+			}
+		}
+
+		// TODO sanity checking etc
+		public ColumnAccess<? extends FieldVector> getColumnStoreAt(int idx) {
+			return m_columnAccesses.get(idx);
+		}
+
+		// TODO Interface?
+		public void close() throws Exception {
+			for (ColumnAccess<?> store : m_columnAccesses) {
+				store.close();
+			}
+		}
+
+		public void destroy() throws Exception {
+			for (final ColumnAccess<?> columnStore : m_columnAccesses) {
+				columnStore.close();
+				columnStore.destroy();
+			}
+		}
+
+		public long getNumColumns() {
+			return m_schema.length;
+		}
 	}
 
 }

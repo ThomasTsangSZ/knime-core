@@ -1,4 +1,4 @@
-package org.knime.core.data.store.column.partition;
+package org.knime.core.data.store.column.access;
 
 import java.io.Flushable;
 import java.io.IOException;
@@ -7,6 +7,10 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.knime.core.data.store.column.partition.ColumnPartition;
+import org.knime.core.data.store.column.partition.ColumnPartitionReader;
+import org.knime.core.data.store.column.partition.ColumnPartitionValueAccess;
 
 /*
  * # Writing case:
@@ -34,7 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Always as single PartitionStore per column
  */
 // TODO Make all of the crap here thread-safe :-)
-public class CachedColumnPartitionStore<T> implements ColumnPartitionStore<T>, Flushable {
+public class CachedColumnAccess<T> implements ColumnAccess<T>, Flushable {
 
 	// TODO: We probably want to replace this by a more powerful (= actual) cache
 	// implementation.
@@ -44,7 +48,7 @@ public class CachedColumnPartitionStore<T> implements ColumnPartitionStore<T>, F
 	// wrappers in the cache.
 	private final ConcurrentHashMap<Long, ColumnPartition<T>> CACHE = new ConcurrentHashMap<>();
 
-	private ColumnPartitionStore<T> m_delegate;
+	private ColumnAccess<T> m_delegate;
 
 	// TODO do I need to synchronize that?
 	private final List<AtomicInteger> m_referenceCounter = new ArrayList<>();
@@ -52,14 +56,20 @@ public class CachedColumnPartitionStore<T> implements ColumnPartitionStore<T>, F
 
 	private AtomicBoolean m_isClosed;
 
-	public CachedColumnPartitionStore(final ColumnPartitionStore<T> delegate) {
+	public CachedColumnAccess(final ColumnAccess<T> delegate) {
 		m_delegate = delegate;
 		m_isClosed = new AtomicBoolean(false);
 
-		for (int i = 0; i < getNumPartitions(); i++) {
+		for (int i = 0; i < delegate.getNumPartitions(); i++) {
 			m_referenceCounter.add(new AtomicInteger());
 			m_isWritten.add(new AtomicBoolean());
 		}
+	}
+
+	@Override
+	public void destroy() throws Exception {
+		close();
+		m_delegate.destroy();
 	}
 
 	@Override
@@ -72,13 +82,12 @@ public class CachedColumnPartitionStore<T> implements ColumnPartitionStore<T>, F
 	 *         has been closed.
 	 */
 	@Override
-	public ColumnPartitionIterator<T> iterator() {
-
-		return new ColumnPartitionIterator<T>() {
+	public ColumnPartitionReader<T> create() {
+		return new ColumnPartitionReader<T>() {
 
 			private long m_idx = 0;
 
-			private final ColumnPartitionIterator<T> m_delegateIterator = m_delegate.iterator();
+			private final ColumnPartitionReader<T> m_delegateIterator = m_delegate.create();
 
 			@Override
 			public boolean hasNext() {
@@ -112,12 +121,17 @@ public class CachedColumnPartitionStore<T> implements ColumnPartitionStore<T>, F
 			public void skip() {
 				m_delegateIterator.skip();
 			}
+
+			@Override
+			public void close() throws Exception {
+				m_delegateIterator.close();
+			}
 		};
 	}
 
 	private ColumnPartition<T> addToCache(long partitionIndex, final ColumnPartition<T> partition) {
-		if (!(partition instanceof CachedColumnPartitionStore.CachedColumnPartition)) {
-			final CachedColumnPartitionStore<T>.CachedColumnPartition cached = new CachedColumnPartition(partition,
+		if (!(partition instanceof CachedColumnAccess.CachedColumnPartition)) {
+			final CachedColumnAccess<T>.CachedColumnPartition cached = new CachedColumnPartition(partition,
 					partitionIndex);
 			CACHE.put(partitionIndex, cached);
 			return cached;
@@ -132,18 +146,19 @@ public class CachedColumnPartitionStore<T> implements ColumnPartitionStore<T>, F
 	 * this call, nothing happens.
 	 */
 	@Override
-	public void persist(ColumnPartition<T> partition) throws IOException {
+	public synchronized void write(ColumnPartition<T> partition) throws IOException {
 		if (!m_isClosed.get()) {
 			// TODO should we implement a re-try in case something goes wrong?
+
+			// TODO HARD ASSUMPTION IS SEQUEANTIL WRITE
 
 			// TODO: Do this sync or async? Async would be faster but could cause
 			// memory problems if flush was called due to a memory alert, since then
 			// writing new data into the table is re-enabled (lock lifted) while still
 			// spilling old data to disk.
 			// we don't need this guy anymore. removed from cache etc.
-			final int idx = (int) partition.getIndex();
-			if (!m_isWritten.get(idx).getAndSet(true)) {
-				m_delegate.persist(partition);
+			if (!m_isWritten.get((int) (m_delegate.getNumPartitions() - 1)).getAndSet(true)) {
+				m_delegate.write(partition);
 			}
 		}
 	}
@@ -158,7 +173,7 @@ public class CachedColumnPartitionStore<T> implements ColumnPartitionStore<T>, F
 			// blocking while flushing!
 			for (long i = 0; i < m_referenceCounter.size(); i++) {
 				// ... if someone is already persisting: thanks bye
-				persist(CACHE.get(i));
+				write(CACHE.get(i));
 				removeFromCacheAndClose(i);
 			}
 		}
@@ -173,8 +188,8 @@ public class CachedColumnPartitionStore<T> implements ColumnPartitionStore<T>, F
 	}
 
 	@Override
-	public ColumnPartitionValueAccess<T> createAccess() {
-		return m_delegate.createAccess();
+	public ColumnPartitionValueAccess<T> createLinkedType() {
+		return m_delegate.createLinkedType();
 	}
 
 	/**
@@ -246,11 +261,6 @@ public class CachedColumnPartitionStore<T> implements ColumnPartitionStore<T>, F
 		public T get() {
 			// TODO do we need sync here?
 			return m_partitionDelegate.get();
-		}
-
-		@Override
-		public long getIndex() {
-			return m_partitionDelegate.getIndex();
 		}
 
 		@Override

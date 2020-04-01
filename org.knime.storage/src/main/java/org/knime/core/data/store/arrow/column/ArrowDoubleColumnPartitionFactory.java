@@ -1,32 +1,24 @@
 package org.knime.core.data.store.arrow.column;
 
-import java.io.File;
-
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.Float8Vector;
-import org.knime.core.data.store.column.partition.ColumnPartitionValueAccess;
 import org.knime.core.data.store.column.value.ReadableDoubleValueAccess;
 import org.knime.core.data.store.column.value.WritableDoubleValueAccess;
 
-public class ArrowDoubleColumnPartitionStore extends AbstractArrowColumnPartitionStore<Float8Vector> {
+public class ArrowDoubleColumnPartitionFactory extends AbstractArrowColumnPartitionFactory<Float8Vector> {
 
-	public ArrowDoubleColumnPartitionStore(int batchSize, BufferAllocator allocator, File baseDir) {
-		super(allocator, baseDir, batchSize);
+	public ArrowDoubleColumnPartitionFactory(BufferAllocator allocator, int batchSize) {
+		super(allocator, batchSize);
 	}
 
 	@Override
-	Float8Vector create(BufferAllocator alloc) {
+	Float8Vector create(BufferAllocator alloc, int size) {
 		final Float8Vector vector = new Float8Vector((String) null, alloc);
-		vector.allocateNew(m_batchSize);
+		vector.allocateNew(size);
 		return vector;
 	}
 
-	@Override
-	public ColumnPartitionValueAccess<Float8Vector> createAccess() {
-		return new ArrowDoubleValueAccess();
-	}
-
-	final class ArrowDoubleValueAccess //
+	public static final class ArrowDoubleValueAccess //
 			extends AbstractArrowValueAccess<Float8Vector> //
 			implements WritableDoubleValueAccess, ReadableDoubleValueAccess {
 

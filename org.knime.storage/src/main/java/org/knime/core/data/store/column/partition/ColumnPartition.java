@@ -4,8 +4,6 @@ public interface ColumnPartition<T> extends AutoCloseable {
 
 	T get();
 
-	long getIndex();
-
 	int getCapacity();
 
 	int getNumValues();

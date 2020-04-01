@@ -1,9 +1,7 @@
 package org.knime.core.data.store.column.partition;
 
-public interface ColumnPartitionReader<T> extends AutoCloseable {
-	ColumnPartition<T> readNext();
+import java.util.Iterator;
 
-	boolean hasNext();
-	
+public interface ColumnPartitionReader<T> extends AutoCloseable, Iterator<ColumnPartition<T>> {
 	void skip();
 }
