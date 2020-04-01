@@ -1,31 +1,26 @@
+
 package org.knime.core.data.store.column.partition;
 
 import org.knime.core.data.store.column.WritableColumnCursor;
 import org.knime.core.data.store.column.value.WritableValueAccess;
 
-public class PartitionedWritableColumn<T> implements WritableColumnCursor {
+public final class PartitionedWritableColumnCursor<T> implements WritableColumnCursor {
 
-	/*
-	 * Accessors to store
-	 */
-	private final ColumnPartitionValueAccess<T> m_linkedAccess;
+	private final PartitionedWritableValueAccess<T> m_linkedAccess;
+
+	private final ColumnPartitionFactory<T> m_factory;
 
 	private ColumnPartition<T> m_currentPartition;
 
-	private ColumnPartitionFactory<T> m_factory;
-
-	/*
-	 * Indices used by the implementation
-	 */
-	private int m_currentPartitionMaxIndex = -1;
+	private long m_currentPartitionMaxIndex = -1;
 
 	private long m_index = -1;
 
-	// TODO typing? store has to match access or line 43 will crash.
-	public PartitionedWritableColumn(ColumnPartitionFactory<T> factory, ColumnPartitionValueAccess<T> linkedAccess) {
-		m_factory = factory;
+	public PartitionedWritableColumnCursor(final PartitionedWritableValueAccess<T> linkedAccess,
+		final ColumnPartitionFactory<T> factory)
+	{
 		m_linkedAccess = linkedAccess;
-
+		m_factory = factory;
 		switchToNextPartition();
 	}
 
@@ -40,15 +35,21 @@ public class PartitionedWritableColumn<T> implements WritableColumnCursor {
 
 	private void switchToNextPartition() {
 		try {
-			// closes current partition only...
-			close();
+			closeCurrentPartition();
 			m_currentPartition = m_factory.createPartition();
 			m_linkedAccess.updatePartition(m_currentPartition);
 			m_currentPartitionMaxIndex = m_currentPartition.getCapacity() - 1;
-
-		} catch (Exception e) {
-			// TODO Exception handling
+		}
+		catch (final Exception e) {
+			// TODO
 			throw new RuntimeException(e);
+		}
+	}
+
+	private void closeCurrentPartition() throws Exception {
+		if (m_currentPartition != null) {
+			m_currentPartition.setNumValues((int) m_index);
+			m_currentPartition.close();
 		}
 	}
 
@@ -59,9 +60,6 @@ public class PartitionedWritableColumn<T> implements WritableColumnCursor {
 
 	@Override
 	public void close() throws Exception {
-		if (m_currentPartition != null) {
-			m_currentPartition.close();
-			m_currentPartition.setNumValues((int) m_index);
-		}
+		closeCurrentPartition();
 	}
 }

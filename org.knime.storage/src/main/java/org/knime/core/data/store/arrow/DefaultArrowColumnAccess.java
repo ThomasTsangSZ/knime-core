@@ -26,7 +26,7 @@ import org.knime.core.data.store.arrow.column.ArrowColumnPartition;
 import org.knime.core.data.store.column.partition.ColumnPartition;
 import org.knime.core.data.store.column.partition.ColumnPartitionFactory;
 import org.knime.core.data.store.column.partition.ColumnPartitionReader;
-import org.knime.core.data.store.column.partition.ColumnPartitionValueAccess;
+import org.knime.core.data.store.column.partition.PartitionedColumnValueAccess;
 
 import io.netty.buffer.ArrowBuf;
 
@@ -36,7 +36,7 @@ import io.netty.buffer.ArrowBuf;
 class DefaultArrowColumnAccess<T extends FieldVector> implements ArrowColumnAccess<T> {
 
 	private ColumnPartitionFactory<T> m_factory;
-	private Supplier<ColumnPartitionValueAccess<T>> m_linkedType;
+	private Supplier<PartitionedColumnValueAccess<T>> m_linkedType;
 	private Schema m_schema;
 	private BufferAllocator m_allocator;
 	private DefaultArrowColumnAccess<T>.ArrowVectorToDiskWriter m_writer;
@@ -46,7 +46,7 @@ class DefaultArrowColumnAccess<T extends FieldVector> implements ArrowColumnAcce
 	private File m_file;
 
 	public DefaultArrowColumnAccess(final File baseDir, final ArrowType type, final BufferAllocator allocator,
-			ColumnPartitionFactory<T> factory, Supplier<ColumnPartitionValueAccess<T>> linkedType) {
+			ColumnPartitionFactory<T> factory, Supplier<PartitionedColumnValueAccess<T>> linkedType) {
 
 		m_schema = new Schema(Collections.singleton(new Field("TODO", new FieldType(true, type, null), null)));
 		m_allocator = allocator;
@@ -80,7 +80,7 @@ class DefaultArrowColumnAccess<T extends FieldVector> implements ArrowColumnAcce
 	}
 
 	@Override
-	public ColumnPartitionValueAccess<T> createLinkedType() {
+	public PartitionedColumnValueAccess<T> createLinkedType() {
 		return m_linkedType.get();
 	}
 
@@ -175,7 +175,7 @@ class DefaultArrowColumnAccess<T extends FieldVector> implements ArrowColumnAcce
 			initWriter();
 			final List<ArrowFieldNode> nodes = new ArrayList<>();
 			final List<ArrowBuf> buffers = new ArrayList<>();
-			final T vector = partition.get();
+			final T vector = partition.getStorage();
 			appendNodes(vector, nodes, buffers);
 			// Auto-closing makes sure that ArrowRecordBatch actually releases the buffers
 			// again

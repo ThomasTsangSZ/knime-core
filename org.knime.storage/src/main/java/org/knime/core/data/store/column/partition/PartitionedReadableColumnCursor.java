@@ -1,62 +1,63 @@
+
 package org.knime.core.data.store.column.partition;
 
 import org.knime.core.data.store.column.ReadableColumnCursor;
 import org.knime.core.data.store.column.value.ReadableValueAccess;
 
-public class PartitionedReadableColumnCursor<T> //
-		implements ReadableColumnCursor {
+public final class PartitionedReadableColumnCursor<T> implements ReadableColumnCursor {
 
-	/*
-	 * Constants
-	 */
-	private final ColumnPartitionValueAccess<T> m_linkedAccess;
+	private final PartitionedReadableValueAccess<T> m_linkedAccess;
 
 	private final ColumnPartitionReader<T> m_reader;
 
-	/*
-	 * Indices used by implementation
-	 */
 	private ColumnPartition<T> m_currentPartition;
 
-	private long m_currentBufferMaxIndex = -1;
+	private long m_currentPartitionMaxIndex = -1;
 
 	private long m_index = -1;
 
-	public PartitionedReadableColumnCursor(final ColumnPartitionReader<T> reader,
-			final ColumnPartitionValueAccess<T> linkedAccess) {
+	public PartitionedReadableColumnCursor(final PartitionedReadableValueAccess<T> linkedAccess,
+		final ColumnPartitionReader<T> reader)
+	{
 		m_linkedAccess = linkedAccess;
 		m_reader = reader;
-		switchToNextBuffer();
+		switchToNextPartition();
 	}
 
 	@Override
 	public boolean canFwd() {
-		return m_index < m_currentBufferMaxIndex - 1
-				// TODO
-				|| m_reader.hasNext();
+		return m_index < m_currentPartitionMaxIndex
+		// TODO
+			|| m_reader.hasNext();
 	}
 
 	@Override
 	public void fwd() {
-		if (++m_index > m_currentBufferMaxIndex) {
+		if (++m_index > m_currentPartitionMaxIndex) {
+			switchToNextPartition();
 			m_index = 0;
-			switchToNextBuffer();
 		}
 		m_linkedAccess.incIndex();
 	}
 
-	private void switchToNextBuffer() {
+	private void switchToNextPartition() {
 		try {
-			if (m_currentPartition != null)
-				m_currentPartition.close();
-
+			closeCurrentPartition();
 			m_currentPartition = m_reader.next();
 			m_linkedAccess.updatePartition(m_currentPartition);
-			m_currentBufferMaxIndex = m_currentPartition.getNumValues() - 1;
-		} catch (Exception e) {
-			// TODO handle exception
+			m_currentPartitionMaxIndex = m_currentPartition.getNumValues() - 1;
+		}
+		catch (final Exception e) {
+			// TODO
 			throw new RuntimeException(e);
 		}
+	}
+
+	private void closeCurrentPartition() throws Exception {
+		if (m_currentPartition != null) {
+			m_currentPartition.close();
+		}
+		m_reader.close();
 	}
 
 	@Override
@@ -66,9 +67,6 @@ public class PartitionedReadableColumnCursor<T> //
 
 	@Override
 	public void close() throws Exception {
-		if (m_currentPartition != null) {
-			m_currentPartition.close();
-		}
-		m_reader.close();
+		closeCurrentPartition();
 	}
 }

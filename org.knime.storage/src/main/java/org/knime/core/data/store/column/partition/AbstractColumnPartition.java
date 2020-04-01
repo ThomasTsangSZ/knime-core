@@ -1,40 +1,41 @@
+
 package org.knime.core.data.store.column.partition;
 
 public abstract class AbstractColumnPartition<V> implements ColumnPartition<V> {
 
 	protected final V m_storage;
-	private final int m_maxSize;
-	private int m_numValues;
 
-	public AbstractColumnPartition(final V storage, final int maxSize, final int numValues) {
-		m_storage = storage;
-		m_maxSize = maxSize;
+	private final long m_capacity;
+
+	private long m_numValues;
+
+	public AbstractColumnPartition(final V storage, final long capacity, final long numValues) {
+		this(storage, capacity);
 		m_numValues = numValues;
 	}
 
-	public AbstractColumnPartition(final V storage, final int maxSize) {
+	public AbstractColumnPartition(final V storage, final long capacity) {
 		m_storage = storage;
-		m_maxSize = maxSize;
+		m_capacity = capacity;
 	}
 
 	@Override
-	public V get() {
+	public V getStorage() {
 		return m_storage;
 	}
 
 	@Override
-	public int getCapacity() {
-		return m_maxSize;
+	public long getCapacity() {
+		return m_capacity;
 	}
 
 	@Override
-	public int getNumValues() {
+	public long getNumValues() {
 		return m_numValues;
 	}
 
 	@Override
-	public void setNumValues(int numValues) {
+	public void setNumValues(final long numValues) {
 		m_numValues = numValues;
 	}
-
 }

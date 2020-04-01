@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.knime.core.data.store.column.partition.ColumnPartition;
 import org.knime.core.data.store.column.partition.ColumnPartitionReader;
-import org.knime.core.data.store.column.partition.ColumnPartitionValueAccess;
+import org.knime.core.data.store.column.partition.PartitionedColumnValueAccess;
 
 /*
  * # Writing case:
@@ -177,7 +177,7 @@ class CachedColumnAccess<T> implements ArrowColumnAccess<T>, Flushable {
 	}
 
 	@Override
-	public ColumnPartitionValueAccess<T> createLinkedType() {
+	public PartitionedColumnValueAccess<T> createLinkedType() {
 		return m_delegate.createLinkedType();
 	}
 
@@ -238,9 +238,9 @@ class CachedColumnAccess<T> implements ArrowColumnAccess<T>, Flushable {
 		}
 
 		@Override
-		public T get() {
+		public T getStorage() {
 			// TODO do we need sync here?
-			return m_partitionDelegate.get();
+			return m_partitionDelegate.getStorage();
 		}
 
 		@Override

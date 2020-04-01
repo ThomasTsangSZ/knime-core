@@ -2,12 +2,12 @@ package org.knime.core.data.store.column.partition;
 
 public interface ColumnPartition<T> extends AutoCloseable {
 
-	T get();
+	T getStorage();
 
-	int getCapacity();
+	long getCapacity();
 
-	int getNumValues();
+	long getNumValues();
 
 	// TODO I'd really like to not need that
-	void setNumValues(int numValues);
+	void setNumValues(long numValues);
 }

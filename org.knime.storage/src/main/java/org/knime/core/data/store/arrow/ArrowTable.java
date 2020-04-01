@@ -22,7 +22,7 @@ import org.knime.core.data.store.column.ReadableColumn;
 import org.knime.core.data.store.column.ReadableColumnCursor;
 import org.knime.core.data.store.column.WritableColumnCursor;
 import org.knime.core.data.store.column.partition.PartitionedReadableColumnCursor;
-import org.knime.core.data.store.column.partition.PartitionedWritableColumn;
+import org.knime.core.data.store.column.partition.PartitionedWritableColumnCursor;
 import org.knime.core.data.store.table.ReadableTable;
 import org.knime.core.data.store.table.WritableTable;
 
@@ -56,11 +56,11 @@ public class ArrowTable implements ReadableTable, WritableTable {
 	}
 
 	private <T extends FieldVector> WritableColumnCursor createWritableColumn(ArrowColumnAccess<T> access) {
-		return new PartitionedWritableColumn<>(access, access.createLinkedType());
+		return new PartitionedWritableColumnCursor<>(access.createLinkedType(), access);
 	}
 
 	private <T extends FieldVector> ReadableColumnCursor createReadableColumnCursor(ArrowColumnAccess<T> columnStore) {
-		return new PartitionedReadableColumnCursor<>(columnStore.create(), columnStore.createLinkedType());
+		return new PartitionedReadableColumnCursor<>(columnStore.createLinkedType(), columnStore.create());
 	}
 
 	@Override
