@@ -31,6 +31,7 @@ import org.knime.core.data.store.table.WritableTable;
 public class ArrowTable implements ReadableTable, WritableTable {
 
 	private final ArrowTableStore m_store;
+	private final List<ArrowCachedColumnAccess<? extends FieldVector>> m_columnAccesses = new ArrayList<>();
 
 	public ArrowTable(File baseDir, final ColumnSchema[] schema, int batchSize) throws IOException {
 		m_store = new ArrowTableStore(baseDir, schema, batchSize);
@@ -78,10 +79,15 @@ public class ArrowTable implements ReadableTable, WritableTable {
 
 	}
 
+	public void flush() throws IOException {
+		for (final ArrowCachedColumnAccess<?> cached : m_columnAccesses) {
+			cached.flush();
+		}
+	}
+
 	class ArrowTableStore {
 
 		private final File m_baseDir;
-		private final List<ArrowColumnAccess<? extends FieldVector>> m_columnAccesses = new ArrayList<>();
 		private final RootAllocator m_rootAllocator;
 		private ColumnSchema[] m_schema;
 		private int m_batchSize;
@@ -106,8 +112,9 @@ public class ArrowTable implements ReadableTable, WritableTable {
 						new ArrowBooleanColumnPartitionFactory(childAllocator, m_batchSize),
 						() -> new ArrowBooleanValueAccess());
 			case DOUBLE:
-				return new DefaultArrowColumnAccess<>(m_baseDir, new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE),
-						childAllocator, new ArrowDoubleColumnPartitionFactory(childAllocator, m_batchSize),
+				return new DefaultArrowColumnAccess<>(m_baseDir,
+						new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE), childAllocator,
+						new ArrowDoubleColumnPartitionFactory(childAllocator, m_batchSize),
 						() -> new ArrowDoubleValueAccess());
 			case STRING:
 				return new DefaultArrowColumnAccess<>(m_baseDir, new ArrowType.Utf8(), childAllocator,

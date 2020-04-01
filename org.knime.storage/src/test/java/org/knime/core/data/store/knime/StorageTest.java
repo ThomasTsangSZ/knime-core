@@ -24,13 +24,13 @@ public class StorageTest {
 	 */
 
 	// in numValues per vector
-	private static final int BATCH_SIZE = 10_000_000;
+	private static final int BATCH_SIZE = 100;
 
 	// in bytes
 	private static final long OFFHEAP_SIZE = 2048_000_000;
 
 	// num rows used for testing
-	private static final long NUM_ROWS = 100_000_000;
+	private static final long NUM_ROWS = 10000;
 
 	// some schema
 	private static final ColumnSchema[] SCHEMAS = new ColumnSchema[] { () -> ColumnType.DOUBLE };
@@ -60,6 +60,18 @@ public class StorageTest {
 					// col1.fwd().getDouble();
 					col0.fwd();
 					val0.setDoubleValue(i);
+
+					
+					// OH OH MEMORY LOW
+					/*
+					 * What should happen
+					 * -> flush to disc.
+					 * -> clear cache
+					 * -> read from cache reading
+					 */
+					if(i == 1337) {
+						table.flush();
+					}
 				}
 			}
 

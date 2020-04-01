@@ -30,6 +30,7 @@ import org.knime.core.data.store.column.partition.ColumnPartitionValueAccess;
 
 import io.netty.buffer.ArrowBuf;
 
+// TODO make sure multi-threaded access is possible.
 class DefaultArrowColumnAccess<T extends FieldVector> implements ArrowColumnAccess<T> {
 
 	private ColumnPartitionFactory<T> m_factory;
@@ -38,6 +39,9 @@ class DefaultArrowColumnAccess<T extends FieldVector> implements ArrowColumnAcce
 	private BufferAllocator m_allocator;
 	private File m_file;
 	private DefaultArrowColumnAccess<T>.ArrowVectorToDiskWriter m_writer;
+
+	// partition counter
+	private long m_createdPartitions = 0;
 
 	public DefaultArrowColumnAccess(final File baseDir, final ArrowType type, final BufferAllocator allocator,
 			ColumnPartitionFactory<T> factory, Supplier<ColumnPartitionValueAccess<T>> linkedType) {
@@ -68,6 +72,8 @@ class DefaultArrowColumnAccess<T extends FieldVector> implements ArrowColumnAcce
 
 	@Override
 	public ColumnPartition<T> appendPartition() {
+		// TODO should be synchronized with getNumPartitions (I think)
+		m_createdPartitions++;
 		return m_factory.appendPartition();
 	}
 
@@ -84,8 +90,7 @@ class DefaultArrowColumnAccess<T extends FieldVector> implements ArrowColumnAcce
 
 	@Override
 	public long getNumPartitions() {
-		// TODO Auto-generated method stub
-		return 0;
+		return m_createdPartitions;
 	}
 
 	// TODO we assume read after write with this implementation.
