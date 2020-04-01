@@ -14,7 +14,7 @@ public final class ColumnBackedReadableRow implements ReadableRow {
 	public static ColumnBackedReadableRow fromReadableTable(final ReadableTable table) {
 		final List<ReadableColumnCursor> columns = new ArrayList<>(Math.toIntExact(table.getNumColumns()));
 		for (long i = 0; i < table.getNumColumns(); i++) {
-			columns.add(table.getReadableColumn(i).cursor());
+			columns.add(table.getReadableColumn(i).createCursor());
 		}
 		return new ColumnBackedReadableRow(columns);
 	}

@@ -1,9 +1,11 @@
 
 package org.knime.core.data.store.table;
 
-import org.knime.core.data.store.column.WritableColumn;
+import org.knime.core.data.store.column.WritableColumnCursor;
 
-public interface WritableTable extends Table, AutoCloseable {
+public interface WritableTable extends AutoCloseable {
 
-	WritableColumn getWritableColumn(long columnIndex);
+	long getNumColumns();
+
+	WritableColumnCursor getWritableColumnCursor(long columnIndex);
 }

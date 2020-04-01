@@ -20,7 +20,7 @@ import org.knime.core.data.store.column.ColumnSchema;
 import org.knime.core.data.store.column.ColumnType;
 import org.knime.core.data.store.column.ReadableColumn;
 import org.knime.core.data.store.column.ReadableColumnCursor;
-import org.knime.core.data.store.column.WritableColumn;
+import org.knime.core.data.store.column.WritableColumnCursor;
 import org.knime.core.data.store.column.partition.PartitionedReadableColumnCursor;
 import org.knime.core.data.store.column.partition.PartitionedWritableColumn;
 import org.knime.core.data.store.table.ReadableTable;
@@ -42,7 +42,7 @@ public class ArrowTable implements ReadableTable, WritableTable {
 	public ReadableColumn getReadableColumn(long columnIndex) {
 		return new ReadableColumn() {
 			@Override
-			public ReadableColumnCursor cursor() {
+			public ReadableColumnCursor createCursor() {
 				// NB: Stupid Java
 				return createReadableColumnCursor(m_store.getColumnStoreAt((int) columnIndex));
 			}
@@ -50,12 +50,12 @@ public class ArrowTable implements ReadableTable, WritableTable {
 	}
 
 	@Override
-	public WritableColumn getWritableColumn(long columnIndex) {
+	public WritableColumnCursor getWritableColumnCursor(long columnIndex) {
 		final ArrowColumnAccess<? extends FieldVector> access = m_store.getColumnStoreAt((int) columnIndex);
 		return createWritableColumn(access);
 	}
 
-	private <T extends FieldVector> WritableColumn createWritableColumn(ArrowColumnAccess<T> access) {
+	private <T extends FieldVector> WritableColumnCursor createWritableColumn(ArrowColumnAccess<T> access) {
 		return new PartitionedWritableColumn<>(access, access.createLinkedType());
 	}
 

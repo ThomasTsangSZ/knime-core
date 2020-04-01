@@ -8,7 +8,7 @@ import org.knime.core.data.store.arrow.ArrowUtils;
 import org.knime.core.data.store.column.ColumnSchema;
 import org.knime.core.data.store.column.ColumnType;
 import org.knime.core.data.store.column.ReadableColumnCursor;
-import org.knime.core.data.store.column.WritableColumn;
+import org.knime.core.data.store.column.WritableColumnCursor;
 import org.knime.core.data.store.column.value.ReadableDoubleValueAccess;
 import org.knime.core.data.store.column.value.WritableDoubleValueAccess;
 
@@ -38,7 +38,7 @@ public class Main {
 
 				final long time = System.nanoTime();
 				// first write
-				try (final WritableColumn column = table.getWritableColumn(0)) {
+				try (final WritableColumnCursor column = table.getWritableColumnCursor(0)) {
 					final WritableDoubleValueAccess value = (WritableDoubleValueAccess) column.getValueAccess();
 					for (long i = 0; i < numRows; i++) {
 						column.fwd();
@@ -50,7 +50,7 @@ public class Main {
 					}
 				}
 				// then read
-				try (final ReadableColumnCursor readableColumn = table.getReadableColumn(0).cursor()) {
+				try (final ReadableColumnCursor readableColumn = table.getReadableColumn(0).createCursor()) {
 					final ReadableDoubleValueAccess readableValue = (ReadableDoubleValueAccess) readableColumn
 							.getValueAccess();
 					for (long i = 0; readableColumn.canFwd(); i++) {

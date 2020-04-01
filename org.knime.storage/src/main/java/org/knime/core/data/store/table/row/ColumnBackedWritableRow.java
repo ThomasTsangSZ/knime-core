@@ -4,7 +4,7 @@ package org.knime.core.data.store.table.row;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.knime.core.data.store.column.WritableColumn;
+import org.knime.core.data.store.column.WritableColumnCursor;
 import org.knime.core.data.store.column.value.WritableValueAccess;
 import org.knime.core.data.store.table.WritableTable;
 
@@ -12,21 +12,21 @@ import org.knime.core.data.store.table.WritableTable;
 public final class ColumnBackedWritableRow implements WritableRow {
 
 	public static ColumnBackedWritableRow fromWritableTable(final WritableTable table) {
-		final List<WritableColumn> columns = new ArrayList<>(Math.toIntExact(table.getNumColumns()));
+		final List<WritableColumnCursor> columns = new ArrayList<>(Math.toIntExact(table.getNumColumns()));
 		for (long i = 0; i < table.getNumColumns(); i++) {
-			columns.add(table.getWritableColumn(i));
+			columns.add(table.getWritableColumnCursor(i));
 		}
 		return new ColumnBackedWritableRow(columns);
 	}
 
-	private final List<WritableColumn> m_columns;
+	private final List<WritableColumnCursor> m_columns;
 
 	private final List<WritableValueAccess> m_dataValues;
 
-	public ColumnBackedWritableRow(final List<WritableColumn> columns) {
+	public ColumnBackedWritableRow(final List<WritableColumnCursor> columns) {
 		m_columns = columns;
 		m_dataValues = new ArrayList<>(columns.size());
-		for (final WritableColumn column : m_columns) {
+		for (final WritableColumnCursor column : m_columns) {
 			m_dataValues.add(column.getValueAccess());
 		}
 	}
@@ -38,7 +38,7 @@ public final class ColumnBackedWritableRow implements WritableRow {
 
 	@Override
 	public void fwd() {
-		for (final WritableColumn column : m_columns) {
+		for (final WritableColumnCursor column : m_columns) {
 			column.fwd();
 		}
 	}
@@ -50,7 +50,7 @@ public final class ColumnBackedWritableRow implements WritableRow {
 
 	@Override
 	public void close() throws Exception {
-		for (final WritableColumn column : m_columns) {
+		for (final WritableColumnCursor column : m_columns) {
 			column.close();
 		}
 	}

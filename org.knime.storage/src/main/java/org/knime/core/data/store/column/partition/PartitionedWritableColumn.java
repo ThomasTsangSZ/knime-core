@@ -1,9 +1,9 @@
 package org.knime.core.data.store.column.partition;
 
-import org.knime.core.data.store.column.WritableColumn;
+import org.knime.core.data.store.column.WritableColumnCursor;
 import org.knime.core.data.store.column.value.WritableValueAccess;
 
-public class PartitionedWritableColumn<T> implements WritableColumn {
+public class PartitionedWritableColumn<T> implements WritableColumnCursor {
 
 	/*
 	 * Accessors to store

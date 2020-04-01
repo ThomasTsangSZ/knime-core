@@ -8,7 +8,7 @@ import org.knime.core.data.store.arrow.ArrowUtils;
 import org.knime.core.data.store.column.ColumnSchema;
 import org.knime.core.data.store.column.ColumnType;
 import org.knime.core.data.store.column.ReadableColumnCursor;
-import org.knime.core.data.store.column.WritableColumn;
+import org.knime.core.data.store.column.WritableColumnCursor;
 import org.knime.core.data.store.column.value.ReadableDoubleValueAccess;
 import org.knime.core.data.store.column.value.WritableDoubleValueAccess;
 import org.knime.core.data.store.table.row.ColumnBackedReadableRow;
@@ -53,7 +53,7 @@ public class StorageTest {
 
 		try (final ArrowTable table = ArrowUtils.createArrowTable(BATCH_SIZE, OFFHEAP_SIZE, SCHEMAS)) {
 			// first column write
-			try (final WritableColumn col0 = table.getWritableColumn(0)) {
+			try (final WritableColumnCursor col0 = table.getWritableColumnCursor(0)) {
 				final WritableDoubleValueAccess val0 = (WritableDoubleValueAccess) col0.getValueAccess();
 				for (long i = 0; i < NUM_ROWS; i++) {
 					// TODO it would be cool to do col0.fwd().setDouble('val') or
@@ -77,7 +77,7 @@ public class StorageTest {
 			}
 
 			// then read
-			try (final ReadableColumnCursor col0 = table.getReadableColumn(0).cursor()) {
+			try (final ReadableColumnCursor col0 = table.getReadableColumn(0).createCursor()) {
 				final ReadableDoubleValueAccess val0 = (ReadableDoubleValueAccess) col0.getValueAccess();
 				for (long i = 0; col0.canFwd(); i++) {
 					col0.fwd();
