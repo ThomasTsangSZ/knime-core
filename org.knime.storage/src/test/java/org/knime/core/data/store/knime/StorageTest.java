@@ -1,24 +1,20 @@
 
 package org.knime.core.data.store.knime;
 
-import java.io.File;
-
 import org.junit.Assert;
 import org.junit.Test;
-import org.knime.core.data.store.arrow.ArrowStore;
+import org.knime.core.data.store.arrow.ArrowTable;
+import org.knime.core.data.store.arrow.ArrowUtils;
 import org.knime.core.data.store.column.ColumnSchema;
 import org.knime.core.data.store.column.ColumnType;
 import org.knime.core.data.store.column.ReadableColumnCursor;
 import org.knime.core.data.store.column.WritableColumn;
-import org.knime.core.data.store.column.partition.DefaultPartitionedColumnsTable;
 import org.knime.core.data.store.column.value.ReadableDoubleValueAccess;
 import org.knime.core.data.store.column.value.WritableDoubleValueAccess;
 import org.knime.core.data.store.table.row.ColumnBackedReadableRow;
 import org.knime.core.data.store.table.row.ColumnBackedWritableRow;
 import org.knime.core.data.store.table.row.ReadableRow;
 import org.knime.core.data.store.table.row.WritableRow;
-
-import com.google.common.io.Files;
 
 public class StorageTest {
 
@@ -27,7 +23,8 @@ public class StorageTest {
 
 	// in bytes
 	private static final long OFFHEAP_SIZE = 2048_000_000;
-	private static final ColumnSchema doubleVectorSchema = () -> ColumnType.DOUBLE;
+
+	private static final ColumnSchema[] SCHEMAS = new ColumnSchema[] { () -> ColumnType.DOUBLE };
 
 	@Test
 	public void doubleArrayTest() {
@@ -45,10 +42,8 @@ public class StorageTest {
 	@Test
 	public void columnwiseWriteReadSingleDoubleColumnIdentityTest() throws Exception {
 		final long numRows = 100_000_000;
-
 		for (int z = 0; z < 10; z++) {
-			try (final DefaultPartitionedColumnsTable table = new DefaultPartitionedColumnsTable(
-					new ColumnSchema[] { doubleVectorSchema }, createStore(numRows))) {
+			try (final ArrowTable table = ArrowUtils.createArrowTable(BATCH_SIZE, OFFHEAP_SIZE, SCHEMAS)) {
 
 				long time = System.currentTimeMillis();
 				// first write
@@ -86,8 +81,7 @@ public class StorageTest {
 		final long numRows = 128;
 
 		// Read/Write table...
-		try (final DefaultPartitionedColumnsTable table = new DefaultPartitionedColumnsTable(
-				new ColumnSchema[] { doubleVectorSchema }, createStore(numRows))) {
+		try (final ArrowTable table = ArrowUtils.createArrowTable(BATCH_SIZE, OFFHEAP_SIZE, SCHEMAS)) {
 
 			try (final WritableRow row = ColumnBackedWritableRow.fromWritableTable(table)) {
 				final WritableDoubleValueAccess value = (WritableDoubleValueAccess) row.getValueAccessAt(0);
@@ -113,12 +107,6 @@ public class StorageTest {
 				}
 			}
 		}
-	}
-
-	private ArrowStore createStore(long numRows) {
-		final File baseDir = Files.createTempDir();
-		baseDir.deleteOnExit();
-		return new ArrowStore(baseDir, BATCH_SIZE, OFFHEAP_SIZE);
 	}
 }
 /*

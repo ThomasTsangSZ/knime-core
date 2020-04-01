@@ -1,4 +1,4 @@
-package org.knime.core.data.store.column.partition;
+package org.knime.core.data.store.arrow;
 
 import java.io.IOException;
 
@@ -7,10 +7,14 @@ import org.knime.core.data.store.column.ColumnSchema;
 import org.knime.core.data.store.column.ReadableColumn;
 import org.knime.core.data.store.column.ReadableColumnCursor;
 import org.knime.core.data.store.column.WritableColumn;
+import org.knime.core.data.store.column.partition.CachedColumnPartitionStore;
+import org.knime.core.data.store.column.partition.ColumnPartitionStore;
+import org.knime.core.data.store.column.partition.PartitionedReadableColumnCursor;
+import org.knime.core.data.store.column.partition.PartitionedWritableColumn;
 import org.knime.core.data.store.table.ReadableTable;
 import org.knime.core.data.store.table.WritableTable;
 
-public class DefaultPartitionedColumnsTable implements ReadableTable, WritableTable {
+public class ArrowTable implements ReadableTable, WritableTable {
 
 	// TODO we support 'Long'-many columns.
 	private final ColumnPartitionStore<?>[] m_columnPartitionStores;
@@ -18,7 +22,7 @@ public class DefaultPartitionedColumnsTable implements ReadableTable, WritableTa
 
 	private final Store m_store;
 
-	public DefaultPartitionedColumnsTable(final ColumnSchema[] schema, final Store store) throws IOException {
+	public ArrowTable(final ColumnSchema[] schema, final ArrowStore store) throws IOException {
 		m_store = store;
 		m_columnPartitionStores = new ColumnPartitionStore[schema.length];
 		m_writableColumn = new PartitionedWritableColumn[schema.length];

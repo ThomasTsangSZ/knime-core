@@ -4,11 +4,11 @@ import java.io.File;
 
 import org.junit.Assert;
 import org.knime.core.data.store.arrow.ArrowStore;
+import org.knime.core.data.store.arrow.ArrowTable;
 import org.knime.core.data.store.column.ColumnSchema;
 import org.knime.core.data.store.column.ColumnType;
 import org.knime.core.data.store.column.ReadableColumnCursor;
 import org.knime.core.data.store.column.WritableColumn;
-import org.knime.core.data.store.column.partition.DefaultPartitionedColumnsTable;
 import org.knime.core.data.store.column.value.ReadableDoubleValueAccess;
 import org.knime.core.data.store.column.value.WritableDoubleValueAccess;
 
@@ -36,7 +36,7 @@ public class Main {
 		final long numRows = 100_000_000;
 
 		for (int z = 0; z < 100; z++) {
-			try (final DefaultPartitionedColumnsTable table = new DefaultPartitionedColumnsTable(
+			try (final ArrowTable table = new ArrowTable(
 					new ColumnSchema[] { doubleVectorSchema }, createStore(numRows))) {
 
 				long time = System.currentTimeMillis();
