@@ -24,13 +24,13 @@ public class StorageTest {
 	 */
 
 	// in numValues per vector
-	private static final int BATCH_SIZE = 100;
+	private static final int BATCH_SIZE = 10_000_000;
 
 	// in bytes
-	private static final long OFFHEAP_SIZE = 2048_000_000;
+	private static final long OFFHEAP_SIZE = 2000_000_000;
 
 	// num rows used for testing
-	private static final long NUM_ROWS = 10000;
+	private static final long NUM_ROWS = 100_000_000;
 
 	// some schema
 	private static final ColumnSchema[] SCHEMAS = new ColumnSchema[] { () -> ColumnType.DOUBLE };

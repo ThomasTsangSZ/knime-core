@@ -14,6 +14,7 @@
 - [ ] Thread-safety (multi-read, cache,...). Locking per partition.
 - [ ] Pre-fetching / pre-writing (async)
 - [ ] Serialization - how do I restore state of a store or rather entire table (use-case: (i) knime has stored store or (ii) store created without prior writing).
+- [ ] Exception Handling & Logging
 - [ ] MultiVecValue & Custom data types (e.g. Date&Time, Text, Struct, PNG Images). Support for serializers. Forseeable problem: avoid constant serialization and deserialization into byte[]
 - [ ] Domain Calculation
 - [ ] DuplicateChecker for RowId
