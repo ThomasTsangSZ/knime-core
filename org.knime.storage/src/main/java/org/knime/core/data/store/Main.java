@@ -1,5 +1,7 @@
 package org.knime.core.data.store;
 
+import java.util.concurrent.TimeUnit;
+
 import org.junit.Assert;
 import org.knime.core.data.store.arrow.ArrowTable;
 import org.knime.core.data.store.arrow.ArrowUtils;
@@ -34,7 +36,7 @@ public class Main {
 		for (int z = 0; z < 100; z++) {
 			try (final ArrowTable table = ArrowUtils.createArrowTable(BATCH_SIZE, OFFHEAP_SIZE, doubleVectorSchema)) {
 
-				long time = System.currentTimeMillis();
+				final long time = System.nanoTime();
 				// first write
 				try (final WritableColumn column = table.getWritableColumn(0)) {
 					final WritableDoubleValueAccess value = (WritableDoubleValueAccess) column.getValueAccess();
@@ -60,7 +62,7 @@ public class Main {
 						}
 					}
 				}
-				System.out.println((System.currentTimeMillis() - time));
+				System.out.println("Took ms: " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - time));
 			}
 		}
 	}
