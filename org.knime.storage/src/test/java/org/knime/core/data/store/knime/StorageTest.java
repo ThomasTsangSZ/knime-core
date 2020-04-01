@@ -61,17 +61,16 @@ public class StorageTest {
 					col0.fwd();
 					val0.setDoubleValue(i);
 
-					
-					// OH OH MEMORY LOW
-					/*
-					 * What should happen
-					 * -> flush to disc.
-					 * -> clear cache
-					 * -> read from cache reading
-					 */
-					if(i == 1337) {
-						table.flush();
-					}
+//					// OH OH MEMORY LOW
+//					/*
+//					 * What should happen
+//					 * -> flush to disc.
+//					 * -> clear cache
+//					 * -> read from cache reading
+//					 */
+//					if(i == 1337) {
+//						table.flush();
+//					}
 				}
 			}
 

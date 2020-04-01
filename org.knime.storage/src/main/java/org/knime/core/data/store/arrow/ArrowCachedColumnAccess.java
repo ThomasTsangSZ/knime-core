@@ -97,8 +97,8 @@ class ArrowCachedColumnAccess<T> implements ArrowColumnAccess<T>, Flushable {
 						// loading from disc. not yet in cache.
 					} else {
 						m_delegateIterator.skip();
+						partition.retain();
 					}
-					partition.retain();
 					m_idx++;
 
 					// do this only if it's a new partition
@@ -123,6 +123,7 @@ class ArrowCachedColumnAccess<T> implements ArrowColumnAccess<T>, Flushable {
 		if (!(partition instanceof ArrowCachedColumnAccess.CachedColumnPartition)) {
 			final CachedColumnPartition cached = new CachedColumnPartition(partition);
 			// Make sure cache is blocking closing
+			cached.retain();
 			CACHE.put(partitionIndex, cached);
 			return cached;
 		} else {
@@ -172,7 +173,7 @@ class ArrowCachedColumnAccess<T> implements ArrowColumnAccess<T>, Flushable {
 	@Override
 	public synchronized ColumnPartition<T> appendPartition() {
 		// immediately add a ref
-		return add(++m_numPartitions, m_delegate.appendPartition());
+		return add(m_numPartitions++, m_delegate.appendPartition());
 	}
 
 	@Override
@@ -189,17 +190,20 @@ class ArrowCachedColumnAccess<T> implements ArrowColumnAccess<T>, Flushable {
 	 */
 	@Override
 	public void close() throws Exception {
-		for (long i = 0; i < CACHE.size(); i++) {
+		// TODO always go through all?
+		for (long i = 0; i < m_numPartitions; i++) {
 			removeFromCacheAndClose(i);
 		}
 	}
 
 	private void removeFromCacheAndClose(long partitionIndex) throws Exception {
 		final CachedColumnPartition partition = CACHE.get(partitionIndex);
-		synchronized (partition) {
-			// release from cache
-			partition.release();
-			CACHE.remove(partitionIndex);
+		if (partition != null) {
+			synchronized (partition) {
+				// release from cache
+				partition.release();
+				CACHE.remove(partitionIndex);
+			}
 		}
 	}
 
@@ -227,11 +231,7 @@ class ArrowCachedColumnAccess<T> implements ArrowColumnAccess<T>, Flushable {
 		public void close() throws Exception {
 			// Only close if all references are actually closed!
 			synchronized (m_lock) {
-
-				// TODO we need the '<0' because it could be called from outside
-				// (#removeFromCacheAndClose). We should fix that
-				// by adding lock / written indicators into this object
-				if (m_lock.decrementAndGet() <= 0) {
+				if (m_lock.decrementAndGet() == 0) {
 					m_partitionDelegate.close();
 				}
 			}
