@@ -91,7 +91,7 @@ public class CachedColumnAccess<T> implements ColumnAccess<T>, Flushable {
 
 			@Override
 			public boolean hasNext() {
-				return m_delegateIterator.hasNext();
+				return m_idx < m_delegate.getNumPartitions();
 			}
 
 			@Override
@@ -120,6 +120,7 @@ public class CachedColumnAccess<T> implements ColumnAccess<T>, Flushable {
 			@Override
 			public void skip() {
 				m_delegateIterator.skip();
+				m_idx++;
 			}
 
 			@Override

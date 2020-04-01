@@ -103,8 +103,10 @@ class ArrowColumnAccess<T extends FieldVector> implements ColumnAccess<T> {
 
 		@Override
 		public void close() throws Exception {
-			m_root.close();
-			m_reader.close();
+			if (m_root != null) {
+				m_root.close();
+				m_reader.close();
+			}
 		}
 
 		@SuppressWarnings("resource")
