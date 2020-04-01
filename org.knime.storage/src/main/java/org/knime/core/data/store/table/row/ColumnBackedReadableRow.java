@@ -4,9 +4,9 @@ package org.knime.core.data.store.table.row;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.knime.core.data.store.table.column.ReadableColumnCursor;
-import org.knime.core.data.store.table.column.ReadableTable;
-import org.knime.core.data.store.table.value.ReadableValueAccess;
+import org.knime.core.data.store.column.ReadableColumnCursor;
+import org.knime.core.data.store.column.value.ReadableValueAccess;
+import org.knime.core.data.store.table.ReadableTable;
 
 //TODO: Implemented against KNIME classes ('DataValue', 'DataCell', ...)
 public final class ColumnBackedReadableRow implements ReadableRow {
@@ -14,7 +14,7 @@ public final class ColumnBackedReadableRow implements ReadableRow {
 	public static ColumnBackedReadableRow fromReadableTable(final ReadableTable table) {
 		final List<ReadableColumnCursor> columns = new ArrayList<>(Math.toIntExact(table.getNumColumns()));
 		for (long i = 0; i < table.getNumColumns(); i++) {
-			columns.add(table.createReadableColumnCursor(i));
+			columns.add(table.getReadableColumn(i).cursor());
 		}
 		return new ColumnBackedReadableRow(columns);
 	}

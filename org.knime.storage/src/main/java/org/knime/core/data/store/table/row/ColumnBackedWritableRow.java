@@ -4,9 +4,9 @@ package org.knime.core.data.store.table.row;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.knime.core.data.store.table.column.WritableColumn;
-import org.knime.core.data.store.table.column.WritableTable;
-import org.knime.core.data.store.table.value.WritableValueAccess;
+import org.knime.core.data.store.column.WritableColumn;
+import org.knime.core.data.store.column.value.WritableValueAccess;
+import org.knime.core.data.store.table.WritableTable;
 
 // TODO: Implemented against KNIME classes ('DataValue', 'DataCell', ...)
 public final class ColumnBackedWritableRow implements WritableRow {

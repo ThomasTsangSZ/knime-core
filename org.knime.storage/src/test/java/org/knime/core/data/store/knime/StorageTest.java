@@ -5,24 +5,24 @@ import java.io.File;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.knime.core.data.store.arrow.table.ArrowStore;
-import org.knime.core.data.store.partition.CachedColumnPartitionedTable;
-import org.knime.core.data.store.table.column.ColumnSchema;
-import org.knime.core.data.store.table.column.ColumnType;
-import org.knime.core.data.store.table.column.ReadableColumnCursor;
-import org.knime.core.data.store.table.column.WritableColumn;
+import org.knime.core.data.store.arrow.ArrowStore;
+import org.knime.core.data.store.column.ColumnSchema;
+import org.knime.core.data.store.column.ColumnType;
+import org.knime.core.data.store.column.ReadableColumnCursor;
+import org.knime.core.data.store.column.WritableColumn;
+import org.knime.core.data.store.column.partition.DefaultPartitionedColumnsTable;
+import org.knime.core.data.store.column.value.ReadableDoubleValueAccess;
+import org.knime.core.data.store.column.value.WritableDoubleValueAccess;
 import org.knime.core.data.store.table.row.ColumnBackedReadableRow;
 import org.knime.core.data.store.table.row.ColumnBackedWritableRow;
 import org.knime.core.data.store.table.row.ReadableRow;
 import org.knime.core.data.store.table.row.WritableRow;
-import org.knime.core.data.store.table.value.ReadableDoubleValueAccess;
-import org.knime.core.data.store.table.value.WritableDoubleValueAccess;
 
 import com.google.common.io.Files;
 
 public class StorageTest {
 
-//	 in numValues per vector
+	// in numValues per vector
 	private static final int BATCH_SIZE = 10_000_000;
 
 	// in bytes
@@ -46,32 +46,37 @@ public class StorageTest {
 	public void columnwiseWriteReadSingleDoubleColumnIdentityTest() throws Exception {
 		final long numRows = 100_000_000;
 
-		try (final CachedColumnPartitionedTable table = new CachedColumnPartitionedTable(
-				new ColumnSchema[] { doubleVectorSchema }, createStore(numRows))) {
-			// first write
-			try (final WritableColumn column = table.getWritableColumn(0)) {
-				final WritableDoubleValueAccess value = (WritableDoubleValueAccess) column.getValueAccess();
-				for (long i = 0; i < numRows; i++) {
-					column.fwd();
-					if (i % numRows / 100 == 0) {
-						value.setMissing();
-					} else {
-						value.setDoubleValue(i);
+		for (int z = 0; z < 10; z++) {
+			try (final DefaultPartitionedColumnsTable table = new DefaultPartitionedColumnsTable(
+					new ColumnSchema[] { doubleVectorSchema }, createStore(numRows))) {
+
+				long time = System.currentTimeMillis();
+				// first write
+				try (final WritableColumn column = table.getWritableColumn(0)) {
+					final WritableDoubleValueAccess value = (WritableDoubleValueAccess) column.getValueAccess();
+					for (long i = 0; i < numRows; i++) {
+						column.fwd();
+						if (i % numRows / 100 == 0) {
+							value.setMissing();
+						} else {
+							value.setDoubleValue(i);
+						}
 					}
 				}
-			}
-			// then read
-			try (final ReadableColumnCursor readableColumn = table.createReadableColumnCursor(0)) {
-				final ReadableDoubleValueAccess readableValue = (ReadableDoubleValueAccess) readableColumn
-						.getValueAccess();
-				for (long i = 0; readableColumn.canFwd(); i++) {
-					readableColumn.fwd();
-					if (i % numRows / 100 == 0) {
-						Assert.assertTrue(readableValue.isMissing());
-					} else {
-						Assert.assertEquals(i, readableValue.getDoubleValue(), 0.0000001);
+				// then read
+				try (final ReadableColumnCursor readableColumn = table.getReadableColumn(0).cursor()) {
+					final ReadableDoubleValueAccess readableValue = (ReadableDoubleValueAccess) readableColumn
+							.getValueAccess();
+					for (long i = 0; readableColumn.canFwd(); i++) {
+						readableColumn.fwd();
+						if (i % numRows / 100 == 0) {
+							Assert.assertTrue(readableValue.isMissing());
+						} else {
+							Assert.assertEquals(i, readableValue.getDoubleValue(), 0.0000001);
+						}
 					}
 				}
+				System.out.println((System.currentTimeMillis() - time));
 			}
 		}
 	}
@@ -81,7 +86,7 @@ public class StorageTest {
 		final long numRows = 128;
 
 		// Read/Write table...
-		try (final CachedColumnPartitionedTable table = new CachedColumnPartitionedTable(
+		try (final DefaultPartitionedColumnsTable table = new DefaultPartitionedColumnsTable(
 				new ColumnSchema[] { doubleVectorSchema }, createStore(numRows))) {
 
 			try (final WritableRow row = ColumnBackedWritableRow.fromWritableTable(table)) {

@@ -1,7 +1,7 @@
 
 package org.knime.core.data.store.table.row;
 
-import org.knime.core.data.store.table.value.WritableValueAccess;
+import org.knime.core.data.store.column.value.WritableValueAccess;
 
 public interface WritableRow extends AutoCloseable {
 
