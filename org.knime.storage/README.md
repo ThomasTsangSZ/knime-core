@@ -28,3 +28,4 @@
 - [ ] Test idea: with intermediate buffers
 - [ ] Wide-table support (e.g. automatically wrap K-consecutive columns for doubles into a double[] behind the scenes.
 - [ ] Use framework for streaming (NB: Nearly support read while write already today).
+- [ ] user facing API improvments (see tests)

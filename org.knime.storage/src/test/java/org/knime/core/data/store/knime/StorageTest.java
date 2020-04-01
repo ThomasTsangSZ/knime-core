@@ -57,7 +57,9 @@ public class StorageTest {
 				final WritableDoubleValueAccess val0 = (WritableDoubleValueAccess) col0.getValueAccess();
 				for (long i = 0; i < NUM_ROWS; i++) {
 					// TODO it would be cool to do col0.fwd().setDouble('val') or
-					// col1.fwd().getDouble();
+					// col0.next().getDouble()
+					// for(DoubleColumValue val : doubleColumn){
+					// }
 					col0.fwd();
 					val0.setDoubleValue(i);
 
