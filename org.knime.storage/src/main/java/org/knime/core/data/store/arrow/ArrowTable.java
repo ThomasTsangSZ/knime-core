@@ -21,8 +21,6 @@ import org.knime.core.data.store.column.ColumnType;
 import org.knime.core.data.store.column.ReadableColumn;
 import org.knime.core.data.store.column.ReadableColumnCursor;
 import org.knime.core.data.store.column.WritableColumn;
-import org.knime.core.data.store.column.access.CachedColumnAccess;
-import org.knime.core.data.store.column.access.ColumnAccess;
 import org.knime.core.data.store.column.partition.PartitionedReadableColumnCursor;
 import org.knime.core.data.store.column.partition.PartitionedWritableColumn;
 import org.knime.core.data.store.table.ReadableTable;
@@ -51,15 +49,15 @@ public class ArrowTable implements ReadableTable, WritableTable {
 
 	@Override
 	public WritableColumn getWritableColumn(long columnIndex) {
-		final ColumnAccess<? extends FieldVector> access = m_store.getColumnStoreAt((int) columnIndex);
+		final ArrowColumnAccess<? extends FieldVector> access = m_store.getColumnStoreAt((int) columnIndex);
 		return createWritableColumn(access);
 	}
 
-	private <T extends FieldVector> WritableColumn createWritableColumn(ColumnAccess<T> access) {
+	private <T extends FieldVector> WritableColumn createWritableColumn(ArrowColumnAccess<T> access) {
 		return new PartitionedWritableColumn<>(access, access.createLinkedType());
 	}
 
-	private <T extends FieldVector> ReadableColumnCursor createReadableColumnCursor(ColumnAccess<T> columnStore) {
+	private <T extends FieldVector> ReadableColumnCursor createReadableColumnCursor(ArrowColumnAccess<T> columnStore) {
 		return new PartitionedReadableColumnCursor<>(columnStore.create(), columnStore.createLinkedType());
 	}
 
@@ -83,7 +81,7 @@ public class ArrowTable implements ReadableTable, WritableTable {
 	class ArrowTableStore {
 
 		private final File m_baseDir;
-		private final List<ColumnAccess<? extends FieldVector>> m_columnAccesses = new ArrayList<>();
+		private final List<ArrowColumnAccess<? extends FieldVector>> m_columnAccesses = new ArrayList<>();
 		private final RootAllocator m_rootAllocator;
 		private ColumnSchema[] m_schema;
 		private int m_batchSize;
@@ -95,24 +93,24 @@ public class ArrowTable implements ReadableTable, WritableTable {
 			m_batchSize = batchSize;
 
 			for (int i = 0; i < m_schema.length; i++) {
-				m_columnAccesses.add(new CachedColumnAccess<>(addColumn(m_schema[i].getType())));
+				m_columnAccesses.add(new ArrowCachedColumnAccess<>(addColumn(m_schema[i].getType())));
 			}
 		}
 
-		private ColumnAccess<? extends FieldVector> addColumn(ColumnType type) {
+		private ArrowColumnAccess<? extends FieldVector> addColumn(ColumnType type) {
 			final BufferAllocator childAllocator = m_rootAllocator.newChildAllocator("ChildAllocator", 0,
 					m_rootAllocator.getLimit());
 			switch (type) {
 			case BOOLEAN:
-				return new ArrowColumnAccess<>(m_baseDir, new ArrowType.Binary(), childAllocator,
+				return new DefaultArrowColumnAccess<>(m_baseDir, new ArrowType.Binary(), childAllocator,
 						new ArrowBooleanColumnPartitionFactory(childAllocator, m_batchSize),
 						() -> new ArrowBooleanValueAccess());
 			case DOUBLE:
-				return new ArrowColumnAccess<>(m_baseDir, new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE),
+				return new DefaultArrowColumnAccess<>(m_baseDir, new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE),
 						childAllocator, new ArrowDoubleColumnPartitionFactory(childAllocator, m_batchSize),
 						() -> new ArrowDoubleValueAccess());
 			case STRING:
-				return new ArrowColumnAccess<>(m_baseDir, new ArrowType.Utf8(), childAllocator,
+				return new DefaultArrowColumnAccess<>(m_baseDir, new ArrowType.Utf8(), childAllocator,
 						new ArrowStringColumnPartitionFactory(childAllocator, m_batchSize),
 						() -> new ArrowStringValueAccess());
 			default:
@@ -121,19 +119,19 @@ public class ArrowTable implements ReadableTable, WritableTable {
 		}
 
 		// TODO sanity checking etc
-		public ColumnAccess<? extends FieldVector> getColumnStoreAt(int idx) {
+		public ArrowColumnAccess<? extends FieldVector> getColumnStoreAt(int idx) {
 			return m_columnAccesses.get(idx);
 		}
 
 		// TODO Interface?
 		public void close() throws Exception {
-			for (ColumnAccess<?> store : m_columnAccesses) {
+			for (ArrowColumnAccess<?> store : m_columnAccesses) {
 				store.close();
 			}
 		}
 
 		public void destroy() throws Exception {
-			for (final ColumnAccess<?> columnStore : m_columnAccesses) {
+			for (final ArrowColumnAccess<?> columnStore : m_columnAccesses) {
 				columnStore.close();
 				columnStore.destroy();
 			}

@@ -19,7 +19,7 @@ import org.knime.core.data.store.table.row.WritableRow;
 public class StorageTest {
 
 	/*
-	 * TODO later we have to obviously parametrize the tests independently. for now
+	 * TODO later we have to obviously parameterize the tests independently. for now
 	 * we're good.
 	 */
 

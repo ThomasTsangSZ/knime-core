@@ -1,4 +1,4 @@
-package org.knime.core.data.store.column.access;
+package org.knime.core.data.store.arrow;
 
 import java.io.Flushable;
 import java.io.IOException;
@@ -38,7 +38,8 @@ import org.knime.core.data.store.column.partition.ColumnPartitionValueAccess;
  * Always as single PartitionStore per column
  */
 // TODO Make all of the crap here thread-safe :-)
-public class CachedColumnAccess<T> implements ColumnAccess<T>, Flushable {
+// TODO all of this is arrow independent...
+class ArrowCachedColumnAccess<T> implements ArrowColumnAccess<T>, Flushable {
 
 	// TODO: We probably want to replace this by a more powerful (= actual) cache
 	// implementation.
@@ -48,7 +49,7 @@ public class CachedColumnAccess<T> implements ColumnAccess<T>, Flushable {
 	// wrappers in the cache.
 	private final ConcurrentHashMap<Long, ColumnPartition<T>> CACHE = new ConcurrentHashMap<>();
 
-	private ColumnAccess<T> m_delegate;
+	private ArrowColumnAccess<T> m_delegate;
 
 	// TODO do I need to synchronize that?
 	private final List<AtomicInteger> m_referenceCounter = new ArrayList<>();
@@ -56,7 +57,7 @@ public class CachedColumnAccess<T> implements ColumnAccess<T>, Flushable {
 
 	private AtomicBoolean m_isClosed;
 
-	public CachedColumnAccess(final ColumnAccess<T> delegate) {
+	public ArrowCachedColumnAccess(final ArrowColumnAccess<T> delegate) {
 		m_delegate = delegate;
 		m_isClosed = new AtomicBoolean(false);
 
@@ -131,8 +132,8 @@ public class CachedColumnAccess<T> implements ColumnAccess<T>, Flushable {
 	}
 
 	private ColumnPartition<T> addToCache(long partitionIndex, final ColumnPartition<T> partition) {
-		if (!(partition instanceof CachedColumnAccess.CachedColumnPartition)) {
-			final CachedColumnAccess<T>.CachedColumnPartition cached = new CachedColumnPartition(partition,
+		if (!(partition instanceof ArrowCachedColumnAccess.CachedColumnPartition)) {
+			final ArrowCachedColumnAccess<T>.CachedColumnPartition cached = new CachedColumnPartition(partition,
 					partitionIndex);
 			CACHE.put(partitionIndex, cached);
 			return cached;
