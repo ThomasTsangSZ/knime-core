@@ -1,17 +1,19 @@
 package org.knime.core.data.vector;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.knime.core.data.table.value.ReadableStructValue;
 import org.knime.core.data.table.value.ReadableValue;
 import org.knime.core.data.table.value.WritableStructValue;
 import org.knime.core.data.table.value.WritableValue;
 import org.knime.core.data.vector.table.VectorValue;
 
-public class VectorStoreGroup<K, D> implements ReadableVectorStore<K, D> {
+// TODO common abstract class with ReadableVectorStoreGroup
+public class WritableVectorStoreGroup<K, D> implements WritableVectorStore<K, D> {
 
 	private ReadableVectorStore<K, ?>[] m_children;
 	private VectorValue<?>[] m_values;
 
-	public VectorStoreGroup(ReadableVectorStore<K, ?>... children) {
+	public WritableVectorStoreGroup(ReadableVectorStore<K, ?>... children) {
 		m_children = children;
 		m_values = new VectorValue[children.length];
 		for (int i = 0; i < children.length; i++) {
@@ -25,15 +27,15 @@ public class VectorStoreGroup<K, D> implements ReadableVectorStore<K, D> {
 	}
 
 	@Override
-	public void retain() {
+	public Pair<K, Vector<D>> add() {
 		// TODO Auto-generated method stub
-
+		return null;
 	}
 
 	@Override
-	public Vector<D> getOrCreate(K key) {
+	public void retain() {
 		// TODO Auto-generated method stub
-		return null;
+
 	}
 
 	@Override

@@ -12,10 +12,11 @@
 - [ ] Arrow Package (encapsulate store and cache)
 - [ ] Life-cycle management (close() vs. destroy() vs. ... finishWriting() 'can I read before I've serialized the entire table')
 - [ ] Thread-safety (multi-read, cache,...). Locking per partition.
+- [ ] MultiVecValue & Custom data types (e.g. Date&Time, Text, Struct, PNG Images). Support for serializers. Forseeable problem: avoid constant serialization and deserialization into byte[]
+- [ ] Try to access some data from python (Davin/Marcel -> shared memory, shared jni)
 - [ ] Pre-fetching / pre-writing (async)
 - [ ] Serialization - how do I restore state of a store or rather entire table (use-case: (i) knime has stored store or (ii) store created without prior writing).
 - [ ] Exception Handling & Logging
-- [ ] MultiVecValue & Custom data types (e.g. Date&Time, Text, Struct, PNG Images). Support for serializers. Forseeable problem: avoid constant serialization and deserialization into byte[]
 - [ ] Domain Calculation
 - [ ] DuplicateChecker for RowId
 - [ ] Predicate push-down and Filter-API
@@ -30,4 +31,4 @@
 - [ ] Test idea: with intermediate buffers
 - [ ] Wide-table support (e.g. automatically wrap K-consecutive columns for doubles into a double[] behind the scenes.
 - [ ] Use framework for streaming (NB: Nearly support read while write already today).
-- [ ] user facing API improvments (see tests)
+- [ ] user facing API improvements (see tests)

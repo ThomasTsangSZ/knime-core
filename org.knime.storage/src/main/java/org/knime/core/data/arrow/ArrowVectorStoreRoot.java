@@ -8,13 +8,15 @@ import java.util.List;
 
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.types.pojo.Schema;
+import org.apache.commons.lang3.tuple.Pair;
 import org.knime.core.data.table.column.NativeType;
 import org.knime.core.data.vector.AbstractRefManaged;
 import org.knime.core.data.vector.FlushableVectorStore;
 import org.knime.core.data.vector.RefManaged;
 import org.knime.core.data.vector.Vector;
+import org.knime.core.data.vector.WritableVectorStore;
 import org.knime.core.data.vector.ReadableVectorStore;
-import org.knime.core.data.vector.VectorStoreGroup;
+import org.knime.core.data.vector.ReadbleVectorStoreGroup;
 import org.knime.core.data.vector.cache.CacheFlusher;
 import org.knime.core.data.vector.cache.SequentialCache;
 import org.knime.core.data.vector.cache.SequentialCacheLoader;
@@ -32,7 +34,7 @@ public final class ArrowVectorStoreRoot<V extends RefManaged> extends AbstractRe
 
 	private final BufferAllocator m_allocator;
 
-	private final List<ReadableVectorStore<Long, ? extends V>> m_createdStores = new ArrayList<>();
+	private final List<ReadableVectorStore<Long, ? extends V>> m_readableStores = new ArrayList<>();
 
 	// TODO what's outside? what's inside?
 	public ArrowVectorStoreRoot() {
@@ -54,10 +56,47 @@ public final class ArrowVectorStoreRoot<V extends RefManaged> extends AbstractRe
 			for (int i = 0; i < struct.length; i++) {
 				struct[i] = createGroupForType(types[i]);
 			}
-			storeForType = new VectorStoreGroup<>(struct);
+			storeForType = new ReadbleVectorStoreGroup<>(struct);
 		}
-		m_createdStores.add(storeForType);
+		m_readableStores.add(storeForType);
 		return storeForType;
+	}
+
+	@Override
+	public WritableVectorStore<Long, ?> createWritableStore(NativeType... type) {
+		return new WritableVectorStore<Long, V>() {
+
+			@Override
+			public void release() {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void retain() {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public Pair<Long, Vector<V>> add() {
+				create();
+				CACHE.add(created);
+			}
+
+			@Override
+			public long numVectors() {
+				// TODO Auto-generated method stub
+				return 0;
+			}
+
+			@Override
+			public VectorValue<V> createLinkedValue() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+
+		};
 	}
 
 	private ReadableVectorStore<Long, ? extends V> createGroupForType(NativeType type) {
@@ -74,7 +113,7 @@ public final class ArrowVectorStoreRoot<V extends RefManaged> extends AbstractRe
 	protected void onAllReferencesReleased() {
 		// release own reference to all groups. groups will always exists as long as the
 		// store exists.
-		m_createdStores.forEach(g -> g.release());
+		m_readableStores.forEach(g -> g.release());
 	}
 
 	private void write(V vector) {
@@ -99,10 +138,10 @@ public final class ArrowVectorStoreRoot<V extends RefManaged> extends AbstractRe
 				CACHE.get(key, new SequentialCacheLoader<D>() {
 					@Override
 					public D load(long index) throws IOException {
-						
+
 						// 1) read from disc
 						// 2) create new
-						
+
 						return null;
 					}
 				});

@@ -19,6 +19,13 @@ public interface VectorStoreRoot<K> extends RefManaged {
 	 * @param type
 	 * @return a new vector group. Reference counter increased before return.
 	 */
-	ReadableVectorStore<K, ?> createStore(final NativeType... type);
+	ReadableVectorStore<K, ?> createReadableStore(final NativeType... type);
+	
+	/**
+	 * @param <O>
+	 * @param type
+	 * @return a new vector group. Reference counter increased before return.
+	 */
+	WritableVectorStore<K, ?> createWritableStore(final NativeType... type);
 
 }
