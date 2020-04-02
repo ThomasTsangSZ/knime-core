@@ -18,6 +18,7 @@
 - [ ] MultiVecValue & Custom data types (e.g. Date&Time, Text, Struct, PNG Images). Support for serializers. Forseeable problem: avoid constant serialization and deserialization into byte[]
 - [ ] Domain Calculation
 - [ ] DuplicateChecker for RowId
+- [ ] Predicate push-down and Filter-API
 
 ### KNIME Integration
 - [ ] CollectionCells

@@ -1,20 +1,20 @@
 
 package org.knime.core.data.store.arrow;
 
-import java.io.File;
-import java.io.IOException;
-
-import org.apache.arrow.vector.ValueVector;
-import org.knime.core.data.store.column.ColumnSchema;
-
 import com.google.common.io.Files;
 
 import io.netty.buffer.ArrowBuf;
 
+import java.io.File;
+import java.io.IOException;
+
+import org.apache.arrow.vector.ValueVector;
+import org.knime.core.data.store.arrow.therealstore.ArrowTableStore;
+import org.knime.core.data.store.column.ColumnSchema;
+
 public final class ArrowUtils {
 
-	private ArrowUtils() {
-	}
+	private ArrowUtils() {}
 
 	public static void retainVector(final ValueVector vector) {
 		for (final ArrowBuf buffer : vector.getBuffers(false)) {
@@ -28,10 +28,12 @@ public final class ArrowUtils {
 		}
 	}
 
-	public static ArrowTable createArrowTable(final int batchSize, final long offHeapSize,
-			final ColumnSchema... schemas) throws IOException {
-		final File baseDir = Files.createTempDir();
-		baseDir.deleteOnExit();
-		return new ArrowTable(baseDir, schemas, batchSize);
+	public static ArrowTable createArrowTable(final int batchSize, final long offHeapSize, final ColumnSchema... schemas)
+		throws IOException
+	{
+		final File baseDirectory = Files.createTempDir();
+		baseDirectory.deleteOnExit();
+		final ArrowTableStore store = new ArrowTableStore(baseDirectory, schemas, batchSize); // TODO
+		return new ArrowTable(schemas, store);
 	}
 }

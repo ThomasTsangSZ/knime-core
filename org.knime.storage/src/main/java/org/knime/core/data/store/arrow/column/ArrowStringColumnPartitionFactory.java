@@ -1,3 +1,4 @@
+
 package org.knime.core.data.store.arrow.column;
 
 import java.nio.charset.StandardCharsets;
@@ -7,23 +8,24 @@ import org.apache.arrow.vector.VarCharVector;
 import org.knime.core.data.store.column.value.ReadableStringValueAccess;
 import org.knime.core.data.store.column.value.WritableStringValueAccess;
 
-public class ArrowStringColumnPartitionFactory extends AbstractArrowColumnPartitionFactory<VarCharVector> {
+public final class ArrowStringColumnPartitionFactory extends AbstractArrowColumnPartitionFactory<VarCharVector> {
 
-	public ArrowStringColumnPartitionFactory(BufferAllocator allocator, int batchSize) {
-		super(allocator, batchSize);
+	public ArrowStringColumnPartitionFactory(final BufferAllocator allocator, final int partitionCapacity) {
+		super(allocator, partitionCapacity);
 	}
 
 	@Override
-	VarCharVector create(BufferAllocator alloc, int size) {
-		final VarCharVector vector = new VarCharVector((String) null, alloc);
-		// TODO heuristic
-		vector.allocateNew(64l * size, size);
+	VarCharVector createStorageVector(final BufferAllocator allocator, final int capacity) {
+		final VarCharVector vector = new VarCharVector((String) null, allocator);
+		// TODO: Heuristic
+		vector.allocateNew(64l * capacity, capacity);
 		return vector;
 	}
 
 	public static final class ArrowStringValueAccess //
-			extends AbstractArrowValueAccess<VarCharVector> //
-			implements WritableStringValueAccess, ReadableStringValueAccess {
+		extends AbstractArrowPartitionedValueAccess<VarCharVector> //
+		implements ReadableStringValueAccess, WritableStringValueAccess
+	{
 
 		@Override
 		public String getStringValue() {
@@ -33,12 +35,10 @@ public class ArrowStringColumnPartitionFactory extends AbstractArrowColumnPartit
 		}
 
 		@Override
-		public void setStringValue(String value) {
+		public void setStringValue(final String value) {
 			// TODO: Is this correct? See knime-python's StringInserter which also
 			// handles possible reallocations.
 			m_vector.set(m_index, value.getBytes(StandardCharsets.UTF_8));
 		}
-
 	}
-
 }

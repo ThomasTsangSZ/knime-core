@@ -1,4 +1,4 @@
-package org.knime.core.data.store.arrow;
+package org.knime.core.data.store.arrow.therealstore;
 
 import java.io.Flushable;
 import java.io.IOException;

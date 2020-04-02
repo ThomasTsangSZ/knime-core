@@ -5,5 +5,5 @@ import java.util.Iterator;
 
 public interface ColumnPartitionReader<T> extends Iterator<ColumnPartition<T>>, AutoCloseable {
 
-	void skip();
+	// TODO
 }
