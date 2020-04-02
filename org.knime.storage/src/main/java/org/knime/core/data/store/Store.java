@@ -5,7 +5,7 @@ import java.io.IOException;
 import org.knime.core.data.table.column.Partition;
 import org.knime.core.data.table.column.PartitionValue;
 
-public interface Store<T> extends AutoCloseable{
+public interface Store<T> extends AutoCloseable {
 
 	// create linked value
 	PartitionValue<T> createLinkedValue();
@@ -20,5 +20,5 @@ public interface Store<T> extends AutoCloseable{
 	Partition<T> get(long index) throws IOException;
 
 	// number managed partition
-	long numPartitions();
+	long getPartitions();
 }

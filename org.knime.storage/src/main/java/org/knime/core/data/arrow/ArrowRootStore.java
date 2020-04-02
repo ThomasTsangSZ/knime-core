@@ -25,28 +25,38 @@ class ArrowRootStore implements RootStore {
 	public ArrowRootStore(final long maxSize, final int batchSize, final ColumnSchema... schemas) {
 		m_stores = new ArrowStore[schemas.length];
 		m_allocator = new RootAllocator();
+
+		// TODO check if there are smarter ways to do this in arrow than that
 		for (int i = 0; i < schemas.length; i++) {
-			// TODO implement 1 column type -> multiple native types
 			final NativeType[] nativeTypes = schemas[i].getColumnType().getNativeTypes();
-			m_stores[i] = create(nativeTypes[0], m_storeId + " Store: " + schemas[i] + ", i ," + nativeTypes[0] + ",",
-					maxSize, batchSize);
+			if (nativeTypes.length == 1) {
+				m_stores[i] = create(nativeTypes[0],
+						m_storeId + " Store: " + schemas[i] + ", i ," + nativeTypes[0] + ",", maxSize, batchSize);
+			} else {
+				final ArrowStore<?>[] stores = new ArrowStore[nativeTypes.length];
+				for (int j = 0; j < stores.length; j++) {
+					stores[j] = create(nativeTypes[j],
+							m_storeId + " Store: " + schemas[i] + ", i ," + nativeTypes[0] + ",", maxSize, batchSize);
+				}
+				m_stores[i] = new ArrowStoreGroup(stores);
+			}
 		}
 		m_storeId = UUID.randomUUID();
 	}
 
-	private ArrowStore<?> create(NativeType type, String name, long maxSize, int batchSize) {
+	private DefaultArrowStore<?> create(NativeType type, String name, long maxSize, int batchSize) {
 		// TODO no idea what a good init size or max-size is. Actually it should
 		// type-dependent
 		final BufferAllocator allocator = m_allocator.newChildAllocator(name, maxSize / (4 * m_stores.length), maxSize);
 		switch (type) {
 		case BOOLEAN:
-			return new ArrowStore<>(() -> new BooleanArrowPartition.BooleanArrowValue(),
+			return new DefaultArrowStore<>(() -> new BooleanArrowPartition.BooleanArrowValue(),
 					() -> new BooleanArrowPartition(allocator, batchSize), new SequentialCache<>(null, null));
 		case DOUBLE:
-			return new ArrowStore<>(() -> new DoubleArrowPartition.DoubleArrowValue(),
+			return new DefaultArrowStore<>(() -> new DoubleArrowPartition.DoubleArrowValue(),
 					() -> new DoubleArrowPartition(allocator, batchSize), new SequentialCache<>(null, null));
 		case STRING:
-			return new ArrowStore<>(() -> new StringArrowPartition.StringArrowValue(),
+			return new DefaultArrowStore<>(() -> new StringArrowPartition.StringArrowValue(),
 					() -> new StringArrowPartition(allocator, batchSize), new SequentialCache<>(null, null));
 		default:
 			throw new IllegalArgumentException("Unknown or not yet implemented NativeType " + type);

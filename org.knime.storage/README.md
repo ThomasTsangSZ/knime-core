@@ -10,9 +10,10 @@
 
 ### API design of org.knime.data.store
 - [X] Arrow Package (encapsulate store and cache)
-- [ ] Life-cycle management (close() vs. destroy() vs. ... finishWriting() 'can I read before I've serialized the entire table')
-- [ ] Thread-safety (multi-read, cache,...). Locking per partition.
-- [ ] MultiVecValue & Custom data types (e.g. Date&Time, Text, Struct, PNG Images). Support for serializers. Forseeable problem: avoid constant serialization and deserialization into byte[]
+- [ ] Test Life-cycle management (close() vs. destroy() vs. ... finishWriting() 'can I read before I've serialized the entire table')
+- [ ] Test Thread-safety (multi-read, cache,...). Locking per partition.
+- [X] MultiVecValue & Custom data types (e.g. Date&Time, Text, Struct, PNG Images). 
+- [ ] Support for serializers. Forseeable problem: avoid constant serialization and deserialization into byte[]
 - [ ] Try to access some data from python (Davin/Marcel -> shared memory, shared jni)
 - [ ] Pre-fetching / pre-writing (async)
 - [ ] Serialization - how do I restore state of a store or rather entire table (use-case: (i) knime has stored store or (ii) store created without prior writing).

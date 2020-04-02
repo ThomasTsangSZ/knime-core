@@ -61,7 +61,7 @@ public class StoreBackedReadableTable implements ReadableTable {
 
 		@Override
 		public long getNumPartitions() {
-			return m_store.numPartitions();
+			return m_store.getPartitions();
 		}
 
 		@Override

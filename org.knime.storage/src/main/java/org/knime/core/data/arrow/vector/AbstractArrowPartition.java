@@ -44,6 +44,7 @@ abstract class AbstractArrowPartition<V extends FieldVector> implements Partitio
 
 	@Override
 	public int getNumValues() {
+		// calling numValues on vector is super slow
 		return m_vector.getValueCount();
 	}
 }
