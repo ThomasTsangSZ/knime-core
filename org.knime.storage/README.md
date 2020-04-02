@@ -9,7 +9,7 @@
 ## TODOs
 
 ### API design of org.knime.data.store
-- [ ] Arrow Package (encapsulate store and cache)
+- [X] Arrow Package (encapsulate store and cache)
 - [ ] Life-cycle management (close() vs. destroy() vs. ... finishWriting() 'can I read before I've serialized the entire table')
 - [ ] Thread-safety (multi-read, cache,...). Locking per partition.
 - [ ] MultiVecValue & Custom data types (e.g. Date&Time, Text, Struct, PNG Images). Support for serializers. Forseeable problem: avoid constant serialization and deserialization into byte[]
