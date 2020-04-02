@@ -1,12 +1,12 @@
 
-package org.knime.core.data.arrow;
+package org.knime.core.data.arrow.vector;
 
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.Float8Vector;
 import org.knime.core.data.table.value.ReadableDoubleValue;
 import org.knime.core.data.table.value.WritableDoubleValue;
 
-public final class ArrowDoubleColumnPartitionFactory extends AbstractArrowColumnPartitionFactory<Float8Vector> {
+public final class ArrowDoubleColumnPartitionFactory extends AbstractArrowVectorSupplier<Float8Vector> {
 
 	public ArrowDoubleColumnPartitionFactory(final BufferAllocator allocator, final int partitionCapacity) {
 		super(allocator, partitionCapacity);

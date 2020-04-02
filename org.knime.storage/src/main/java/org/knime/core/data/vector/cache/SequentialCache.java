@@ -7,25 +7,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import org.knime.core.data.vector.RefManaged;
-
-public final class SequentialCache<O extends RefManaged> implements Flushable, AutoCloseable {
+public final class SequentialCache<O> implements Flushable, AutoCloseable {
 
 	private final List<O> m_cache = new ArrayList<>();
 
 	private final ReentrantReadWriteLock m_cacheLock = new ReentrantReadWriteLock(true);
 
-	private final CacheFlusher<O> m_flusher;
+	private final SequentialCacheFlusher<O> m_flusher;
 
 	private long m_cacheOffset = 0;
 
-	public SequentialCache(final CacheFlusher<O> flusher) {
+	public SequentialCache(final SequentialCacheFlusher<O> flusher) {
 		m_flusher = flusher;
 	}
 
 	public void add(final O entry) {
-		// TODO is it good enough to retain the vector here (c.f. thread-safety). Do we have to retain before passing the object?
-		entry.retain();
 		m_cacheLock.writeLock().lock();
 		try {
 			m_cache.add(entry);
@@ -34,14 +30,19 @@ public final class SequentialCache<O extends RefManaged> implements Flushable, A
 		}
 	}
 
+	public O get(final long index) {
+		return m_cache.get(Math.toIntExact(index - m_cacheOffset));
+	}
+
 	public O get(final long index, final SequentialCacheLoader<O> loader) throws IOException {
 		m_cacheLock.readLock().lock();
 		try {
-			O entry = m_cache.get(Math.toIntExact(index - m_cacheOffset));
+			O entry = get(index);
 			if (entry == null) {
 				entry = loader.load(index);
-				entry.retain();
 				add(entry);
+				// TODO thread-safety?
+				// retain for external
 				// TODO: Acquire write lock, update, etc.
 			}
 			return entry;
@@ -56,7 +57,6 @@ public final class SequentialCache<O extends RefManaged> implements Flushable, A
 		try {
 			for (final O partition : m_cache) {
 				m_flusher.flush(partition);
-				partition.release();
 			}
 			m_cacheOffset = m_cache.size();
 			m_cache.clear();

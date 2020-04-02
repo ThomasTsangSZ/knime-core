@@ -1,14 +1,12 @@
 
-package org.knime.core.data.arrow;
+package org.knime.core.data.arrow.vector;
 
 import org.apache.arrow.vector.FieldVector;
-import org.knime.core.data.table.column.vector.VectorWritableValue;
 import org.knime.core.data.vector.Vector;
 import org.knime.core.data.vector.table.VectorValue;
 
 public abstract class AbstractArrowPartitionedValueAccess<V extends FieldVector> //
-	implements VectorValue<V>, VectorWritableValue<V>
-{
+		implements VectorValue<V> {
 
 	protected int m_index = -1;
 

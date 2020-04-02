@@ -1,5 +1,5 @@
 
-package org.knime.core.data.arrow;
+package org.knime.core.data.arrow.vector;
 
 import java.nio.charset.StandardCharsets;
 
@@ -8,7 +8,7 @@ import org.apache.arrow.vector.VarCharVector;
 import org.knime.core.data.table.value.ReadableStringValue;
 import org.knime.core.data.table.value.WritableStringValue;
 
-public final class ArrowStringColumnPartitionFactory extends AbstractArrowColumnPartitionFactory<VarCharVector> {
+public final class ArrowStringColumnPartitionFactory extends AbstractArrowVectorSupplier<VarCharVector> {
 
 	public ArrowStringColumnPartitionFactory(final BufferAllocator allocator, final int partitionCapacity) {
 		super(allocator, partitionCapacity);

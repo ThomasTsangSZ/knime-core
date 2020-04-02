@@ -1,5 +1,5 @@
 
-package org.knime.core.data.arrow;
+package org.knime.core.data.arrow.vector;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -8,12 +8,14 @@ import java.io.IOException;
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.FieldVector;
 import org.apache.arrow.vector.types.pojo.Schema;
+import org.knime.core.data.arrow.ArrowVectorFromDiskLoader;
+import org.knime.core.data.arrow.ArrowVectorToDiskFlusher;
 import org.knime.core.data.vector.ColumnPartitionReader;
 import org.knime.core.data.vector.ColumnPartitionWriter;
 import org.knime.core.data.vector.Vector;
 import org.knime.core.data.vector.ReadableVectorGroup;
 import org.knime.core.data.vector.cache.SequentialCache;
-import org.knime.core.data.vector.cache.CacheFlusher;
+import org.knime.core.data.vector.cache.SequentialCacheFlusher;
 
 public final class ArrowColumnPartitionStore<P extends FieldVector> implements ReadableVectorGroup<P> {
 
@@ -32,7 +34,7 @@ public final class ArrowColumnPartitionStore<P extends FieldVector> implements R
 		m_file = file;
 		m_schema = schema;
 		m_allocator = allocator;
-		final CacheFlusher<P> flusher = new ArrowVectorToDiskFlusher<>(file, schema, allocator);
+		final SequentialCacheFlusher<P> flusher = new ArrowVectorToDiskFlusher<>(file, schema, allocator);
 		m_cache = new SequentialCache<>(flusher);
 	}
 

@@ -16,9 +16,9 @@ public final class VectorWritableColumnCursor<T> implements WritableColumnCursor
 
 	private long m_index = -1;
 
-	private final WritableVectorStore<Long, T> m_store;
+	private final WritableVectorStore<T> m_store;
 
-	public VectorWritableColumnCursor(final WritableVectorStore<Long, T> store) {
+	public VectorWritableColumnCursor(final WritableVectorStore<T> store) {
 		m_linkedAccess = store.createLinkedValue();
 		m_store = store;
 		switchToNextPartition();
@@ -48,7 +48,9 @@ public final class VectorWritableColumnCursor<T> implements WritableColumnCursor
 	private void closeCurrentPartition() throws Exception {
 		if (m_currentPartition != null) {
 			m_currentPartition.setNumValues((int) m_index);
-			m_currentPartition.release();
+			// can be closed. we're done writing
+			m_currentPartition.close();
+			m_currentPartition = null;
 		}
 	}
 
@@ -60,8 +62,5 @@ public final class VectorWritableColumnCursor<T> implements WritableColumnCursor
 	@Override
 	public void close() throws Exception {
 		closeCurrentPartition();
-
-		// release reference on store
-		m_store.release();
 	}
 }

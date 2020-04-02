@@ -1,4 +1,4 @@
-package org.knime.core.data.vector.cache;
+package org.knime.core.data.arrow;
 //package org.knime.core.data.store;
 //
 //import java.io.Flushable;

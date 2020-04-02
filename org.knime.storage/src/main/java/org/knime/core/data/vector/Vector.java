@@ -1,6 +1,6 @@
 package org.knime.core.data.vector;
 
-public interface Vector<T> extends RefManaged {
+public interface Vector<T> extends AutoCloseable {
 
 	T get();
 

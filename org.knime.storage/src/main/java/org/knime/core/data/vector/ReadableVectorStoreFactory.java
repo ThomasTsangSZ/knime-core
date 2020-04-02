@@ -12,20 +12,13 @@ import org.knime.core.data.table.column.NativeType;
  */
 
 // TODO read vs. write in groups? use-case KNIME read-only table.
-public interface VectorStoreRoot<K> extends RefManaged {
+public interface ReadableVectorStoreFactory {
 
 	/**
 	 * @param <O>
 	 * @param type
 	 * @return a new vector group. Reference counter increased before return.
 	 */
-	ReadableVectorStore<K, ?> createReadableStore(final NativeType... type);
-	
-	/**
-	 * @param <O>
-	 * @param type
-	 * @return a new vector group. Reference counter increased before return.
-	 */
-	WritableVectorStore<K, ?> createWritableStore(final NativeType... type);
+	ReadableVectorStore<?> createReadableStore(final NativeType... type);
 
 }
