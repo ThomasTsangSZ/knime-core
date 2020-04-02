@@ -1,24 +1,21 @@
 
-package org.knime.core.data.vector.table;
+package org.knime.core.data.table.column;
 
-import org.knime.core.data.table.column.WritableColumnCursor;
 import org.knime.core.data.table.value.WritableValue;
-import org.knime.core.data.vector.Vector;
-import org.knime.core.data.vector.WritableVectorStore;
 
-public final class VectorWritableColumnCursor<T> implements WritableColumnCursor {
+public final class WritablePartitionedColumnCursor<T> implements WritableColumnCursor {
 
-	private final VectorValue<T> m_linkedAccess;
+	private final PartitionValue<T> m_linkedAccess;
 
-	private Vector<T> m_currentPartition;
+	private Partition<T> m_currentPartition;
 
 	private long m_currentPartitionMaxIndex = -1;
 
 	private long m_index = -1;
 
-	private final WritableVectorStore<T> m_store;
+	private final WritablePartitionedColumn<T> m_store;
 
-	public VectorWritableColumnCursor(final WritableVectorStore<T> store) {
+	public WritablePartitionedColumnCursor(final WritablePartitionedColumn<T> store) {
 		m_linkedAccess = store.createLinkedValue();
 		m_store = store;
 		switchToNextPartition();
@@ -35,8 +32,8 @@ public final class VectorWritableColumnCursor<T> implements WritableColumnCursor
 
 	private void switchToNextPartition() {
 		try {
-			closeCurrentPartition();
-			m_currentPartition = m_store.add().getRight();
+			closeCurrentPartition(m_index);
+			m_currentPartition = m_store.extend().getRight();
 			m_linkedAccess.updatePartition(m_currentPartition);
 			m_currentPartitionMaxIndex = m_currentPartition.getCapacity() - 1;
 		} catch (final Exception e) {
@@ -45,9 +42,9 @@ public final class VectorWritableColumnCursor<T> implements WritableColumnCursor
 		}
 	}
 
-	private void closeCurrentPartition() throws Exception {
+	private void closeCurrentPartition(long numValues) throws Exception {
 		if (m_currentPartition != null) {
-			m_currentPartition.setNumValues((int) m_index);
+			m_currentPartition.setNumValues((int) numValues);
 			// can be closed. we're done writing
 			m_currentPartition.close();
 			m_currentPartition = null;
@@ -61,6 +58,6 @@ public final class VectorWritableColumnCursor<T> implements WritableColumnCursor
 
 	@Override
 	public void close() throws Exception {
-		closeCurrentPartition();
+		closeCurrentPartition(m_index + 1);
 	}
 }

@@ -8,24 +8,23 @@ import org.apache.arrow.vector.VarCharVector;
 import org.knime.core.data.table.value.ReadableStringValue;
 import org.knime.core.data.table.value.WritableStringValue;
 
-public final class ArrowStringColumnPartitionFactory extends AbstractArrowVectorSupplier<VarCharVector> {
+public final class StringArrowPartition extends AbstractArrowPartition<VarCharVector> {
 
-	public ArrowStringColumnPartitionFactory(final BufferAllocator allocator, final int partitionCapacity) {
+	public StringArrowPartition(final BufferAllocator allocator, final int partitionCapacity) {
 		super(allocator, partitionCapacity);
 	}
 
 	@Override
-	VarCharVector createStorageVector(final BufferAllocator allocator, final int capacity) {
+	VarCharVector create(final BufferAllocator allocator, final int capacity) {
 		final VarCharVector vector = new VarCharVector((String) null, allocator);
 		// TODO: Heuristic
 		vector.allocateNew(64l * capacity, capacity);
 		return vector;
 	}
 
-	public static final class ArrowStringValueAccess //
-		extends AbstractArrowPartitionedValueAccess<VarCharVector> //
-		implements ReadableStringValue, WritableStringValue
-	{
+	public static final class StringArrowValue //
+			extends AbstractArrowValue<VarCharVector> //
+			implements ReadableStringValue, WritableStringValue {
 
 		@Override
 		public String getStringValue() {

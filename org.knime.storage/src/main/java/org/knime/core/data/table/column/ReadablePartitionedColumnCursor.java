@@ -1,18 +1,15 @@
 
-package org.knime.core.data.vector.table;
+package org.knime.core.data.table.column;
 
-import org.knime.core.data.table.column.ReadableColumnCursor;
 import org.knime.core.data.table.value.ReadableValue;
-import org.knime.core.data.vector.ReadableVectorStore;
-import org.knime.core.data.vector.Vector;
 
-public final class VectorReadableColumnCursor<T> implements ReadableColumnCursor {
+public final class ReadablePartitionedColumnCursor<T> implements ReadableColumnCursor {
 
-	private final VectorValue<T> m_linkedAccess;
+	private final PartitionValue<T> m_linkedAccess;
 
-	private final ReadableVectorStore<T> m_vectorStore;
+	private final ReadablePartitionedColumn<T> m_vectorStore;
 
-	private Vector<T> m_currentPartition;
+	private Partition<T> m_currentPartition;
 
 	private long m_currentPartitionMaxIndex = -1;
 
@@ -20,7 +17,7 @@ public final class VectorReadableColumnCursor<T> implements ReadableColumnCursor
 
 	private long m_partitionIndex = -1;
 
-	public VectorReadableColumnCursor(final ReadableVectorStore<T> vectorGroup) {
+	public ReadablePartitionedColumnCursor(final ReadablePartitionedColumn<T> vectorGroup) {
 		m_linkedAccess = vectorGroup.createLinkedValue();
 		m_vectorStore = vectorGroup;
 		switchToNextPartition();
@@ -30,7 +27,7 @@ public final class VectorReadableColumnCursor<T> implements ReadableColumnCursor
 	public boolean canFwd() {
 		return m_index < m_currentPartitionMaxIndex
 				// TODO
-				|| m_partitionIndex < m_vectorStore.numVectors();
+				|| m_partitionIndex < m_vectorStore.getNumPartitions() - 1;
 	}
 
 	@Override

@@ -1,29 +1,15 @@
 
 package org.knime.core.data.arrow;
 
-import org.apache.arrow.vector.FieldVector;
 import org.apache.arrow.vector.ValueVector;
-import org.knime.core.data.table.column.NativeType;
+import org.knime.core.data.store.RootStore;
+import org.knime.core.data.table.column.ColumnSchema;
 
 import io.netty.buffer.ArrowBuf;
 
 public final class ArrowUtils {
 
 	private ArrowUtils() {
-	}
-
-	public static <F extends FieldVector> ArrowNativeType<F> create(NativeType type) {
-		switch (type) {
-		case BOOLEAN:
-			break;
-		case DOUBLE:
-			break;
-		case STRING:
-			break;
-		default:
-			break;
-		}
-		throw new IllegalArgumentException();
 	}
 
 	public static void retainVector(final ValueVector vector) {
@@ -36,6 +22,10 @@ public final class ArrowUtils {
 		for (final ArrowBuf buffer : vector.getBuffers(false)) {
 			buffer.getReferenceManager().release();
 		}
+	}
+
+	public static RootStore createArrowStore(long maxSize, int batchSize, ColumnSchema... schemas) {
+		return new ArrowRootStore(maxSize, batchSize, schemas);
 	}
 
 //	private ArrowColumnAccess<? extends FieldVector> addColumn(final ColumnType type) {

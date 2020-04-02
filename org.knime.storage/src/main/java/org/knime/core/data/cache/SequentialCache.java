@@ -1,5 +1,5 @@
 
-package org.knime.core.data.vector.cache;
+package org.knime.core.data.cache;
 
 import java.io.Flushable;
 import java.io.IOException;
@@ -7,21 +7,25 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import org.knime.core.data.table.column.Partition;
+
 public final class SequentialCache<O> implements Flushable, AutoCloseable {
 
-	private final List<O> m_cache = new ArrayList<>();
+	private final List<Partition<O>> m_cache = new ArrayList<>();
 
 	private final ReentrantReadWriteLock m_cacheLock = new ReentrantReadWriteLock(true);
 
 	private final SequentialCacheFlusher<O> m_flusher;
+	private final SequentialCacheLoader<O> m_loader;
 
 	private long m_cacheOffset = 0;
 
-	public SequentialCache(final SequentialCacheFlusher<O> flusher) {
+	public SequentialCache(final SequentialCacheFlusher<O> flusher, final SequentialCacheLoader<O> loader) {
 		m_flusher = flusher;
+		m_loader = loader;
 	}
 
-	public void add(final O entry) {
+	public void add(final Partition<O> entry) {
 		m_cacheLock.writeLock().lock();
 		try {
 			m_cache.add(entry);
@@ -30,16 +34,12 @@ public final class SequentialCache<O> implements Flushable, AutoCloseable {
 		}
 	}
 
-	public O get(final long index) {
-		return m_cache.get(Math.toIntExact(index - m_cacheOffset));
-	}
-
-	public O get(final long index, final SequentialCacheLoader<O> loader) throws IOException {
+	public Partition<O> get(final long index) throws IOException {
 		m_cacheLock.readLock().lock();
 		try {
-			O entry = get(index);
+			Partition<O> entry = m_cache.get(Math.toIntExact(index - m_cacheOffset));
 			if (entry == null) {
-				entry = loader.load(index);
+				entry = m_loader.load(index);
 				add(entry);
 				// TODO thread-safety?
 				// retain for external
@@ -55,7 +55,7 @@ public final class SequentialCache<O> implements Flushable, AutoCloseable {
 	public void flush() throws IOException {
 		m_cacheLock.writeLock().lock();
 		try {
-			for (final O partition : m_cache) {
+			for (final Partition<O> partition : m_cache) {
 				m_flusher.flush(partition);
 			}
 			m_cacheOffset = m_cache.size();
@@ -65,8 +65,16 @@ public final class SequentialCache<O> implements Flushable, AutoCloseable {
 		}
 	}
 
+	public void clear() throws Exception {
+		for (final Partition<O> obj : m_cache) {
+			// TODO we may only close if no other external reference is kept on this partition for reading or writing.
+			obj.close();
+		}
+	}
+
 	@Override
 	public void close() throws Exception {
 		flush();
+		clear();
 	}
 }

@@ -1,8 +1,6 @@
 
 package org.knime.core.data.arrow;
 
-import io.netty.buffer.ArrowBuf;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -18,28 +16,30 @@ import org.apache.arrow.vector.ipc.ArrowFileWriter;
 import org.apache.arrow.vector.ipc.message.ArrowFieldNode;
 import org.apache.arrow.vector.ipc.message.ArrowRecordBatch;
 import org.apache.arrow.vector.types.pojo.Schema;
-import org.knime.core.data.vector.cache.SequentialCacheFlusher;
+import org.knime.core.data.cache.SequentialCacheFlusher;
+import org.knime.core.data.table.column.Partition;
 
-public final class ArrowVectorToDiskFlusher<V extends FieldVector> implements SequentialCacheFlusher<V>, AutoCloseable {
+import io.netty.buffer.ArrowBuf;
+
+final class ArrowVectorToDiskFlusher<V extends FieldVector> implements SequentialCacheFlusher<V>, AutoCloseable {
 
 	private final VectorSchemaRoot m_root;
 
 	private final ArrowFileWriter m_writer;
 
 	public ArrowVectorToDiskFlusher(final File file, final Schema schema, final BufferAllocator allocator)
-		throws FileNotFoundException
-	{
+			throws FileNotFoundException {
 		m_root = VectorSchemaRoot.create(schema, allocator);
 		// TODO: Figure out if closing the channel also closes the file.
 		m_writer = new ArrowFileWriter(m_root, null, new RandomAccessFile(file, "rw").getChannel());
 	}
 
 	@Override
-	public void flush(final V vector) throws IOException {
+	public void flush(final Partition<V> vector) throws IOException {
 		final List<ArrowFieldNode> nodes = new ArrayList<>();
 		final List<ArrowBuf> buffers = new ArrayList<>();
-		appendNodes(vector, nodes, buffers);
-		try (final ArrowRecordBatch batch = new ArrowRecordBatch(vector.getValueCount(), nodes, buffers)) {
+		appendNodes(vector.get(), nodes, buffers);
+		try (final ArrowRecordBatch batch = new ArrowRecordBatch(vector.get().getValueCount(), nodes, buffers)) {
 			m_writer.writeBatch();
 		}
 	}
@@ -51,8 +51,9 @@ public final class ArrowVectorToDiskFlusher<V extends FieldVector> implements Se
 		final List<ArrowBuf> fieldBuffers = vector.getFieldBuffers();
 		final int expectedBufferCount = TypeLayout.getTypeBufferCount(vector.getField().getType());
 		if (fieldBuffers.size() != expectedBufferCount) {
-			throw new IllegalArgumentException(String.format("wrong number of buffers for field %s in vector %s. found: %s",
-				vector.getField(), vector.getClass().getSimpleName(), fieldBuffers));
+			throw new IllegalArgumentException(
+					String.format("wrong number of buffers for field %s in vector %s. found: %s", vector.getField(),
+							vector.getClass().getSimpleName(), fieldBuffers));
 		}
 		buffers.addAll(fieldBuffers);
 		for (final FieldVector child : vector.getChildrenFromFields()) {

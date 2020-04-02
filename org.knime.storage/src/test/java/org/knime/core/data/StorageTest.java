@@ -1,11 +1,16 @@
 
-package org.knime.core.data.store.knime;
+package org.knime.core.data;
 
+import org.apache.arrow.memory.RootAllocator;
 import org.junit.Assert;
 import org.junit.Test;
 import org.knime.core.data.arrow.ArrowUtils;
+import org.knime.core.data.store.RootStore;
+import org.knime.core.data.store.StoreBackedReadableTable;
+import org.knime.core.data.store.StoreBackedWritableTable;
 import org.knime.core.data.table.column.ColumnSchema;
 import org.knime.core.data.table.column.ColumnType;
+import org.knime.core.data.table.column.NativeType;
 import org.knime.core.data.table.column.ReadableColumnCursor;
 import org.knime.core.data.table.column.WritableColumnCursor;
 import org.knime.core.data.table.row.ColumnBackedReadableRow;
@@ -14,17 +19,14 @@ import org.knime.core.data.table.row.ReadableRow;
 import org.knime.core.data.table.row.WritableRow;
 import org.knime.core.data.table.value.ReadableDoubleValue;
 import org.knime.core.data.table.value.WritableDoubleValue;
-import org.knime.core.data.vector.table.VectorStoreReadableTable;
 
 public class StorageTest {
 
-	/*
-	 * TODO later we have to obviously parameterize the tests independently. for now
-	 * we're good.
+	/**
+	 * Some variables
 	 */
-
 	// in numValues per vector
-	private static final int BATCH_SIZE = 10_000_000;
+	private static final int BATCH_SIZE = RootAllocator.nextPowerOfTwo(1000000);
 
 	// in bytes
 	private static final long OFFHEAP_SIZE = 2000_000_000;
@@ -33,7 +35,27 @@ public class StorageTest {
 	private static final long NUM_ROWS = 100_000_000;
 
 	// some schema
-	private static final ColumnSchema[] SCHEMAS = new ColumnSchema[] { () -> ColumnType.DOUBLE };
+	private static final ColumnSchema[] SCHEMAS = new ColumnSchema[] { new ColumnSchema() {
+		@Override
+		public String name() {
+			return "My Double Column";
+		}
+
+		@Override
+		public ColumnType getColumnType() {
+			return new ColumnType() {
+
+				@Override
+				public NativeType[] getNativeTypes() {
+					return new NativeType[] { NativeType.DOUBLE };
+				}
+			};
+		}
+	} };
+
+	/**
+	 * TESTS
+	 */
 
 	@Test
 	public void doubleArrayTest() {
@@ -50,10 +72,13 @@ public class StorageTest {
 
 	@Test
 	public void columnwiseWriteReadSingleDoubleColumnIdentityTest() throws Exception {
+		try (final RootStore root = ArrowUtils.createArrowStore(OFFHEAP_SIZE, BATCH_SIZE, SCHEMAS)) {
 
-		try (final VectorStoreReadableTable table = ArrowUtils.createArrowTable(BATCH_SIZE, OFFHEAP_SIZE, SCHEMAS)) {
+			// Create writable table on store. Just an access on store.
+			final StoreBackedWritableTable writableTable = new StoreBackedWritableTable(root);
+
 			// first column write
-			try (final WritableColumnCursor col0 = table.getWritableColumnCursor(0)) {
+			try (final WritableColumnCursor col0 = writableTable.getWritableColumnCursor(0)) {
 				final WritableDoubleValue val0 = (WritableDoubleValue) col0.getValueAccess();
 				for (long i = 0; i < NUM_ROWS; i++) {
 					// TODO it would be cool to do col0.fwd().setDouble('val') or
@@ -62,22 +87,14 @@ public class StorageTest {
 					// }
 					col0.fwd();
 					val0.setDoubleValue(i);
-
-//					// OH OH MEMORY LOW
-//					/*
-//					 * What should happen
-//					 * -> flush to disc.
-//					 * -> clear cache
-//					 * -> read from cache reading
-//					 */
-//					if(i == 1337) {
-//						table.flush();
-//					}
 				}
 			}
 
+			// Done writing?
+			final StoreBackedReadableTable readableTable = new StoreBackedReadableTable(root);
+
 			// then read
-			try (final ReadableColumnCursor col0 = table.getReadableColumn(0).createCursor()) {
+			try (final ReadableColumnCursor col0 = readableTable.getReadableColumn(0).createCursor()) {
 				final ReadableDoubleValue val0 = (ReadableDoubleValue) col0.getValueAccess();
 				for (long i = 0; col0.canFwd(); i++) {
 					col0.fwd();
@@ -90,9 +107,12 @@ public class StorageTest {
 	@Test
 	public void rowwiseWriteReadSingleDoubleColumnIdentityTest() throws Exception {
 		// Read/Write table...
-		try (final VectorStoreReadableTable table = ArrowUtils.createArrowTable(BATCH_SIZE, OFFHEAP_SIZE, SCHEMAS)) {
+		try (final RootStore root = ArrowUtils.createArrowStore(OFFHEAP_SIZE, BATCH_SIZE, SCHEMAS)) {
 
-			try (final WritableRow row = ColumnBackedWritableRow.fromWritableTable(table)) {
+			// Create writable table on store. Just an access on store.
+			final StoreBackedWritableTable writableTable = new StoreBackedWritableTable(root);
+
+			try (final WritableRow row = ColumnBackedWritableRow.fromWritableTable(writableTable)) {
 				final WritableDoubleValue val0 = (WritableDoubleValue) row.getValueAccessAt(0);
 				for (long i = 0; i < NUM_ROWS; i++) {
 					row.fwd();
@@ -100,7 +120,10 @@ public class StorageTest {
 				}
 			}
 
-			try (final ReadableRow row = ColumnBackedReadableRow.fromReadableTable(table)) {
+			// Done writing?
+			final StoreBackedReadableTable readableTable = new StoreBackedReadableTable(root);
+
+			try (final ReadableRow row = ColumnBackedReadableRow.fromReadableTable(readableTable)) {
 				final ReadableDoubleValue val0 = (ReadableDoubleValue) row.getValueAccessAt(0);
 				for (long i = 0; row.canFwd(); i++) {
 					row.fwd();

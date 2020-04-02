@@ -1,6 +1,6 @@
-package org.knime.core.data.vector;
+package org.knime.core.data.table.column;
 
-public interface Vector<T> extends AutoCloseable {
+public interface Partition<T> extends AutoCloseable {
 
 	T get();
 

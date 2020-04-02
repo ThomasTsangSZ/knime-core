@@ -6,23 +6,22 @@ import org.apache.arrow.vector.Float8Vector;
 import org.knime.core.data.table.value.ReadableDoubleValue;
 import org.knime.core.data.table.value.WritableDoubleValue;
 
-public final class ArrowDoubleColumnPartitionFactory extends AbstractArrowVectorSupplier<Float8Vector> {
+public class DoubleArrowPartition extends AbstractArrowPartition<Float8Vector> {
 
-	public ArrowDoubleColumnPartitionFactory(final BufferAllocator allocator, final int partitionCapacity) {
+	public DoubleArrowPartition(final BufferAllocator allocator, final int partitionCapacity) {
 		super(allocator, partitionCapacity);
 	}
 
 	@Override
-	Float8Vector createStorageVector(final BufferAllocator allocator, final int capacity) {
+	Float8Vector create(final BufferAllocator allocator, final int capacity) {
 		final Float8Vector vector = new Float8Vector((String) null, allocator);
 		vector.allocateNew(capacity);
 		return vector;
 	}
 
-	public static final class ArrowDoubleValueAccess //
-		extends AbstractArrowPartitionedValueAccess<Float8Vector> //
-		implements ReadableDoubleValue, WritableDoubleValue
-	{
+	public static final class DoubleArrowValue//
+			extends AbstractArrowValue<Float8Vector> //
+			implements ReadableDoubleValue, WritableDoubleValue {
 
 		@Override
 		public double getDoubleValue() {

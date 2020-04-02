@@ -2,11 +2,12 @@
 package org.knime.core.data.arrow.vector;
 
 import org.apache.arrow.vector.FieldVector;
-import org.knime.core.data.vector.Vector;
-import org.knime.core.data.vector.table.VectorValue;
+import org.knime.core.data.table.column.Partition;
+import org.knime.core.data.table.column.PartitionValue;
 
-public abstract class AbstractArrowPartitionedValueAccess<V extends FieldVector> //
-		implements VectorValue<V> {
+// TODO composition over inheritance? :-(
+abstract class AbstractArrowValue<V extends FieldVector> //
+		implements PartitionValue<V> {
 
 	protected int m_index = -1;
 
@@ -18,7 +19,7 @@ public abstract class AbstractArrowPartitionedValueAccess<V extends FieldVector>
 	}
 
 	@Override
-	public void updatePartition(final Vector<V> partition) {
+	public void updatePartition(final Partition<V> partition) {
 		m_index = -1;
 		m_vector = partition.get();
 	}
