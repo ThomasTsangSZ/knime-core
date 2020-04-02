@@ -1555,7 +1555,10 @@ public abstract class NodeDialogPane {
             JPanel panel = new JPanel(new BorderLayout());
             panel.add(m_tree, BorderLayout.CENTER);
             JScrollPane scrPanel = new JScrollPane(panel);
-            scrPanel.setPreferredSize(new Dimension(150, 100));
+            final int panelMinimumWidth = ConfigEditJTree.MINIMUM_ROW_WIDTH;
+            final Dimension scrollPaneSize = new Dimension(panelMinimumWidth, 167);
+            scrPanel.setMinimumSize(scrollPaneSize);
+            scrPanel.setPreferredSize(scrollPaneSize);
             add(scrPanel, BorderLayout.CENTER);
             add(m_errorLabel, BorderLayout.NORTH);
             scrPanel.getViewport().addComponentListener(new ComponentAdapter() {

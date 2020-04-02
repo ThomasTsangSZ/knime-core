@@ -78,6 +78,16 @@ import org.knime.core.node.workflow.FlowObjectStack;
  */
 @SuppressWarnings("serial")
 public class ConfigEditJTree extends JTree {
+    /**
+     * The minimum visible width the tree would like to have.
+     * @since 4.2
+     */
+    public static final int MINIMUM_ROW_WIDTH
+                        = ConfigEditTreeNodePanel.MINIMUM_LABEL_WIDTH
+                            + ConfigEditTreeNodePanel.COMBOBOX_WIDTH
+                            + 100                   // text label
+                            + (3 * (9 * 2));        // inset slop
+
     // Part of implementing AP-11595 featured, for a moment in time, an attempt to fill the width; that functionality
     //      is enabled or disabled by this flag.
     static final boolean ROW_SHOULD_FILL_WIDTH = true;
