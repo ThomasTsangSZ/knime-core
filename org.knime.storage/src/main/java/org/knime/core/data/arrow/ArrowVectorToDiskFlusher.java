@@ -18,9 +18,9 @@ import org.apache.arrow.vector.ipc.ArrowFileWriter;
 import org.apache.arrow.vector.ipc.message.ArrowFieldNode;
 import org.apache.arrow.vector.ipc.message.ArrowRecordBatch;
 import org.apache.arrow.vector.types.pojo.Schema;
-import org.knime.core.data.vector.cache.SequentialCacheFlusher;
+import org.knime.core.data.vector.cache.CacheFlusher;
 
-public final class ArrowVectorToDiskFlusher<V extends FieldVector> implements SequentialCacheFlusher<V>, AutoCloseable {
+public final class ArrowVectorToDiskFlusher<V extends FieldVector> implements CacheFlusher<V>, AutoCloseable {
 
 	private final VectorSchemaRoot m_root;
 

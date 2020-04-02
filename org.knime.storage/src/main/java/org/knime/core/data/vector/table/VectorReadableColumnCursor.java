@@ -4,13 +4,13 @@ package org.knime.core.data.vector.table;
 import org.knime.core.data.table.column.ReadableColumnCursor;
 import org.knime.core.data.table.value.ReadableValue;
 import org.knime.core.data.vector.Vector;
-import org.knime.core.data.vector.VectorGroup;
+import org.knime.core.data.vector.ReadableVectorStore;
 
 public final class VectorReadableColumnCursor<T> implements ReadableColumnCursor {
 
 	private final VectorValue<T> m_linkedAccess;
 
-	private final VectorGroup<Long, T> m_reader;
+	private final ReadableVectorStore<Long, T> m_vectorGroup;
 
 	private Vector<T> m_currentPartition;
 
@@ -20,9 +20,9 @@ public final class VectorReadableColumnCursor<T> implements ReadableColumnCursor
 
 	private long m_partitionIndex = -1;
 
-	public VectorReadableColumnCursor(final VectorGroup<Long, T> store) {
-		m_linkedAccess = store.createLinkedValue();
-		m_reader = store;
+	public VectorReadableColumnCursor(final ReadableVectorStore<Long, T> vectorGroup) {
+		m_linkedAccess = vectorGroup.createLinkedValue();
+		m_vectorGroup = vectorGroup;
 		switchToNextPartition();
 	}
 
@@ -30,7 +30,7 @@ public final class VectorReadableColumnCursor<T> implements ReadableColumnCursor
 	public boolean canFwd() {
 		return m_index < m_currentPartitionMaxIndex
 				// TODO
-				|| m_partitionIndex < m_reader.numVectors();
+				|| m_partitionIndex < m_vectorGroup.numVectors();
 	}
 
 	@Override
@@ -46,7 +46,7 @@ public final class VectorReadableColumnCursor<T> implements ReadableColumnCursor
 		try {
 			m_partitionIndex++;
 			closeCurrentPartition();
-			m_currentPartition = m_reader.getOrCreate(m_partitionIndex);
+			m_currentPartition = m_vectorGroup.get(m_partitionIndex);
 			m_linkedAccess.updatePartition(m_currentPartition);
 			m_currentPartitionMaxIndex = m_currentPartition.getNumValues() - 1;
 		} catch (final Exception e) {
@@ -57,7 +57,7 @@ public final class VectorReadableColumnCursor<T> implements ReadableColumnCursor
 
 	private void closeCurrentPartition() throws Exception {
 		if (m_currentPartition != null) {
-			m_currentPartition.close();
+			m_currentPartition.release();
 		}
 	}
 
@@ -69,5 +69,6 @@ public final class VectorReadableColumnCursor<T> implements ReadableColumnCursor
 	@Override
 	public void close() throws Exception {
 		closeCurrentPartition();
+		m_vectorGroup.release();
 	}
 }

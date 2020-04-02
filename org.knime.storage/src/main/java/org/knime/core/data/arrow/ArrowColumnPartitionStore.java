@@ -11,11 +11,11 @@ import org.apache.arrow.vector.types.pojo.Schema;
 import org.knime.core.data.vector.ColumnPartitionReader;
 import org.knime.core.data.vector.ColumnPartitionWriter;
 import org.knime.core.data.vector.Vector;
-import org.knime.core.data.vector.VectorGroup;
+import org.knime.core.data.vector.ReadableVectorGroup;
 import org.knime.core.data.vector.cache.SequentialCache;
-import org.knime.core.data.vector.cache.SequentialCacheFlusher;
+import org.knime.core.data.vector.cache.CacheFlusher;
 
-public final class ArrowColumnPartitionStore<P extends FieldVector> implements VectorGroup<P> {
+public final class ArrowColumnPartitionStore<P extends FieldVector> implements ReadableVectorGroup<P> {
 
 	private final File m_file;
 
@@ -32,7 +32,7 @@ public final class ArrowColumnPartitionStore<P extends FieldVector> implements V
 		m_file = file;
 		m_schema = schema;
 		m_allocator = allocator;
-		final SequentialCacheFlusher<P> flusher = new ArrowVectorToDiskFlusher<>(file, schema, allocator);
+		final CacheFlusher<P> flusher = new ArrowVectorToDiskFlusher<>(file, schema, allocator);
 		m_cache = new SequentialCache<>(flusher);
 	}
 

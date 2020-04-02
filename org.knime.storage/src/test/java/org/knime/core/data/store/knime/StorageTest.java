@@ -14,7 +14,7 @@ import org.knime.core.data.table.row.ReadableRow;
 import org.knime.core.data.table.row.WritableRow;
 import org.knime.core.data.table.value.ReadableDoubleValue;
 import org.knime.core.data.table.value.WritableDoubleValue;
-import org.knime.core.data.vector.table.VectorStoreBackedTable;
+import org.knime.core.data.vector.table.VectorStoreReadableTable;
 
 public class StorageTest {
 
@@ -51,7 +51,7 @@ public class StorageTest {
 	@Test
 	public void columnwiseWriteReadSingleDoubleColumnIdentityTest() throws Exception {
 
-		try (final VectorStoreBackedTable table = ArrowUtils.createArrowTable(BATCH_SIZE, OFFHEAP_SIZE, SCHEMAS)) {
+		try (final VectorStoreReadableTable table = ArrowUtils.createArrowTable(BATCH_SIZE, OFFHEAP_SIZE, SCHEMAS)) {
 			// first column write
 			try (final WritableColumnCursor col0 = table.getWritableColumnCursor(0)) {
 				final WritableDoubleValue val0 = (WritableDoubleValue) col0.getValueAccess();
@@ -90,7 +90,7 @@ public class StorageTest {
 	@Test
 	public void rowwiseWriteReadSingleDoubleColumnIdentityTest() throws Exception {
 		// Read/Write table...
-		try (final VectorStoreBackedTable table = ArrowUtils.createArrowTable(BATCH_SIZE, OFFHEAP_SIZE, SCHEMAS)) {
+		try (final VectorStoreReadableTable table = ArrowUtils.createArrowTable(BATCH_SIZE, OFFHEAP_SIZE, SCHEMAS)) {
 
 			try (final WritableRow row = ColumnBackedWritableRow.fromWritableTable(table)) {
 				final WritableDoubleValue val0 = (WritableDoubleValue) row.getValueAccessAt(0);

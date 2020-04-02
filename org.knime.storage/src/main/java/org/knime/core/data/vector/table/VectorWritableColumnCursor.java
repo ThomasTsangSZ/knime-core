@@ -4,7 +4,7 @@ package org.knime.core.data.vector.table;
 import org.knime.core.data.table.column.WritableColumnCursor;
 import org.knime.core.data.table.value.WritableValue;
 import org.knime.core.data.vector.Vector;
-import org.knime.core.data.vector.VectorGroup;
+import org.knime.core.data.vector.WritableVectorStore;
 
 public final class VectorWritableColumnCursor<T> implements WritableColumnCursor {
 
@@ -16,11 +16,9 @@ public final class VectorWritableColumnCursor<T> implements WritableColumnCursor
 
 	private long m_index = -1;
 
-	private long m_currentPartitionIndex = -1;
+	private final WritableVectorStore<Long, T> m_store;
 
-	private final VectorGroup<Long, T> m_store;
-
-	public VectorWritableColumnCursor(final VectorGroup<Long, T> store) {
+	public VectorWritableColumnCursor(final WritableVectorStore<Long, T> store) {
 		m_linkedAccess = store.createLinkedValue();
 		m_store = store;
 		switchToNextPartition();
@@ -38,7 +36,7 @@ public final class VectorWritableColumnCursor<T> implements WritableColumnCursor
 	private void switchToNextPartition() {
 		try {
 			closeCurrentPartition();
-			m_currentPartition = m_store.getOrCreate(++m_currentPartitionIndex);
+			m_currentPartition = m_store.add().getRight();
 			m_linkedAccess.updatePartition(m_currentPartition);
 			m_currentPartitionMaxIndex = m_currentPartition.getCapacity() - 1;
 		} catch (final Exception e) {
@@ -50,7 +48,7 @@ public final class VectorWritableColumnCursor<T> implements WritableColumnCursor
 	private void closeCurrentPartition() throws Exception {
 		if (m_currentPartition != null) {
 			m_currentPartition.setNumValues((int) m_index);
-			m_currentPartition.close();
+			m_currentPartition.release();
 		}
 	}
 
@@ -62,5 +60,8 @@ public final class VectorWritableColumnCursor<T> implements WritableColumnCursor
 	@Override
 	public void close() throws Exception {
 		closeCurrentPartition();
+
+		// release reference on store
+		m_store.release();
 	}
 }

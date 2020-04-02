@@ -10,7 +10,7 @@ import org.knime.core.data.table.column.ReadableColumnCursor;
 import org.knime.core.data.table.column.WritableColumnCursor;
 import org.knime.core.data.table.value.ReadableDoubleValue;
 import org.knime.core.data.table.value.WritableDoubleValue;
-import org.knime.core.data.vector.table.VectorStoreBackedTable;
+import org.knime.core.data.vector.table.VectorStoreReadableTable;
 
 public class Main {
 
@@ -34,7 +34,7 @@ public class Main {
 		final long numRows = 100_000_000;
 
 		for (int z = 0; z < 100; z++) {
-			try (final VectorStoreBackedTable table = ArrowUtils.createArrowTable(BATCH_SIZE, OFFHEAP_SIZE, doubleVectorSchema)) {
+			try (final VectorStoreReadableTable table = ArrowUtils.createArrowTable(BATCH_SIZE, OFFHEAP_SIZE, doubleVectorSchema)) {
 
 				final long time = System.nanoTime();
 				// first write

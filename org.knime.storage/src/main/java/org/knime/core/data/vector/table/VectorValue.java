@@ -5,6 +5,7 @@ import org.knime.core.data.table.value.ReadableValue;
 import org.knime.core.data.table.value.WritableValue;
 import org.knime.core.data.vector.Vector;
 
+// TODO split into Readable / Writable
 public interface VectorValue<T> extends ReadableValue, WritableValue {
 
 	/**
