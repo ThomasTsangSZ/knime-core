@@ -3,18 +3,18 @@ package org.knime.core.data.store.knime;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.knime.core.data.store.arrow.ArrowTable;
-import org.knime.core.data.store.arrow.ArrowUtils;
-import org.knime.core.data.store.column.ColumnSchema;
-import org.knime.core.data.store.column.ColumnType;
-import org.knime.core.data.store.column.ReadableColumnCursor;
-import org.knime.core.data.store.column.WritableColumnCursor;
-import org.knime.core.data.store.column.value.ReadableDoubleValueAccess;
-import org.knime.core.data.store.column.value.WritableDoubleValueAccess;
-import org.knime.core.data.store.table.row.ColumnBackedReadableRow;
-import org.knime.core.data.store.table.row.ColumnBackedWritableRow;
-import org.knime.core.data.store.table.row.ReadableRow;
-import org.knime.core.data.store.table.row.WritableRow;
+import org.knime.core.data.arrow.ArrowUtils;
+import org.knime.core.data.table.column.ColumnSchema;
+import org.knime.core.data.table.column.ColumnType;
+import org.knime.core.data.table.column.ReadableColumnCursor;
+import org.knime.core.data.table.column.WritableColumnCursor;
+import org.knime.core.data.table.row.ColumnBackedReadableRow;
+import org.knime.core.data.table.row.ColumnBackedWritableRow;
+import org.knime.core.data.table.row.ReadableRow;
+import org.knime.core.data.table.row.WritableRow;
+import org.knime.core.data.table.value.ReadableDoubleValue;
+import org.knime.core.data.table.value.WritableDoubleValue;
+import org.knime.core.data.vector.table.VectorStoreBackedTable;
 
 public class StorageTest {
 
@@ -51,10 +51,10 @@ public class StorageTest {
 	@Test
 	public void columnwiseWriteReadSingleDoubleColumnIdentityTest() throws Exception {
 
-		try (final ArrowTable table = ArrowUtils.createArrowTable(BATCH_SIZE, OFFHEAP_SIZE, SCHEMAS)) {
+		try (final VectorStoreBackedTable table = ArrowUtils.createArrowTable(BATCH_SIZE, OFFHEAP_SIZE, SCHEMAS)) {
 			// first column write
 			try (final WritableColumnCursor col0 = table.getWritableColumnCursor(0)) {
-				final WritableDoubleValueAccess val0 = (WritableDoubleValueAccess) col0.getValueAccess();
+				final WritableDoubleValue val0 = (WritableDoubleValue) col0.getValueAccess();
 				for (long i = 0; i < NUM_ROWS; i++) {
 					// TODO it would be cool to do col0.fwd().setDouble('val') or
 					// col0.next().getDouble()
@@ -78,7 +78,7 @@ public class StorageTest {
 
 			// then read
 			try (final ReadableColumnCursor col0 = table.getReadableColumn(0).createCursor()) {
-				final ReadableDoubleValueAccess val0 = (ReadableDoubleValueAccess) col0.getValueAccess();
+				final ReadableDoubleValue val0 = (ReadableDoubleValue) col0.getValueAccess();
 				for (long i = 0; col0.canFwd(); i++) {
 					col0.fwd();
 					Assert.assertEquals(i, val0.getDoubleValue(), 0.0000001);
@@ -90,10 +90,10 @@ public class StorageTest {
 	@Test
 	public void rowwiseWriteReadSingleDoubleColumnIdentityTest() throws Exception {
 		// Read/Write table...
-		try (final ArrowTable table = ArrowUtils.createArrowTable(BATCH_SIZE, OFFHEAP_SIZE, SCHEMAS)) {
+		try (final VectorStoreBackedTable table = ArrowUtils.createArrowTable(BATCH_SIZE, OFFHEAP_SIZE, SCHEMAS)) {
 
 			try (final WritableRow row = ColumnBackedWritableRow.fromWritableTable(table)) {
-				final WritableDoubleValueAccess val0 = (WritableDoubleValueAccess) row.getValueAccessAt(0);
+				final WritableDoubleValue val0 = (WritableDoubleValue) row.getValueAccessAt(0);
 				for (long i = 0; i < NUM_ROWS; i++) {
 					row.fwd();
 					val0.setDoubleValue(i);
@@ -101,7 +101,7 @@ public class StorageTest {
 			}
 
 			try (final ReadableRow row = ColumnBackedReadableRow.fromReadableTable(table)) {
-				final ReadableDoubleValueAccess val0 = (ReadableDoubleValueAccess) row.getValueAccessAt(0);
+				final ReadableDoubleValue val0 = (ReadableDoubleValue) row.getValueAccessAt(0);
 				for (long i = 0; row.canFwd(); i++) {
 					row.fwd();
 					Assert.assertEquals(i, val0.getDoubleValue(), 0.0000001);
