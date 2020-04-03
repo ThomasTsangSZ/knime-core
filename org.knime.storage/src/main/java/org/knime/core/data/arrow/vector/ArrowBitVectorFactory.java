@@ -6,9 +6,9 @@ import org.apache.arrow.vector.BitVector;
 import org.knime.core.data.table.value.ReadableBooleanValue;
 import org.knime.core.data.table.value.WritableBooleanValue;
 
-public final class BooleanArrowPartition extends AbstractArrowPartition<BitVector> {
+public final class ArrowBitVectorFactory extends AbstractArrowFieldVectorFactory<BitVector> {
 
-	public BooleanArrowPartition(final BufferAllocator allocator, final int partitionCapacity) {
+	public ArrowBitVectorFactory(final BufferAllocator allocator, final int partitionCapacity) {
 		super(allocator, partitionCapacity);
 	}
 

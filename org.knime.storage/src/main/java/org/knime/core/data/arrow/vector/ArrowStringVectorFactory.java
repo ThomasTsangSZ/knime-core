@@ -8,9 +8,9 @@ import org.apache.arrow.vector.VarCharVector;
 import org.knime.core.data.table.value.ReadableStringValue;
 import org.knime.core.data.table.value.WritableStringValue;
 
-public final class StringArrowPartition extends AbstractArrowPartition<VarCharVector> {
+public final class ArrowStringVectorFactory extends AbstractArrowFieldVectorFactory<VarCharVector> {
 
-	public StringArrowPartition(final BufferAllocator allocator, final int partitionCapacity) {
+	public ArrowStringVectorFactory(final BufferAllocator allocator, final int partitionCapacity) {
 		super(allocator, partitionCapacity);
 	}
 

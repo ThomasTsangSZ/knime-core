@@ -13,6 +13,7 @@
 - [ ] Test Life-cycle management (close() vs. destroy() vs. ... finishWriting() 'can I read before I've serialized the entire table')
 - [ ] Test Thread-safety (multi-read, cache,...). Locking per partition.
 - [X] MultiVecValue & Custom data types (e.g. Date&Time, Text, Struct, PNG Images). 
+- [ ] More types: DictType for categorical variables, NativeStructs?, Collections, ...
 - [ ] Support for serializers. Forseeable problem: avoid constant serialization and deserialization into byte[]
 - [ ] Try to access some data from python (Davin/Marcel -> shared memory, shared jni)
 - [ ] Pre-fetching / pre-writing (async)
@@ -23,8 +24,8 @@
 - [ ] Predicate push-down and Filter-API
 
 ### KNIME Integration
-- [ ] CollectionCells
 - [ ] Support for FileStores / BlobStores
+- [ ] CollectionCells
 - [ ] Off heap memory management
 
 ### Nice-to-haves

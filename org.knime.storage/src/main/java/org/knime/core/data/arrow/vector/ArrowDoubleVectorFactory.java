@@ -6,9 +6,9 @@ import org.apache.arrow.vector.Float8Vector;
 import org.knime.core.data.table.value.ReadableDoubleValue;
 import org.knime.core.data.table.value.WritableDoubleValue;
 
-public class DoubleArrowPartition extends AbstractArrowPartition<Float8Vector> {
+public class ArrowDoubleVectorFactory extends AbstractArrowFieldVectorFactory<Float8Vector> {
 
-	public DoubleArrowPartition(final BufferAllocator allocator, final int partitionCapacity) {
+	public ArrowDoubleVectorFactory(final BufferAllocator allocator, final int partitionCapacity) {
 		super(allocator, partitionCapacity);
 	}
 

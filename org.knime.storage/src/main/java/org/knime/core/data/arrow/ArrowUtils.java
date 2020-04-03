@@ -1,9 +1,18 @@
 
 package org.knime.core.data.arrow;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.arrow.vector.ValueVector;
+import org.apache.arrow.vector.types.FloatingPointPrecision;
+import org.apache.arrow.vector.types.pojo.ArrowType;
+import org.apache.arrow.vector.types.pojo.Field;
+import org.apache.arrow.vector.types.pojo.Schema;
 import org.knime.core.data.store.RootStore;
 import org.knime.core.data.table.column.ColumnSchema;
+import org.knime.core.data.table.column.ColumnType;
+import org.knime.core.data.table.column.NativeType;
 
 import io.netty.buffer.ArrowBuf;
 
@@ -28,41 +37,57 @@ public final class ArrowUtils {
 		return new ArrowRootStore(maxSize, batchSize, schemas);
 	}
 
-//	private ArrowColumnAccess<? extends FieldVector> addColumn(final ColumnType type) {
-//	final BufferAllocator childAllocator = m_rootAllocator.newChildAllocator("ChildAllocator", 0, m_rootAllocator
-//		.getLimit());
-//	switch (type) {
-//		case BOOLEAN:
-//			return new DefaultArrowColumnAccess<>(m_baseDir, new ArrowType.Binary(), childAllocator,
-//				new ArrowBooleanColumnPartitionFactory(childAllocator, m_batchSize), () -> new ArrowBooleanValueAccess());
-//		case DOUBLE:
-//			return new DefaultArrowColumnAccess<>(m_baseDir, new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE),
-//				childAllocator, new ArrowDoubleColumnPartitionFactory(childAllocator, m_batchSize),
-//				() -> new ArrowDoubleValueAccess());
-//		case STRING:
-//			return new DefaultArrowColumnAccess<>(m_baseDir, new ArrowType.Utf8(), childAllocator,
-//				new ArrowStringColumnPartitionFactory(childAllocator, m_batchSize), () -> new ArrowStringValueAccess());
-//		default:
-//			throw new UnsupportedOperationException("not yet implemented");
-//	}
-//}
+	public static Field toField(String name, NativeType type) {
+		switch (type) {
+		case BOOLEAN:
+			return Field.nullablePrimitive(name, new ArrowType.Binary());
+		case DOUBLE:
+			return Field.nullablePrimitive(name, new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE));
+		case STRING:
+			return Field.nullablePrimitive(name, new ArrowType.Utf8());
+		default:
+			throw new IllegalArgumentException("NativeType not yet implemented: " + type);
+		}
+	}
 
-//	private ArrowColumnAccess<? extends FieldVector> addColumn(final ColumnType type) {
-//	final BufferAllocator childAllocator = m_rootAllocator.newChildAllocator("ChildAllocator", 0, m_rootAllocator
-//		.getLimit());
-//	switch (type) {
-//		case BOOLEAN:
-//			return new DefaultArrowColumnAccess<>(m_baseDir, new ArrowType.Binary(), childAllocator,
-//				new ArrowBooleanColumnPartitionFactory(childAllocator, m_batchSize), () -> new ArrowBooleanValueAccess());
-//		case DOUBLE:
-//			return new DefaultArrowColumnAccess<>(m_baseDir, new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE),
-//				childAllocator, new ArrowDoubleColumnPartitionFactory(childAllocator, m_batchSize),
-//				() -> new ArrowDoubleValueAccess());
-//		case STRING:
-//			return new DefaultArrowColumnAccess<>(m_baseDir, new ArrowType.Utf8(), childAllocator,
-//				new ArrowStringColumnPartitionFactory(childAllocator, m_batchSize), () -> new ArrowStringValueAccess());
-//		default:
-//			throw new UnsupportedOperationException("not yet implemented");
+	public static List<Field> toFieldList(String name, ColumnType colType) {
+		final List<Field> fields = new ArrayList<>();
+		final NativeType[] types = colType.getNativeTypes();
+		for (int i = 0; i < types.length; i++) {
+			// TODO no idea about good naming
+			fields.add(toField(name + ", index " + i + ", type, " + types[i], types[i]));
+		}
+		return fields;
+	}
+
+	public static Schema createArrowSchema(ColumnSchema... schemas) {
+		final List<Field> fields = new ArrayList<>();
+		for (final ColumnSchema schema : schemas) {
+			fields.addAll(toFieldList(schema.name(), schema.getColumnType()));
+		}
+		return new Schema(fields);
+	}
+
+//
+//	public void 
+//    for (FieldVector vector : root.getFieldVectors()) {
+//        appendNodes(vector, nodes, buffers);
+//      }
+//	
+//	// TODO: Copied from org.apache.arrow.vector.VectorUnloader. Is any better
+//	// way?
+//	public void appendNodes(final FieldVector vector, final List<ArrowFieldNode> nodes, final List<ArrowBuf> buffers) {
+//		nodes.add(new ArrowFieldNode(vector.getValueCount(), vector.getNullCount()));
+//		final List<ArrowBuf> fieldBuffers = vector.getFieldBuffers();
+//		final int expectedBufferCount = TypeLayout.getTypeBufferCount(vector.getField().getType());
+//		if (fieldBuffers.size() != expectedBufferCount) {
+//			throw new IllegalArgumentException(
+//					String.format("wrong number of buffers for field %s in vector %s. found: %s", vector.getField(),
+//							vector.getClass().getSimpleName(), fieldBuffers));
+//		}
+//		buffers.addAll(fieldBuffers);
+//		for (final FieldVector child : vector.getChildrenFromFields()) {
+//			appendNodes(child, nodes, buffers);
+//		}
 //	}
-//}
 }
