@@ -18,11 +18,7 @@ import org.knime.core.data.table.row.ColumnBackedWritableRow;
 import org.knime.core.data.table.row.ReadableRow;
 import org.knime.core.data.table.row.WritableRow;
 import org.knime.core.data.table.value.ReadableDoubleValue;
-import org.knime.core.data.table.value.ReadableStringValue;
-import org.knime.core.data.table.value.ReadableStructValue;
 import org.knime.core.data.table.value.WritableDoubleValue;
-import org.knime.core.data.table.value.WritableStringValue;
-import org.knime.core.data.table.value.WritableStructValue;
 
 public class StorageTest {
 
@@ -36,7 +32,7 @@ public class StorageTest {
 	public static final long OFFHEAP_SIZE = 2000_000_000;
 
 	// num rows used for testing
-	public static final long NUM_ROWS = 100;
+	public static final long NUM_ROWS = 10000;
 
 	// some schema
 	private static final ColumnSchema[] SCHEMAS = new ColumnSchema[] { new ColumnSchema() {
@@ -89,10 +85,18 @@ public class StorageTest {
 					// col0.next().getDouble()
 					// for(DoubleColumValue val : doubleColumn){
 					// }
+
 					col0.fwd();
 					val0.setDoubleValue(i);
 				}
 			}
+
+			// TODO this is unfortunately required before reading...
+			// TODO implication: We can't offer read access to a table if the table is not
+			// entirely flushed AND/OR held in memory, unless we write multiple files per
+			// table (chunks) (-> current implementation)
+			// TODO maybe Parquet behaves differently?
+			// root.closeForWriting();
 
 			// Done writing?
 			final StoreBackedReadableTable readableTable = new StoreBackedReadableTable(root);

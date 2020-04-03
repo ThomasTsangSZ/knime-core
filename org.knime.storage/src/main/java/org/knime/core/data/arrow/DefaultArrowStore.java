@@ -34,8 +34,7 @@ class DefaultArrowStore<T> implements ArrowStore<T> {
 
 	@Override
 	public void addPartition(Partition<T> partition) {
-		m_partitionIdx++;
-		m_cache.add(partition);
+		m_cache.add(m_partitionIdx++, partition);
 	}
 
 	@Override
@@ -60,4 +59,5 @@ class DefaultArrowStore<T> implements ArrowStore<T> {
 	public void close() throws Exception {
 		m_cache.clear();
 	}
+
 }

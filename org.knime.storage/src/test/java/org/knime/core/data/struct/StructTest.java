@@ -7,7 +7,6 @@ import org.knime.core.data.arrow.ArrowUtils;
 import org.knime.core.data.store.RootStore;
 import org.knime.core.data.store.StoreBackedReadableTable;
 import org.knime.core.data.store.StoreBackedWritableTable;
-import org.knime.core.data.table.WritableTable;
 import org.knime.core.data.table.column.ColumnSchema;
 import org.knime.core.data.table.column.ColumnType;
 import org.knime.core.data.table.column.NativeType;
@@ -48,7 +47,6 @@ public class StructTest {
 		long age;
 	}
 	
-
 	@Test
 	public void columnwiseWriteReadStructColumnIdentityTest() throws Exception {
 		try (final RootStore root = ArrowUtils.createArrowStore(StorageTest.OFFHEAP_SIZE, StorageTest.BATCH_SIZE,

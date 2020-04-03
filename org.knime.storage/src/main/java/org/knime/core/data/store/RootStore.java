@@ -12,5 +12,4 @@ public interface RootStore extends AutoCloseable {
 
 	// delete all traces of this store
 	void destroy() throws Exception;
-
 }

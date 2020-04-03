@@ -7,7 +7,7 @@ public final class ReadablePartitionedColumnCursor<T> implements ReadableColumnC
 
 	private final PartitionValue<T> m_linkedAccess;
 
-	private final ReadablePartitionedColumn<T> m_vectorStore;
+	private final ReadablePartitionedColumn<T> m_partitionedColumn;
 
 	private Partition<T> m_currentPartition;
 
@@ -17,9 +17,9 @@ public final class ReadablePartitionedColumnCursor<T> implements ReadableColumnC
 
 	private long m_partitionIndex = -1;
 
-	public ReadablePartitionedColumnCursor(final ReadablePartitionedColumn<T> vectorGroup) {
-		m_linkedAccess = vectorGroup.createLinkedValue();
-		m_vectorStore = vectorGroup;
+	public ReadablePartitionedColumnCursor(final ReadablePartitionedColumn<T> partitionedColumn) {
+		m_linkedAccess = partitionedColumn.createLinkedValue();
+		m_partitionedColumn = partitionedColumn;
 		switchToNextPartition();
 	}
 
@@ -27,7 +27,7 @@ public final class ReadablePartitionedColumnCursor<T> implements ReadableColumnC
 	public boolean canFwd() {
 		return m_index < m_currentPartitionMaxIndex
 				// TODO
-				|| m_partitionIndex < m_vectorStore.getNumPartitions() - 1;
+				|| m_partitionIndex < m_partitionedColumn.getNumPartitions() - 1;
 	}
 
 	@Override
@@ -43,7 +43,7 @@ public final class ReadablePartitionedColumnCursor<T> implements ReadableColumnC
 		try {
 			m_partitionIndex++;
 			closeCurrentPartition();
-			m_currentPartition = m_vectorStore.get(m_partitionIndex);
+			m_currentPartition = m_partitionedColumn.get(m_partitionIndex);
 			m_linkedAccess.updatePartition(m_currentPartition);
 			m_currentPartitionMaxIndex = m_currentPartition.getNumValues() - 1;
 		} catch (final Exception e) {

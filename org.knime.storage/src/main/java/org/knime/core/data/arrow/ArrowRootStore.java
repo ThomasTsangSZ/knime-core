@@ -1,6 +1,5 @@
 package org.knime.core.data.arrow;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -41,15 +40,13 @@ class ArrowRootStore implements RootStore {
 			for (int i = 0; i < schemas.length; i++) {
 				final NativeType[] nativeTypes = schemas[i].getColumnType().getNativeTypes();
 				if (nativeTypes.length == 1) {
-					m_stores[i] = create(nativeTypes[0],
-							m_storeId + " Store: " + schemas[i] + ", i ," + nativeTypes[0] + ",", maxSize, batchSize, i,
+					m_stores[i] = create(nativeTypes[0], "colIdx" + "_" + i + "_childIdx_" + 0, maxSize, batchSize, i,
 							0);
 				} else {
 					final ArrowStore<?>[] stores = new ArrowStore[nativeTypes.length];
 					for (int j = 0; j < nativeTypes.length; j++) {
-						stores[j] = create(nativeTypes[j],
-								m_storeId + " Store: " + schemas[j] + ", i ," + nativeTypes[j] + ",", maxSize,
-								batchSize, i, j);
+						stores[j] = create(nativeTypes[j], "colIdx" + "_" + i + "_childIdx_" + j, maxSize, batchSize, i,
+								j);
 					}
 					m_stores[i] = new StructArrowStore(stores);
 				}
@@ -60,31 +57,27 @@ class ArrowRootStore implements RootStore {
 	}
 
 	private DefaultArrowStore<?> create(NativeType type, String name, long maxSize, int batchSize, int colIdx,
-			int subIdx) throws IOException {
+			int childIdx) throws IOException {
 		// TODO no idea what a good init size or max-size is. Actually it should
 		// type-dependent
 		final BufferAllocator allocator = m_allocator.newChildAllocator(name, maxSize / (4 * m_stores.length), maxSize);
-		final File file = Files.createTempFile(m_baseDir, "arrow_column_at_" + colIdx + "_subtype_" + subIdx, ".arrow")
-				.toFile();
-		file.deleteOnExit();
-
 		switch (type) {
 		// TODO a bit clunky. Util methods?
 		case BOOLEAN:
 			return new DefaultArrowStore<>(() -> new ArrowBitVectorFactory.BooleanArrowValue(),
 					() -> new ArrowPartition<>(new ArrowBitVectorFactory(allocator, batchSize).create(), batchSize),
-					new SequentialCache<>(new ArrowCacheFlusher<>(file), new ArrowCacheLoader<>(file, m_allocator,
-							ArrowUtils.toField(/* TODO */type.name(), type), batchSize)));
+					new SequentialCache<>(new ArrowCacheFlusher<>(m_baseDir, name),
+							new ArrowCacheLoader<>(m_baseDir, name, m_allocator)));
 		case DOUBLE:
 			return new DefaultArrowStore<>(() -> new ArrowDoubleVectorFactory.DoubleArrowValue(),
 					() -> new ArrowPartition<>(new ArrowDoubleVectorFactory(allocator, batchSize).create(), batchSize),
-					new SequentialCache<>(new ArrowCacheFlusher<>(file), new ArrowCacheLoader<>(file, m_allocator,
-							ArrowUtils.toField(/* TODO */type.name(), type), batchSize)));
+					new SequentialCache<>(new ArrowCacheFlusher<>(m_baseDir, name),
+							new ArrowCacheLoader<>(m_baseDir, name, m_allocator)));
 		case STRING:
 			return new DefaultArrowStore<>(() -> new ArrowStringVectorFactory.StringArrowValue(),
 					() -> new ArrowPartition<>(new ArrowStringVectorFactory(allocator, batchSize).create(), batchSize),
-					new SequentialCache<>(new ArrowCacheFlusher<>(file), new ArrowCacheLoader<>(file, m_allocator,
-							ArrowUtils.toField(/* TODO */type.name(), type), batchSize)));
+					new SequentialCache<>(new ArrowCacheFlusher<>(m_baseDir, name),
+							new ArrowCacheLoader<>(m_baseDir, name, m_allocator)));
 		default:
 			throw new IllegalArgumentException("Unknown or not yet implemented NativeType " + type);
 		}
@@ -127,5 +120,4 @@ class ArrowRootStore implements RootStore {
 		close();
 		// delete all created files in case of writing.
 	}
-
 }

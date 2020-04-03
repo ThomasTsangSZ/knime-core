@@ -19,16 +19,7 @@ public class StoreBackedReadableTable implements ReadableTable {
 		m_column = new ReadableColumn[(int) store.getNumStores()];
 		for (int i = 0; i < m_column.length; i++) {
 			m_column[i] = new DefaultWritablePartitionedColumn<>(store.getStoreAt(i));
-//			else {
-//				@SuppressWarnings("unchecked")
-//				final WritablePartitionedColumn<Long, ?>[] struct = new WritablePartitionedColumn[types.length];
-//				for (int i = 0; i < struct.length; i++) {
-//					struct[i] = createGroupForType(types[i]);
-//				}
-//				storeForType = new WritableVectorStoreGroup<>(struct);
-//			}
 		}
-
 	}
 
 	@Override
