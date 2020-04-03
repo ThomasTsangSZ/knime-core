@@ -9,11 +9,11 @@ import org.knime.core.data.table.value.ReadableValue;
 import org.knime.core.data.table.value.WritableStructValue;
 import org.knime.core.data.table.value.WritableValue;
 
-public class ArrowStoreGroup implements ArrowStore<Partition<?>[]> {
+public class StructArrowStore implements ArrowStore<Partition<?>[]> {
 
 	private ArrowStore<?>[] m_stores;
 
-	public ArrowStoreGroup(ArrowStore<?>... stores) {
+	public StructArrowStore(ArrowStore<?>... stores) {
 		m_stores = stores;
 	}
 

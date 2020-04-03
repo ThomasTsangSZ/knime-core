@@ -38,7 +38,7 @@ class ArrowRootStore implements RootStore {
 					stores[j] = create(nativeTypes[j],
 							m_storeId + " Store: " + schemas[i] + ", i ," + nativeTypes[0] + ",", maxSize, batchSize);
 				}
-				m_stores[i] = new ArrowStoreGroup(stores);
+				m_stores[i] = new StructArrowStore(stores);
 			}
 		}
 		m_storeId = UUID.randomUUID();
