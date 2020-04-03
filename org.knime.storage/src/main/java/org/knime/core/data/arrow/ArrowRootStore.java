@@ -18,6 +18,8 @@ import org.knime.core.data.store.Store;
 import org.knime.core.data.table.column.ColumnSchema;
 import org.knime.core.data.table.column.NativeType;
 
+// TODO persistence done with one file per column at the moment. That's not working out will in case of very wide-data with only little rows. Also problematic as so many small files are created.
+// TODO likely better approach: use parquet as persistence layer. can be done on implementation level without API changes.
 class ArrowRootStore implements RootStore {
 
 	private final ArrowStore<?>[] m_stores;
@@ -33,34 +35,37 @@ class ArrowRootStore implements RootStore {
 		try {
 			m_stores = new ArrowStore[schemas.length];
 			m_allocator = new RootAllocator();
-			m_baseDir = Files.createTempDirectory("ArrowStore: " + m_storeId.toString());
+			m_baseDir = Files.createTempDirectory("ArrowStore_" + m_storeId.toString());
 
 			// TODO check if there are smarter ways to do this in arrow than that
 			for (int i = 0; i < schemas.length; i++) {
 				final NativeType[] nativeTypes = schemas[i].getColumnType().getNativeTypes();
 				if (nativeTypes.length == 1) {
 					m_stores[i] = create(nativeTypes[0],
-							m_storeId + " Store: " + schemas[i] + ", i ," + nativeTypes[0] + ",", maxSize, batchSize);
+							m_storeId + " Store: " + schemas[i] + ", i ," + nativeTypes[0] + ",", maxSize, batchSize, i,
+							0);
 				} else {
 					final ArrowStore<?>[] stores = new ArrowStore[nativeTypes.length];
 					for (int j = 0; j < nativeTypes.length; j++) {
 						stores[j] = create(nativeTypes[j],
 								m_storeId + " Store: " + schemas[j] + ", i ," + nativeTypes[j] + ",", maxSize,
-								batchSize);
+								batchSize, i, j);
 					}
 					m_stores[i] = new StructArrowStore(stores);
 				}
 			}
 		} catch (IOException e) {
-			throw new RuntimeException("UhOh. Couldn't create file.");
+			throw new RuntimeException(e);
 		}
 	}
 
-	private DefaultArrowStore<?> create(NativeType type, String name, long maxSize, int batchSize) throws IOException {
+	private DefaultArrowStore<?> create(NativeType type, String name, long maxSize, int batchSize, int colIdx,
+			int subIdx) throws IOException {
 		// TODO no idea what a good init size or max-size is. Actually it should
 		// type-dependent
 		final BufferAllocator allocator = m_allocator.newChildAllocator(name, maxSize / (4 * m_stores.length), maxSize);
-		final File file = Files.createFile(m_baseDir).toFile();
+		final File file = Files.createTempFile(m_baseDir, "arrow_column_at_" + colIdx + "_subtype_" + subIdx, ".arrow")
+				.toFile();
 		file.deleteOnExit();
 
 		switch (type) {
