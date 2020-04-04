@@ -55,6 +55,7 @@ import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -65,9 +66,11 @@ import javax.swing.SwingUtilities;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.TreeModel;
 
+import org.knime.core.node.KNIMEConstants;
 import org.knime.core.node.NodeSettings;
 import org.knime.core.node.NodeSettingsWO;
 import org.knime.core.node.workflow.FlowObjectStack;
+import org.knime.core.util.RetriggerableDelayedRunnable;
 
 /**
  * A tree implementation that allows one to overwrite certain node settings
@@ -107,6 +110,9 @@ public class ConfigEditJTree extends JTree {
     // the visible width of this tree (the parent viewport's width)
     private int m_visibleWidth = -1;
 
+    private final AtomicBoolean m_instantiatedTriggerDueToMissedTrain;
+    private RetriggerableDelayedRunnable m_modelRefreshTrigger;
+
     /** Constructor for empty tree. */
     public ConfigEditJTree() {
         this(EMPTY_MODEL);
@@ -129,6 +135,8 @@ public class ConfigEditJTree extends JTree {
         setRowHeight(renderer.getPreferredSize().height);
         setEditable(true);
         setToolTipText("config tree"); // enable tooltip
+
+        m_instantiatedTriggerDueToMissedTrain = new AtomicBoolean(false);
     }
 
     /**
@@ -138,9 +146,34 @@ public class ConfigEditJTree extends JTree {
      */
     public void setViewportWidth(final int w) {
         m_visibleWidth = w - m_childIndentSum;
-        SwingUtilities.invokeLater(() -> {
-            getModel().forceModelRefresh(ConfigEditJTree.this);
-        });
+
+        synchronized (m_instantiatedTriggerDueToMissedTrain) {
+            final boolean createTrigger;
+            if (m_modelRefreshTrigger != null) {
+                createTrigger = !m_modelRefreshTrigger.retrigger();
+                if (createTrigger) {
+                    m_instantiatedTriggerDueToMissedTrain.set(true);
+                }
+            } else {
+                createTrigger = true;
+            }
+
+            if (createTrigger) {
+                final Runnable r = () -> {
+                    SwingUtilities.invokeLater(() -> {
+                        getModel().forceModelRefresh(ConfigEditJTree.this);
+
+                        synchronized (m_instantiatedTriggerDueToMissedTrain) {
+                            if (!m_instantiatedTriggerDueToMissedTrain.getAndSet(false)) {
+                                m_modelRefreshTrigger = null;
+                            }
+                        }
+                    });
+                };
+                m_modelRefreshTrigger = new RetriggerableDelayedRunnable(r, 200);
+                KNIMEConstants.GLOBAL_THREAD_POOL.enqueue(m_modelRefreshTrigger);
+            }
+        }
     }
 
     int getVisibleWidth() {
