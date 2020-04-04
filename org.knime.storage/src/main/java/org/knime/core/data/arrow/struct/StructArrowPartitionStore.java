@@ -2,16 +2,18 @@ package org.knime.core.data.arrow.struct;
 
 import java.io.IOException;
 
-import org.knime.core.data.arrow.ArrowStore;
-import org.knime.core.data.table.column.Partition;
-import org.knime.core.data.table.column.PartitionValue;
+import org.knime.core.data.arrow.ArrowPartitionStore;
+import org.knime.core.data.partition.Partition;
+import org.knime.core.data.partition.PartitionValue;
 
-public class StructArrowStore implements ArrowStore<Partition<?>[]> {
+public class StructArrowPartitionStore implements ArrowPartitionStore<Partition<?>[]> {
 
-	private ArrowStore<?>[] m_stores;
+	private ArrowPartitionStore<?>[] m_stores;
+	private long m_index;
 
-	public StructArrowStore(ArrowStore<?>... stores) {
+	public StructArrowPartitionStore(long index, ArrowPartitionStore<?>... stores) {
 		m_stores = stores;
+		m_index = index;
 	}
 
 	@Override
@@ -29,16 +31,7 @@ public class StructArrowStore implements ArrowStore<Partition<?>[]> {
 		for (int i = 0; i < m_stores.length; i++) {
 			partitions[i] = m_stores[i].createPartition();
 		}
-		return new StructArrowPartition(partitions);
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	@Override
-	public void addPartition(Partition<Partition<?>[]> partition) {
-		for (int i = 0; i < m_stores.length; i++) {
-			// TODO is there a better way?
-			m_stores[i].addPartition((Partition) partition.get()[i]);
-		}
+		return new StructArrowPartition(partitions, m_index);
 	}
 
 	@Override
@@ -48,12 +41,12 @@ public class StructArrowStore implements ArrowStore<Partition<?>[]> {
 			partitions[i] = m_stores[i].get(index);
 		}
 		// We could potentially cache this
-		return new StructArrowPartition(partitions);
+		return new StructArrowPartition(partitions, m_index);
 	}
 
 	@Override
-	public long getPartitions() {
-		return m_stores[0].getPartitions();
+	public long getNumPartitions() {
+		return m_stores[0].getNumPartitions();
 	}
 
 	@Override
@@ -65,7 +58,7 @@ public class StructArrowStore implements ArrowStore<Partition<?>[]> {
 
 	@Override
 	public void close() throws Exception {
-		for (final ArrowStore<?> store : m_stores) {
+		for (final ArrowPartitionStore<?> store : m_stores) {
 			store.close();
 		}
 	}

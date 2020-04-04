@@ -1,5 +1,6 @@
 package org.knime.core.data.arrow;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -7,21 +8,21 @@ import java.util.UUID;
 
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.memory.RootAllocator;
-import org.knime.core.data.arrow.struct.StructArrowStore;
+import org.knime.core.data.arrow.struct.StructArrowPartitionStore;
 import org.knime.core.data.arrow.vector.ArrowBitVectorFactory;
 import org.knime.core.data.arrow.vector.ArrowDoubleVectorFactory;
 import org.knime.core.data.arrow.vector.ArrowStringVectorFactory;
 import org.knime.core.data.cache.SequentialCache;
-import org.knime.core.data.store.RootStore;
-import org.knime.core.data.store.Store;
+import org.knime.core.data.partition.PartitionStore;
+import org.knime.core.data.partition.Store;
 import org.knime.core.data.table.column.ColumnSchema;
 import org.knime.core.data.table.column.NativeType;
 
 // TODO persistence done with one file per column at the moment. That's not working out will in case of very wide-data with only little rows. Also problematic as so many small files are created.
 // TODO likely better approach: use parquet as persistence layer. can be done on implementation level without API changes.
-class ArrowRootStore implements RootStore {
+class ArrowRootStore implements Store {
 
-	private final ArrowStore<?>[] m_stores;
+	private final ArrowPartitionStore<?>[] m_stores;
 	private final RootAllocator m_allocator;
 
 	// anticipation of future debugging :-)
@@ -30,9 +31,11 @@ class ArrowRootStore implements RootStore {
 	private Path m_baseDir;
 
 	// TODO maybe we can have something like an adaptive batchSize at some point
+	// TODO documentation that vectorCapacity will be adopted.
 	public ArrowRootStore(final long maxSize, final int batchSize, final ColumnSchema... schemas) {
+		final int vectorCapacity = RootAllocator.nextPowerOfTwo(batchSize);
 		try {
-			m_stores = new ArrowStore[schemas.length];
+			m_stores = new ArrowPartitionStore[schemas.length];
 			m_allocator = new RootAllocator();
 			m_baseDir = Files.createTempDirectory("ArrowStore_" + m_storeId.toString());
 
@@ -40,15 +43,15 @@ class ArrowRootStore implements RootStore {
 			for (int i = 0; i < schemas.length; i++) {
 				final NativeType[] nativeTypes = schemas[i].getColumnType().getNativeTypes();
 				if (nativeTypes.length == 1) {
-					m_stores[i] = create(nativeTypes[0], "colIdx" + "_" + i + "_childIdx_" + 0, maxSize, batchSize, i,
-							0);
+					m_stores[i] = create(nativeTypes[0], "colIdx" + "_" + i + "_childIdx_" + 0, maxSize, vectorCapacity,
+							i, 0);
 				} else {
-					final ArrowStore<?>[] stores = new ArrowStore[nativeTypes.length];
+					final ArrowPartitionStore<?>[] stores = new ArrowPartitionStore[nativeTypes.length];
 					for (int j = 0; j < nativeTypes.length; j++) {
-						stores[j] = create(nativeTypes[j], "colIdx" + "_" + i + "_childIdx_" + j, maxSize, batchSize, i,
-								j);
+						stores[j] = create(nativeTypes[j], "colIdx" + "_" + i + "_childIdx_" + j, maxSize,
+								vectorCapacity, i, j);
 					}
-					m_stores[i] = new StructArrowStore(stores);
+					m_stores[i] = new StructArrowPartitionStore(i, stores);
 				}
 			}
 		} catch (IOException e) {
@@ -56,28 +59,32 @@ class ArrowRootStore implements RootStore {
 		}
 	}
 
-	private DefaultArrowStore<?> create(NativeType type, String name, long maxSize, int batchSize, int colIdx,
-			int childIdx) throws IOException {
+	private DefaultArrowPartitionStore<?> create(NativeType type, String name, long maxSize, int vectorCapacity,
+			int colIdx, int childIdx) throws IOException {
+		// TODO make sure that vectorCapacity is toThePowerOf2
+
 		// TODO no idea what a good init size or max-size is. Actually it should
 		// type-dependent
 		final BufferAllocator allocator = m_allocator.newChildAllocator(name, maxSize / (4 * m_stores.length), maxSize);
+		final File f = new File(m_baseDir.toFile(), "ColumnIdx_" + colIdx + "ChildIdx " + childIdx + ".knarrow");
 		switch (type) {
+
 		// TODO a bit clunky. Util methods?
+		// TODO last argument for DefaultPartitionStore (batchSize) could also be
+		// retrieved from VectorFactory.
 		case BOOLEAN:
-			return new DefaultArrowStore<>(() -> new ArrowBitVectorFactory.BooleanArrowValue(),
-					() -> new ArrowPartition<>(new ArrowBitVectorFactory(allocator, batchSize).create(), batchSize),
-					new SequentialCache<>(new ArrowCacheFlusher<>(m_baseDir, name),
-							new ArrowCacheLoader<>(m_baseDir, name, m_allocator)));
+			return new DefaultArrowPartitionStore<>(() -> new ArrowBitVectorFactory.BooleanArrowValue(),
+					() -> new ArrowBitVectorFactory(allocator, vectorCapacity).create(),
+					new SequentialCache<>(new ArrowCacheFlusher<>(f), new ArrowCacheLoader<>(f, allocator)));
 		case DOUBLE:
-			return new DefaultArrowStore<>(() -> new ArrowDoubleVectorFactory.DoubleArrowValue(),
-					() -> new ArrowPartition<>(new ArrowDoubleVectorFactory(allocator, batchSize).create(), batchSize),
-					new SequentialCache<>(new ArrowCacheFlusher<>(m_baseDir, name),
-							new ArrowCacheLoader<>(m_baseDir, name, m_allocator)));
+			return new DefaultArrowPartitionStore<>(() -> new ArrowDoubleVectorFactory.DoubleArrowValue(),
+					() -> new ArrowDoubleVectorFactory(allocator, vectorCapacity).create(),
+					new SequentialCache<>(new ArrowCacheFlusher<>(f), new ArrowCacheLoader<>(f, m_allocator
+							.newChildAllocator(name + "FLUSHER", maxSize / (4 * m_stores.length), maxSize))));
 		case STRING:
-			return new DefaultArrowStore<>(() -> new ArrowStringVectorFactory.StringArrowValue(),
-					() -> new ArrowPartition<>(new ArrowStringVectorFactory(allocator, batchSize).create(), batchSize),
-					new SequentialCache<>(new ArrowCacheFlusher<>(m_baseDir, name),
-							new ArrowCacheLoader<>(m_baseDir, name, m_allocator)));
+			return new DefaultArrowPartitionStore<>(() -> new ArrowStringVectorFactory.StringArrowValue(),
+					() -> new ArrowStringVectorFactory(allocator, vectorCapacity).create(),
+					new SequentialCache<>(new ArrowCacheFlusher<>(f), new ArrowCacheLoader<>(f, allocator)));
 		default:
 			throw new IllegalArgumentException("Unknown or not yet implemented NativeType " + type);
 		}
@@ -89,7 +96,7 @@ class ArrowRootStore implements RootStore {
 	}
 
 	@Override
-	public Store<?> getStoreAt(long index) {
+	public PartitionStore<?> getStoreAt(long index) {
 		return m_stores[(int) index];
 	}
 

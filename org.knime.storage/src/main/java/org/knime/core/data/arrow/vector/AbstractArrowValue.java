@@ -2,8 +2,8 @@
 package org.knime.core.data.arrow.vector;
 
 import org.apache.arrow.vector.FieldVector;
-import org.knime.core.data.table.column.Partition;
-import org.knime.core.data.table.column.PartitionValue;
+import org.knime.core.data.partition.Partition;
+import org.knime.core.data.partition.PartitionValue;
 
 // TODO composition over inheritance? :-(
 abstract class AbstractArrowValue<V extends FieldVector> //

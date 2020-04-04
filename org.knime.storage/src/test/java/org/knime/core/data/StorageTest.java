@@ -1,13 +1,12 @@
 
 package org.knime.core.data;
 
-import org.apache.arrow.memory.RootAllocator;
 import org.junit.Assert;
 import org.junit.Test;
 import org.knime.core.data.arrow.ArrowUtils;
-import org.knime.core.data.store.RootStore;
-import org.knime.core.data.store.StoreBackedReadableTable;
-import org.knime.core.data.store.StoreBackedWritableTable;
+import org.knime.core.data.partition.ReadablePartitionedTable;
+import org.knime.core.data.partition.Store;
+import org.knime.core.data.partition.WritablePartitionedTable;
 import org.knime.core.data.table.column.ColumnSchema;
 import org.knime.core.data.table.column.ColumnType;
 import org.knime.core.data.table.column.NativeType;
@@ -26,13 +25,13 @@ public class StorageTest {
 	 * Some variables
 	 */
 	// in numValues per vector
-	public static final int BATCH_SIZE = RootAllocator.nextPowerOfTwo(32);
+	public static final int BATCH_SIZE = 10;
 
 	// in bytes
 	public static final long OFFHEAP_SIZE = 2000_000_000;
 
 	// num rows used for testing
-	public static final long NUM_ROWS = 10000;
+	public static final long NUM_ROWS = 21;
 
 	// some schema
 	private static final ColumnSchema[] SCHEMAS = new ColumnSchema[] { new ColumnSchema() {
@@ -72,10 +71,10 @@ public class StorageTest {
 
 	@Test
 	public void columnwiseWriteReadSingleDoubleColumnIdentityTest() throws Exception {
-		try (final RootStore root = ArrowUtils.createArrowStore(OFFHEAP_SIZE, BATCH_SIZE, SCHEMAS)) {
+		try (final Store root = ArrowUtils.createArrowStore(OFFHEAP_SIZE, BATCH_SIZE, SCHEMAS)) {
 
 			// Create writable table on store. Just an access on store.
-			final StoreBackedWritableTable writableTable = new StoreBackedWritableTable(root);
+			final WritablePartitionedTable writableTable = new WritablePartitionedTable(root);
 
 			// first column write
 			try (final WritableColumnCursor col0 = writableTable.getWritableColumnCursor(0)) {
@@ -85,6 +84,8 @@ public class StorageTest {
 					// col0.next().getDouble()
 					// for(DoubleColumValue val : doubleColumn){
 					// }
+
+					root.flush();
 
 					col0.fwd();
 					val0.setDoubleValue(i);
@@ -99,9 +100,18 @@ public class StorageTest {
 			// root.closeForWriting();
 
 			// Done writing?
-			final StoreBackedReadableTable readableTable = new StoreBackedReadableTable(root);
+			final ReadablePartitionedTable readableTable = new ReadablePartitionedTable(root);
 
 			// then read
+			try (final ReadableColumnCursor col0 = readableTable.getReadableColumn(0).createCursor()) {
+				final ReadableDoubleValue val0 = (ReadableDoubleValue) col0.getValueAccess();
+				for (long i = 0; col0.canFwd(); i++) {
+					col0.fwd();
+					Assert.assertEquals(i, val0.getDoubleValue(), 0.0000001);
+				}
+			}
+
+			// then read... again
 			try (final ReadableColumnCursor col0 = readableTable.getReadableColumn(0).createCursor()) {
 				final ReadableDoubleValue val0 = (ReadableDoubleValue) col0.getValueAccess();
 				for (long i = 0; col0.canFwd(); i++) {
@@ -115,10 +125,10 @@ public class StorageTest {
 	@Test
 	public void rowwiseWriteReadSingleDoubleColumnIdentityTest() throws Exception {
 		// Read/Write table...
-		try (final RootStore root = ArrowUtils.createArrowStore(OFFHEAP_SIZE, BATCH_SIZE, SCHEMAS)) {
+		try (final Store root = ArrowUtils.createArrowStore(OFFHEAP_SIZE, BATCH_SIZE, SCHEMAS)) {
 
 			// Create writable table on store. Just an access on store.
-			final StoreBackedWritableTable writableTable = new StoreBackedWritableTable(root);
+			final WritablePartitionedTable writableTable = new WritablePartitionedTable(root);
 
 			try (final WritableRow row = ColumnBackedWritableRow.fromWritableTable(writableTable)) {
 				final WritableDoubleValue val0 = (WritableDoubleValue) row.getValueAccessAt(0);
@@ -129,7 +139,7 @@ public class StorageTest {
 			}
 
 			// Done writing?
-			final StoreBackedReadableTable readableTable = new StoreBackedReadableTable(root);
+			final ReadablePartitionedTable readableTable = new ReadablePartitionedTable(root);
 
 			try (final ReadableRow row = ColumnBackedReadableRow.fromReadableTable(readableTable)) {
 				final ReadableDoubleValue val0 = (ReadableDoubleValue) row.getValueAccessAt(0);

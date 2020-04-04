@@ -4,9 +4,9 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.knime.core.data.StorageTest;
 import org.knime.core.data.arrow.ArrowUtils;
-import org.knime.core.data.store.RootStore;
-import org.knime.core.data.store.StoreBackedReadableTable;
-import org.knime.core.data.store.StoreBackedWritableTable;
+import org.knime.core.data.partition.ReadablePartitionedTable;
+import org.knime.core.data.partition.Store;
+import org.knime.core.data.partition.WritablePartitionedTable;
 import org.knime.core.data.table.column.ColumnSchema;
 import org.knime.core.data.table.column.ColumnType;
 import org.knime.core.data.table.column.NativeType;
@@ -49,11 +49,11 @@ public class StructTest {
 	
 	@Test
 	public void columnwiseWriteReadStructColumnIdentityTest() throws Exception {
-		try (final RootStore root = ArrowUtils.createArrowStore(StorageTest.OFFHEAP_SIZE, StorageTest.BATCH_SIZE,
+		try (final Store root = ArrowUtils.createArrowStore(StorageTest.OFFHEAP_SIZE, StorageTest.BATCH_SIZE,
 				STRUCT_SCHEMA)) {
 
 			// Create writable table on store. Just an access on store.
-			final StoreBackedWritableTable writableTable = new StoreBackedWritableTable(root);
+			final WritablePartitionedTable writableTable = new WritablePartitionedTable(root);
 
 			// first column write
 			try (final WritableColumnCursor col0 = writableTable.getWritableColumnCursor(0)) {
@@ -70,7 +70,7 @@ public class StructTest {
 			}
 
 			// Done writing?
-			final StoreBackedReadableTable readableTable = new StoreBackedReadableTable(root);
+			final ReadablePartitionedTable readableTable = new ReadablePartitionedTable(root);
 
 			// then read
 			try (final ReadableColumnCursor col0 = readableTable.getReadableColumn(0).createCursor()) {

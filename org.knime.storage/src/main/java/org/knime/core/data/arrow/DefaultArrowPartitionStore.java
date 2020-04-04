@@ -3,20 +3,20 @@ package org.knime.core.data.arrow;
 import java.io.IOException;
 import java.util.function.Supplier;
 
+import org.apache.arrow.vector.FieldVector;
 import org.knime.core.data.cache.SequentialCache;
-import org.knime.core.data.table.column.Partition;
-import org.knime.core.data.table.column.PartitionValue;
+import org.knime.core.data.partition.Partition;
+import org.knime.core.data.partition.PartitionValue;
 
-class DefaultArrowStore<T> implements ArrowStore<T> {
+class DefaultArrowPartitionStore<T extends FieldVector> implements ArrowPartitionStore<T> {
 
 	private final Supplier<PartitionValue<T>> m_valueSupplier;
-	private final Supplier<Partition<T>> m_partitionSupplier;
+	private final Supplier<T> m_partitionSupplier;
 	private final SequentialCache<T> m_cache;
-
 	private long m_partitionIdx;
 
-	public DefaultArrowStore(Supplier<PartitionValue<T>> partitionValueSupplier,
-			Supplier<Partition<T>> partitionSupplier, SequentialCache<T> cache) {
+	public DefaultArrowPartitionStore(Supplier<PartitionValue<T>> partitionValueSupplier, Supplier<T> partitionSupplier,
+			SequentialCache<T> cache) {
 		m_valueSupplier = partitionValueSupplier;
 		m_partitionSupplier = partitionSupplier;
 		m_cache = cache;
@@ -29,12 +29,14 @@ class DefaultArrowStore<T> implements ArrowStore<T> {
 
 	@Override
 	public Partition<T> createPartition() {
-		return m_partitionSupplier.get();
-	}
-
-	@Override
-	public void addPartition(Partition<T> partition) {
-		m_cache.add(m_partitionIdx++, partition);
+		T t = m_partitionSupplier.get();
+		return new ArrowPartition<T>(t, t.getValueCapacity(), m_partitionIdx++) {
+			@Override
+			public void close() throws Exception {
+				// instead of releasing the reference, we add ourselves in the cache.
+				m_cache.add(getIndex(), this);
+			}
+		};
 	}
 
 	@Override
@@ -43,7 +45,7 @@ class DefaultArrowStore<T> implements ArrowStore<T> {
 	}
 
 	@Override
-	public long getPartitions() {
+	public long getNumPartitions() {
 		return m_partitionIdx;
 	}
 
@@ -57,7 +59,7 @@ class DefaultArrowStore<T> implements ArrowStore<T> {
 	// release all memory
 	@Override
 	public void close() throws Exception {
-		m_cache.clear();
+		m_cache.close();
 	}
 
 }

@@ -1,13 +1,15 @@
 package org.knime.core.data.arrow.struct;
 
-import org.knime.core.data.table.column.Partition;
+import org.knime.core.data.partition.Partition;
 
 class StructArrowPartition implements Partition<Partition<?>[]> {
 
 	private Partition<?>[] m_partitions;
+	private long m_index;
 
-	public StructArrowPartition(Partition<?>[] partitions) {
+	public StructArrowPartition(Partition<?>[] partitions, long index) {
 		m_partitions = partitions;
+		m_index = index;
 	}
 
 	@Override
@@ -38,6 +40,11 @@ class StructArrowPartition implements Partition<Partition<?>[]> {
 	@Override
 	public int getNumValues() {
 		return m_partitions[0].getNumValues();
+	}
+
+	@Override
+	public long getIndex() {
+		return m_index;
 	}
 
 }

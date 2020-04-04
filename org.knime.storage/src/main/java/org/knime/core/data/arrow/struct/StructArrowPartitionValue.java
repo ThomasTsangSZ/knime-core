@@ -1,8 +1,8 @@
 package org.knime.core.data.arrow.struct;
 
-import org.knime.core.data.arrow.ArrowStore;
-import org.knime.core.data.table.column.Partition;
-import org.knime.core.data.table.column.PartitionValue;
+import org.knime.core.data.arrow.ArrowPartitionStore;
+import org.knime.core.data.partition.Partition;
+import org.knime.core.data.partition.PartitionValue;
 import org.knime.core.data.table.value.ReadableStructValue;
 import org.knime.core.data.table.value.ReadableValue;
 import org.knime.core.data.table.value.WritableStructValue;
@@ -11,9 +11,9 @@ import org.knime.core.data.table.value.WritableValue;
 class StructArrowPartitionValue implements PartitionValue<Partition<?>[]>, ReadableStructValue, WritableStructValue {
 
 	private PartitionValue<?>[] m_values;
-	private ArrowStore<?>[] m_stores;
+	private ArrowPartitionStore<?>[] m_stores;
 
-	StructArrowPartitionValue(PartitionValue<?>[] values, final ArrowStore<?>[] stores) {
+	StructArrowPartitionValue(PartitionValue<?>[] values, final ArrowPartitionStore<?>[] stores) {
 		m_values = values;
 		m_stores = stores;
 	}

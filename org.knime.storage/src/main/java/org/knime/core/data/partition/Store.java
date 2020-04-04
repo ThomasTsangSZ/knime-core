@@ -1,12 +1,12 @@
-package org.knime.core.data.store;
+package org.knime.core.data.partition;
 
 // we could even split this guy into read/write
-public interface RootStore extends AutoCloseable {
+public interface Store extends AutoCloseable {
 
 	// number of created stores.
 	long getNumStores();
 
-	Store<?> getStoreAt(long index);
+	PartitionStore<?> getStoreAt(long index);
 
 	void flush() throws Exception;
 

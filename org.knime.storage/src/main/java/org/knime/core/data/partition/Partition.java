@@ -1,7 +1,9 @@
-package org.knime.core.data.table.column;
+package org.knime.core.data.partition;
 
 public interface Partition<T> extends AutoCloseable {
 
+	long getIndex();
+	
 	T get();
 
 	long getCapacity();

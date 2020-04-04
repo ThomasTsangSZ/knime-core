@@ -66,9 +66,9 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.apache.arrow.orc</groupId>
-			<artifactId>arrow-orc</artifactId>
-			<version>0.16.0</version>
+			<groupId>org.apache.arrow.parquet</groupId>
+			<artifactId>arrow-parquet</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
 		</dependency>
 
 		<dependency>

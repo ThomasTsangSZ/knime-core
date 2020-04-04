@@ -9,7 +9,7 @@ import org.apache.arrow.vector.types.FloatingPointPrecision;
 import org.apache.arrow.vector.types.pojo.ArrowType;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.arrow.vector.types.pojo.Schema;
-import org.knime.core.data.store.RootStore;
+import org.knime.core.data.partition.Store;
 import org.knime.core.data.table.column.ColumnSchema;
 import org.knime.core.data.table.column.ColumnType;
 import org.knime.core.data.table.column.NativeType;
@@ -33,7 +33,7 @@ public final class ArrowUtils {
 		}
 	}
 
-	public static RootStore createArrowStore(long maxSize, int batchSize, ColumnSchema... schemas) {
+	public static Store createArrowStore(long maxSize, int batchSize, ColumnSchema... schemas) {
 		return new ArrowRootStore(maxSize, batchSize, schemas);
 	}
 

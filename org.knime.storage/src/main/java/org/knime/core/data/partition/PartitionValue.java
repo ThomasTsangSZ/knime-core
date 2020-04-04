@@ -1,5 +1,5 @@
 
-package org.knime.core.data.table.column;
+package org.knime.core.data.partition;
 
 import org.knime.core.data.table.value.ReadableValue;
 import org.knime.core.data.table.value.WritableValue;
