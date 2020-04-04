@@ -10,18 +10,19 @@
 
 ### API design of org.knime.data.store
 - [X] Arrow Package (encapsulate store and cache)
-- [ ] Test Life-cycle management (close() vs. destroy() vs. ... finishWriting() 'can I read before I've serialized the entire table')
-- [ ] Test Thread-safety (multi-read, cache,...). Locking per partition.
+- [X] Test Life-cycle management (close() vs. destroy() vs. ... finishWriting() 'can I read before I've serialized the entire table')
 - [X] MultiVecValue & Custom data types (e.g. Date&Time, Text, Struct, PNG Images). 
+- [ ] Test Thread-safety (multi-read, multi-write?, cache, ref counting).  Also try locking per partition.
+- [ ] Exception Handling & Logging
 - [ ] More types: DictType for categorical variables, NativeStructs?, Collections, ...
-- [ ] Support for serializers. Forseeable problem: avoid constant serialization and deserialization into byte[]
+- [ ] Support for DataCellserializers. Forseeable problem: avoid constant serialization and deserialization into byte[]
+- [ ] Parquet Backend (either adapt Marc's implementation to be KNIME independent or https://github.com/apache/arrow/pull/5719).
+- [ ] Add TableFilter API (limit number of read rows from disc / limit number of read columns from disc)
 - [ ] Try to access some data from python (Davin/Marcel -> shared memory, shared jni)
+- [ ] Domain Calculation
 - [ ] Pre-fetching / pre-writing (async)
 - [ ] Serialization - how do I restore state of a store or rather entire table (use-case: (i) knime has stored store or (ii) store created without prior writing).
-- [ ] Exception Handling & Logging
-- [ ] Domain Calculation
 - [ ] DuplicateChecker for RowId
-- [ ] Predicate push-down and Filter-API
 
 ### KNIME Integration
 - [ ] Support for FileStores / BlobStores
@@ -29,7 +30,6 @@
 - [ ] Off heap memory management
 
 ### Nice-to-haves
-- [ ] ORC Backend / Parquet Backend?
 - [ ] Test idea: with intermediate buffers
 - [ ] Wide-table support (e.g. automatically wrap K-consecutive columns for doubles into a double[] behind the scenes.
 - [ ] Use framework for streaming (NB: Nearly support read while write already today).

@@ -31,10 +31,20 @@ class DefaultArrowPartitionStore<T extends FieldVector> implements ArrowPartitio
 	public Partition<T> createPartition() {
 		T t = m_partitionSupplier.get();
 		return new ArrowPartition<T>(t, t.getValueCapacity(), m_partitionIdx++) {
+			// TODO I'm sure marcel doesn't like this. we could also introduce a writable
+			// partition with a special close behaviour. for now it's hidden and works.
+			private boolean m_moveToCache = true;
+
 			@Override
 			public void close() throws Exception {
-				// instead of releasing the reference, we add ourselves in the cache.
-				m_cache.add(getIndex(), this);
+				if (m_moveToCache) {
+					// instead of releasing the reference, we add the partition to the cache.
+					m_cache.add(getIndex(), this);
+					m_moveToCache = false;
+				} else {
+					// either cache or a reader is closing the partition.
+					super.close();
+				}
 			}
 		};
 	}

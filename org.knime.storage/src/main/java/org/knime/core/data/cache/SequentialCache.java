@@ -62,7 +62,7 @@ public final class SequentialCache<O> implements Flushable, AutoCloseable {
 	public void flush() throws IOException {
 		m_cacheLock.writeLock().lock();
 		try {
-			for (Entry<Long, RefCountingPartition<O>> entry : m_cache.entrySet()) {
+			for (final Entry<Long, RefCountingPartition<O>> entry : m_cache.entrySet()) {
 				final RefCountingPartition<O> value = entry.getValue();
 				m_flusher.flush(value);
 				entry.getValue().close();

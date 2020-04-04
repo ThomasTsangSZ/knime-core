@@ -46,7 +46,7 @@ public class StructTest {
 		String name;
 		long age;
 	}
-	
+
 	@Test
 	public void columnwiseWriteReadStructColumnIdentityTest() throws Exception {
 		try (final Store root = ArrowUtils.createArrowStore(StorageTest.OFFHEAP_SIZE, StorageTest.BATCH_SIZE,

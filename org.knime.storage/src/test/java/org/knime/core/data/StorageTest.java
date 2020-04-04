@@ -85,7 +85,7 @@ public class StorageTest {
 					// for(DoubleColumValue val : doubleColumn){
 					// }
 
-					root.flush();
+//					root.flush();
 
 					col0.fwd();
 					val0.setDoubleValue(i);
