@@ -1,7 +1,13 @@
 
 package org.knime.core.data.arrow.vector;
 
-import java.nio.charset.StandardCharsets;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CodingErrorAction;
 
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.VarCharVector;
@@ -22,22 +28,36 @@ public final class ArrowStringVectorFactory extends AbstractArrowFieldVectorFact
 		return vector;
 	}
 
+	// TODO: we could gain some performance here (i.e. avoid object creation
+	// where possible)
+	// TODO we don't have to encode anything in case we stay on the same system
 	public static final class StringArrowValue //
 			extends AbstractArrowValue<VarCharVector> //
 			implements ReadableStringValue, WritableStringValue {
 
+		private final CharsetDecoder decoder = Charset.forName("UTF-8").newDecoder()
+				.onMalformedInput(CodingErrorAction.REPLACE).onUnmappableCharacter(CodingErrorAction.REPLACE);
+		private final CharsetEncoder encoder = Charset.forName("UTF-8").newEncoder()
+				.onMalformedInput(CodingErrorAction.REPLACE).onUnmappableCharacter(CodingErrorAction.REPLACE);
+
 		@Override
 		public String getStringValue() {
-			// TODO: Is there a more efficient way? E.g. via m_vector.get(m_index) and
-			// manual decoding.
-			return m_vector.getObject(m_index).toString();
+			try {
+				return decoder.decode(ByteBuffer.wrap(m_vector.get(m_index))).toString();
+			} catch (CharacterCodingException e) {
+				throw new RuntimeException(e);
+			}
 		}
 
 		@Override
 		public void setStringValue(final String value) {
-			// TODO: Is this correct? See knime-python's StringInserter which also
-			// handles possible reallocations.
-			m_vector.set(m_index, value.getBytes(StandardCharsets.UTF_8));
+			try {
+				final ByteBuffer encode = encoder.encode(CharBuffer.wrap(value.toCharArray()));
+				m_vector.set(m_index, encode.array(), 0, encode.limit());
+			} catch (CharacterCodingException e) {
+				throw new RuntimeException(e);
+			}
 		}
+
 	}
 }

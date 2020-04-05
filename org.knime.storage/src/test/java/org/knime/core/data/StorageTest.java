@@ -4,7 +4,6 @@ package org.knime.core.data;
 import org.junit.Assert;
 import org.junit.Test;
 import org.knime.core.data.arrow.ArrowUtils;
-import org.knime.core.data.inmemory.NativeArraysUtils;
 import org.knime.core.data.partition.ReadablePartitionedTable;
 import org.knime.core.data.partition.Store;
 import org.knime.core.data.partition.WritablePartitionedTable;
@@ -17,22 +16,30 @@ import org.knime.core.data.table.row.ColumnBackedReadableRow;
 import org.knime.core.data.table.row.ColumnBackedWritableRow;
 import org.knime.core.data.table.row.ReadableRow;
 import org.knime.core.data.table.row.WritableRow;
-import org.knime.core.data.table.value.ReadableDoubleValue;
-import org.knime.core.data.table.value.WritableDoubleValue;
+import org.knime.core.data.table.value.ReadableStringValue;
+import org.knime.core.data.table.value.WritableStringValue;
 
 public class StorageTest {
+
+	public static void main(String[] args) throws Exception {
+		final StorageTest storageTest = new StorageTest();
+		for (int i = 0; i < 2; i++) {
+			System.out.println("Iteration: " + i);
+			storageTest.columnwiseWriteReadSingleColumnIdentityTest();
+		}
+	}
 
 	/**
 	 * Some variables
 	 */
 	// in numValues per vector
-	public static final int BATCH_SIZE = 3;
+	public static final int BATCH_SIZE = 1_000_000;
 
 	// in bytes
 	public static final long OFFHEAP_SIZE = 2000_000_000;
 
 	// num rows used for testing
-	public static final long NUM_ROWS = 7;
+	public static final long NUM_ROWS = 1_000_000;
 
 	// some schema
 	private static final ColumnSchema[] SCHEMAS = new ColumnSchema[] { new ColumnSchema() {
@@ -47,7 +54,7 @@ public class StorageTest {
 
 				@Override
 				public NativeType[] getNativeTypes() {
-					return new NativeType[] { NativeType.DOUBLE };
+					return new NativeType[] { NativeType.STRING };
 				}
 			};
 		}
@@ -71,16 +78,15 @@ public class StorageTest {
 	}
 
 	@Test
-	public void columnwiseWriteReadSingleDoubleColumnIdentityTest() throws Exception {
-//		try (final Store root = ArrowUtils.createArrowStore(OFFHEAP_SIZE, BATCH_SIZE, SCHEMAS)) {
-		try (final Store root = NativeArraysUtils.createInMemoryStore(BATCH_SIZE, SCHEMAS)) {
+	public void columnwiseWriteReadSingleColumnIdentityTest() throws Exception {
+		try (final Store root = ArrowUtils.createArrowStore(OFFHEAP_SIZE, BATCH_SIZE, SCHEMAS)) {
 
 			// Create writable table on store. Just an access on store.
 			final WritablePartitionedTable writableTable = new WritablePartitionedTable(root);
 
 			// first column write
 			try (final WritableColumnCursor col0 = writableTable.getWritableColumnCursor(0)) {
-				final WritableDoubleValue val0 = (WritableDoubleValue) col0.getValueAccess();
+				final WritableStringValue val0 = (WritableStringValue) col0.getValueAccess();
 				for (long i = 0; i < NUM_ROWS; i++) {
 					// TODO it would be cool to do col0.fwd().setDouble('val') or
 					// col0.next().getDouble()
@@ -90,7 +96,7 @@ public class StorageTest {
 //					root.flush();
 
 					col0.fwd();
-					val0.setDoubleValue(i);
+					val0.setStringValue("Entry" + i);
 				}
 			}
 
@@ -106,19 +112,10 @@ public class StorageTest {
 
 			// then read
 			try (final ReadableColumnCursor col0 = readableTable.getReadableColumn(0).createCursor()) {
-				final ReadableDoubleValue val0 = (ReadableDoubleValue) col0.getValueAccess();
+				final ReadableStringValue val0 = (ReadableStringValue) col0.getValueAccess();
 				for (long i = 0; col0.canFwd(); i++) {
 					col0.fwd();
-					Assert.assertEquals(i, val0.getDoubleValue(), 0.0000001);
-				}
-			}
-
-			// then read... again
-			try (final ReadableColumnCursor col0 = readableTable.getReadableColumn(0).createCursor()) {
-				final ReadableDoubleValue val0 = (ReadableDoubleValue) col0.getValueAccess();
-				for (long i = 0; col0.canFwd(); i++) {
-					col0.fwd();
-					Assert.assertEquals(i, val0.getDoubleValue(), 0.0000001);
+					Assert.assertEquals("Entry" + i, val0.getStringValue());
 				}
 			}
 		}
@@ -133,10 +130,10 @@ public class StorageTest {
 			final WritablePartitionedTable writableTable = new WritablePartitionedTable(root);
 
 			try (final WritableRow row = ColumnBackedWritableRow.fromWritableTable(writableTable)) {
-				final WritableDoubleValue val0 = (WritableDoubleValue) row.getValueAccessAt(0);
+				final WritableStringValue val0 = (WritableStringValue) row.getValueAccessAt(0);
 				for (long i = 0; i < NUM_ROWS; i++) {
 					row.fwd();
-					val0.setDoubleValue(i);
+					val0.setStringValue("Entry " + i);
 				}
 			}
 
@@ -144,10 +141,10 @@ public class StorageTest {
 			final ReadablePartitionedTable readableTable = new ReadablePartitionedTable(root);
 
 			try (final ReadableRow row = ColumnBackedReadableRow.fromReadableTable(readableTable)) {
-				final ReadableDoubleValue val0 = (ReadableDoubleValue) row.getValueAccessAt(0);
+				final ReadableStringValue val0 = (ReadableStringValue) row.getValueAccessAt(0);
 				for (long i = 0; row.canFwd(); i++) {
 					row.fwd();
-					Assert.assertEquals(i, val0.getDoubleValue(), 0.0000001);
+					Assert.assertEquals("Entry " + i, val0.getStringValue());
 				}
 			}
 		}
