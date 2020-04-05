@@ -85,8 +85,10 @@ public final class SequentialCache<O> implements Flushable, AutoCloseable {
 	@Override
 	public void close() throws Exception {
 		clear();
-		m_loader.close();
-		m_flusher.close();
+		if (m_loader != null) {
+			m_loader.close();
+			m_flusher.close();
+		}
 	}
 
 }

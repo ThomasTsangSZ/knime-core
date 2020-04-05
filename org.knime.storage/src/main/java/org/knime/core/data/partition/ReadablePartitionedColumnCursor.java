@@ -46,7 +46,7 @@ public final class ReadablePartitionedColumnCursor<T> implements ReadableColumnC
 			closeCurrentPartition();
 			m_currentPartition = m_store.get(m_partitionIndex);
 			m_linkedAccess.updatePartition(m_currentPartition);
-			m_currentPartitionMaxIndex = m_currentPartition.getNumValues() - 1;
+			m_currentPartitionMaxIndex = m_currentPartition.getNumValuesWritten() - 1;
 		} catch (final Exception e) {
 			// TODO
 			throw new RuntimeException(e);

@@ -31,15 +31,15 @@ class StructArrowPartition implements Partition<Partition<?>[]> {
 	}
 
 	@Override
-	public void setNumValues(int numValues) {
+	public void setNumValuesWritten(int numValues) {
 		for (int i = 0; i < m_partitions.length; i++) {
-			m_partitions[i].setNumValues(numValues);
+			m_partitions[i].setNumValuesWritten(numValues);
 		}
 	}
 
 	@Override
-	public int getNumValues() {
-		return m_partitions[0].getNumValues();
+	public int getNumValuesWritten() {
+		return m_partitions[0].getNumValuesWritten();
 	}
 
 	@Override

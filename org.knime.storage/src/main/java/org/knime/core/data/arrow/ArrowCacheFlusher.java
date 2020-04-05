@@ -47,7 +47,7 @@ public class ArrowCacheFlusher<F extends FieldVector> implements AutoCloseable, 
 
 		// Auto-closing makes sure that ArrowRecordBatch actually releases the buffers
 		// again
-		try (final ArrowRecordBatch batch = new ArrowRecordBatch(partition.getNumValues(), nodes, buffers)) {
+		try (final ArrowRecordBatch batch = new ArrowRecordBatch(partition.getNumValuesWritten(), nodes, buffers)) {
 			m_vectorLoader.load(batch);
 			m_writer.writeBatch();
 		}

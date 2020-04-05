@@ -4,6 +4,7 @@ package org.knime.core.data;
 import org.junit.Assert;
 import org.junit.Test;
 import org.knime.core.data.arrow.ArrowUtils;
+import org.knime.core.data.inmemory.NativeArraysUtils;
 import org.knime.core.data.partition.ReadablePartitionedTable;
 import org.knime.core.data.partition.Store;
 import org.knime.core.data.partition.WritablePartitionedTable;
@@ -25,13 +26,13 @@ public class StorageTest {
 	 * Some variables
 	 */
 	// in numValues per vector
-	public static final int BATCH_SIZE = 10;
+	public static final int BATCH_SIZE = 3;
 
 	// in bytes
 	public static final long OFFHEAP_SIZE = 2000_000_000;
 
 	// num rows used for testing
-	public static final long NUM_ROWS = 21;
+	public static final long NUM_ROWS = 7;
 
 	// some schema
 	private static final ColumnSchema[] SCHEMAS = new ColumnSchema[] { new ColumnSchema() {
@@ -71,7 +72,8 @@ public class StorageTest {
 
 	@Test
 	public void columnwiseWriteReadSingleDoubleColumnIdentityTest() throws Exception {
-		try (final Store root = ArrowUtils.createArrowStore(OFFHEAP_SIZE, BATCH_SIZE, SCHEMAS)) {
+//		try (final Store root = ArrowUtils.createArrowStore(OFFHEAP_SIZE, BATCH_SIZE, SCHEMAS)) {
+		try (final Store root = NativeArraysUtils.createInMemoryStore(BATCH_SIZE, SCHEMAS)) {
 
 			// Create writable table on store. Just an access on store.
 			final WritablePartitionedTable writableTable = new WritablePartitionedTable(root);

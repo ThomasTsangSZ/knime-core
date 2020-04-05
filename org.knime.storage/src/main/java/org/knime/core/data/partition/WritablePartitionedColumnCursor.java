@@ -45,7 +45,7 @@ public final class WritablePartitionedColumnCursor<T> implements WritableColumnC
 
 	private void closeCurrentPartition(long numValues) throws Exception {
 		if (m_currentPartition != null) {
-			m_currentPartition.setNumValues((int) numValues);
+			m_currentPartition.setNumValuesWritten((int) numValues);
 			// can be closed. we're done writing.
 			m_currentPartition.close();
 			m_currentPartition = null;

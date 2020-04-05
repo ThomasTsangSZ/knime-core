@@ -61,7 +61,7 @@ public class ArrowCacheLoader<V extends FieldVector> implements AutoCloseable, S
 		@SuppressWarnings("unchecked")
 		final V vector = (V) root.getVector(0);
 		final ArrowPartition<V> partition = new ArrowPartition<>(vector, index);
-		partition.setNumValues(vector.getValueCount());
+		partition.setNumValuesWritten(vector.getValueCount());
 
 		return partition;
 	}

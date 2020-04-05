@@ -1,26 +1,27 @@
-package org.knime.core.data.arrow;
+package org.knime.core.data.inmemory;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.arrow.vector.FieldVector;
 import org.knime.core.data.cache.RefCountingPartition;
+import org.knime.core.data.inmemory.array.NativeArray;
 
-public class ArrowPartition<V extends FieldVector> implements RefCountingPartition<V> {
+public class NativeArraysPartition<V extends NativeArray<?>> implements RefCountingPartition<V> {
 
-	private final V m_vector;
+	private final V m_array;
 	private long m_capacity;
 	private final long m_index;
 	private final AtomicInteger m_refCount;
+	private int m_numValues;
 
 	// Read case
-	public ArrowPartition(V vector, long index) {
+	public NativeArraysPartition(V vector, long index) {
 		this(vector, -1, index);
 	}
 
 	// write case
-	public ArrowPartition(V vector, final long capacity, final long index) {
+	public NativeArraysPartition(V vector, final long capacity, final long index) {
 		m_capacity = capacity;
-		m_vector = vector;
+		m_array = vector;
 		m_capacity = capacity;
 		m_index = index;
 
@@ -31,7 +32,7 @@ public class ArrowPartition<V extends FieldVector> implements RefCountingPartiti
 	@Override
 	public void close() throws Exception {
 		if (m_refCount.decrementAndGet() == 0)
-			m_vector.close();
+			m_array.close();
 	}
 
 	@Override
@@ -41,18 +42,17 @@ public class ArrowPartition<V extends FieldVector> implements RefCountingPartiti
 
 	@Override
 	public void setNumValuesWritten(int numValues) {
-		m_vector.setValueCount(numValues);
+		m_numValues = numValues;
 	}
 
 	@Override
 	public int getNumValuesWritten() {
-		// calling numValues on vector is super slow
-		return m_vector.getValueCount();
+		return m_numValues;
 	}
 
 	@Override
 	public V get() {
-		return m_vector;
+		return m_array;
 	}
 
 	@Override

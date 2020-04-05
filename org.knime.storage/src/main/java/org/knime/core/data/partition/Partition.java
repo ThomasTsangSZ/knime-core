@@ -9,7 +9,7 @@ public interface Partition<T> extends AutoCloseable {
 	long getCapacity();
 
 	// TODO can we get rid of this?
-	void setNumValues(int numValues);
+	void setNumValuesWritten(int numValues);
 
-	int getNumValues();
+	int getNumValuesWritten();
 }
