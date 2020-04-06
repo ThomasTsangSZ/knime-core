@@ -28,6 +28,7 @@ public final class ArrowStringVectorFactory extends AbstractArrowFieldVectorFact
 		return vector;
 	}
 
+	// TODO: row key split string 'RowKey' from integer '0'
 	// TODO: we could gain some performance here (i.e. avoid object creation
 	// where possible)
 	// TODO we don't have to encode anything in case we stay on the same system

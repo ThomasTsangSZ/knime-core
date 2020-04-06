@@ -16,7 +16,10 @@
 - [ ] Test Thread-safety (multi-read, multi-write?, cache, ref counting).  Also try locking per partition.
 - [ ] Exception Handling & Logging
 - [ ] More types: DictType for categorical variables, NativeStructs?, Collections, ...
+- [ ] Avoid data-copying in case of RowFilter (with efficient copy -> chunk-wise copy or so...). Create new table which only fulfills condition.
 - [ ] Support for DataCellserializers. Forseeable problem: avoid constant serialization and deserialization into byte[]
+- [ ] DataCell[] as column backend?
+- [ ] Native -> Arrow layering?
 - [ ] Parquet Backend (either adapt Marc's implementation to be KNIME independent or https://github.com/apache/arrow/pull/5719 or https://github.com/apache/parquet-mr/tree/master/parquet-arrow).
 - [ ] Add TableFilter API (limit number of read rows from disc / limit number of read columns from disc)
 - [ ] Try to access some data from python (Davin/Marcel -> shared memory, shared jni)
