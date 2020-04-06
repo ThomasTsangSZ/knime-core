@@ -31,8 +31,7 @@ try {
 
     workflowTests.runTests(
         dependencies: [
-            repositories: ['knime-core', 'knime-json', 'knime-python'],
-            ius: ['']
+            repositories: ['knime-core', 'knime-json', 'knime-python', 'knime-product']
         ],
         withAssertions: true
     )
