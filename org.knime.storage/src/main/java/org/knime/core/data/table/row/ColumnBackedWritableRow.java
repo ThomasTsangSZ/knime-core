@@ -14,7 +14,7 @@ public final class ColumnBackedWritableRow implements WritableRow {
 	public static ColumnBackedWritableRow fromWritableTable(final WritableTable table) {
 		final List<WritableColumnCursor> columns = new ArrayList<>(Math.toIntExact(table.getNumColumns()));
 		for (long i = 0; i < table.getNumColumns(); i++) {
-			columns.add(table.getWritableColumnCursor(i));
+			columns.add(table.getWritableColumn(i).createWritableCursor());
 		}
 		return new ColumnBackedWritableRow(columns);
 	}

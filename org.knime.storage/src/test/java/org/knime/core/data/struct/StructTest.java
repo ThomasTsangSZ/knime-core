@@ -56,7 +56,7 @@ public class StructTest {
 			final WritablePartitionedTable writableTable = new WritablePartitionedTable(root);
 
 			// first column write
-			try (final WritableColumnCursor col0 = writableTable.getWritableColumnCursor(0)) {
+			try (final WritableColumnCursor col0 = writableTable.getWritableColumn(0).createWritableCursor()) {
 				final WritableStructValue val0 = (WritableStructValue) col0.getValueAccess();
 				// TODO we could offer convenience API with reflection to operate on POJO
 				// structs :-)

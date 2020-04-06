@@ -1,27 +1,30 @@
 package org.knime.core.data.partition;
 
 import org.knime.core.data.table.WritableTable;
+import org.knime.core.data.table.column.WritableColumn;
 import org.knime.core.data.table.column.WritableColumnCursor;
 
 public class WritablePartitionedTable implements WritableTable {
 
-	private WritablePartitionedColumnCursor<?>[] m_cursors;
+	private Store m_root;
 
 	public WritablePartitionedTable(Store root) {
-		m_cursors = new WritablePartitionedColumnCursor[(int) root.getNumStores()];
-		for (long i = 0; i < root.getNumStores(); i++) {
-			m_cursors[(int) i] = new WritablePartitionedColumnCursor<>(root.getStoreAt(i));
-		}
-
+		m_root = root;
 	}
 
 	@Override
 	public long getNumColumns() {
-		return m_cursors.length;
+		return m_root.getNumStores();
 	}
 
 	@Override
-	public WritableColumnCursor getWritableColumnCursor(long columnIndex) {
-		return m_cursors[(int) columnIndex];
+	public WritableColumn getWritableColumn(long columnIndex) {
+		return new WritableColumn() {
+
+			@Override
+			public WritableColumnCursor createWritableCursor() {
+				return new WritablePartitionedColumnCursor<>(m_root.getStoreAt(columnIndex));
+			}
+		};
 	}
 }

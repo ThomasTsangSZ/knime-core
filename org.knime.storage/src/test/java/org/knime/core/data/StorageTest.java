@@ -85,7 +85,7 @@ public class StorageTest {
 			final WritablePartitionedTable writableTable = new WritablePartitionedTable(root);
 
 			// first column write
-			try (final WritableColumnCursor col0 = writableTable.getWritableColumnCursor(0)) {
+			try (final WritableColumnCursor col0 = writableTable.getWritableColumn(0).createWritableCursor()) {
 				final WritableStringValue val0 = (WritableStringValue) col0.getValueAccess();
 				for (long i = 0; i < NUM_ROWS; i++) {
 					// TODO it would be cool to do col0.fwd().setDouble('val') or

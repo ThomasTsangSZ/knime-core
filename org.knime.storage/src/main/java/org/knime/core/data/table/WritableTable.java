@@ -1,11 +1,11 @@
 
 package org.knime.core.data.table;
 
-import org.knime.core.data.table.column.WritableColumnCursor;
+import org.knime.core.data.table.column.WritableColumn;
 
 public interface WritableTable {
 
 	long getNumColumns();
 
-	WritableColumnCursor getWritableColumnCursor(long columnIndex);
+	WritableColumn getWritableColumn(long columnIndex);
 }
