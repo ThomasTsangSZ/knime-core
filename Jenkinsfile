@@ -68,9 +68,9 @@ def runIntegratedWorkflowTests(String image){
 
                         mvn -e -X -Dmaven.test.failure.ignore=true -Dknime.p2.repo=${P2_REPO} clean verify -P test
                         rm -rf "${TEMP}"
-                        if [[ -n "$XVFB_PID" ]]; then
-                            kill $XVFB_PID
-                        fi
+                        #if [[ -n "$XVFB_PID" ]]; then
+                            #kill $XVFB_PID
+                        #fi
                     '''
                 }
             }
