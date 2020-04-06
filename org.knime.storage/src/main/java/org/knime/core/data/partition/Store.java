@@ -9,7 +9,4 @@ public interface Store extends AutoCloseable {
 	PartitionStore<?> getStoreAt(long index);
 
 	void flush() throws Exception;
-
-	// delete all traces of this store
-	void destroy() throws Exception;
 }

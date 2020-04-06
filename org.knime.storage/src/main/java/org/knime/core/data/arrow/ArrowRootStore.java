@@ -121,10 +121,4 @@ class ArrowRootStore implements Store {
 		}
 		m_allocator.close();
 	}
-
-	@Override
-	public void destroy() throws Exception {
-		close();
-		// delete all created files in case of writing.
-	}
 }

@@ -27,12 +27,12 @@ public final class ColumnBackedWritableRow implements WritableRow {
 		m_columns = columns;
 		m_dataValues = new ArrayList<>(columns.size());
 		for (final WritableColumnCursor column : m_columns) {
-			m_dataValues.add(column.getValueAccess());
+			m_dataValues.add(column.getValue());
 		}
 	}
 
 	@Override
-	public long getNumValueAccesses() {
+	public long getNumValues() {
 		return m_dataValues.size();
 	}
 
@@ -44,7 +44,7 @@ public final class ColumnBackedWritableRow implements WritableRow {
 	}
 
 	@Override
-	public WritableValue getValueAccessAt(final int idx) {
+	public WritableValue getValueAt(final int idx) {
 		return m_dataValues.get(idx);
 	}
 

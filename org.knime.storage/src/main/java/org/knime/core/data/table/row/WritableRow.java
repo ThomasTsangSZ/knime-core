@@ -7,7 +7,7 @@ public interface WritableRow extends AutoCloseable {
 
 	void fwd();
 
-	long getNumValueAccesses();
+	long getNumValues();
 
-	WritableValue getValueAccessAt(int index);
+	WritableValue getValueAt(int index);
 }

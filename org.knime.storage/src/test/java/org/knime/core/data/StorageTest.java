@@ -86,7 +86,7 @@ public class StorageTest {
 
 			// first column write
 			try (final WritableColumnCursor col0 = writableTable.getWritableColumn(0).createWritableCursor()) {
-				final WritableStringValue val0 = (WritableStringValue) col0.getValueAccess();
+				final WritableStringValue val0 = (WritableStringValue) col0.getValue();
 				for (long i = 0; i < NUM_ROWS; i++) {
 					// TODO it would be cool to do col0.fwd().setDouble('val') or
 					// col0.next().getDouble()
@@ -112,7 +112,7 @@ public class StorageTest {
 
 			// then read
 			try (final ReadableColumnCursor col0 = readableTable.getReadableColumn(0).createCursor()) {
-				final ReadableStringValue val0 = (ReadableStringValue) col0.getValueAccess();
+				final ReadableStringValue val0 = (ReadableStringValue) col0.getValue();
 				for (long i = 0; col0.canFwd(); i++) {
 					col0.fwd();
 					Assert.assertEquals("Entry" + i, val0.getStringValue());
@@ -130,7 +130,7 @@ public class StorageTest {
 			final WritablePartitionedTable writableTable = new WritablePartitionedTable(root);
 
 			try (final WritableRow row = ColumnBackedWritableRow.fromWritableTable(writableTable)) {
-				final WritableStringValue val0 = (WritableStringValue) row.getValueAccessAt(0);
+				final WritableStringValue val0 = (WritableStringValue) row.getValueAt(0);
 				for (long i = 0; i < NUM_ROWS; i++) {
 					row.fwd();
 					val0.setStringValue("Entry " + i);
@@ -141,7 +141,7 @@ public class StorageTest {
 			final ReadablePartitionedTable readableTable = new ReadablePartitionedTable(root);
 
 			try (final ReadableRow row = ColumnBackedReadableRow.fromReadableTable(readableTable)) {
-				final ReadableStringValue val0 = (ReadableStringValue) row.getValueAccessAt(0);
+				final ReadableStringValue val0 = (ReadableStringValue) row.getValueAt(0);
 				for (long i = 0; row.canFwd(); i++) {
 					row.fwd();
 					Assert.assertEquals("Entry " + i, val0.getStringValue());

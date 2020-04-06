@@ -61,7 +61,7 @@ public final class ReadablePartitionedColumnCursor<T> implements ReadableColumnC
 	}
 
 	@Override
-	public ReadableValue getValueAccess() {
+	public ReadableValue getValue() {
 		return m_linkedAccess;
 	}
 

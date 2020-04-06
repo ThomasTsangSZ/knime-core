@@ -9,7 +9,7 @@ public interface ReadableRow extends AutoCloseable {
 
 	void fwd();
 
-	long getNumValueAccesses();
+	long getNumValues();
 
-	ReadableValue getValueAccessAt(int index);
+	ReadableValue getValueAt(int index);
 }

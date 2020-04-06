@@ -53,7 +53,7 @@ public final class WritablePartitionedColumnCursor<T> implements WritableColumnC
 	}
 
 	@Override
-	public WritableValue getValueAccess() {
+	public WritableValue getValue() {
 		return m_linkedValue;
 	}
 

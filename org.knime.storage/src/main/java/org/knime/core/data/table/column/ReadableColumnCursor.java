@@ -9,5 +9,5 @@ public interface ReadableColumnCursor extends AutoCloseable {
 
 	void fwd();
 	
-	ReadableValue getValueAccess();
+	ReadableValue getValue();
 }

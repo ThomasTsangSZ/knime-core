@@ -57,7 +57,7 @@ public class StructTest {
 
 			// first column write
 			try (final WritableColumnCursor col0 = writableTable.getWritableColumn(0).createWritableCursor()) {
-				final WritableStructValue val0 = (WritableStructValue) col0.getValueAccess();
+				final WritableStructValue val0 = (WritableStructValue) col0.getValue();
 				// TODO we could offer convenience API with reflection to operate on POJO
 				// structs :-)
 				final WritableStringValue stringValue = (WritableStringValue) val0.writableValueAt(0);
@@ -74,7 +74,7 @@ public class StructTest {
 
 			// then read
 			try (final ReadableColumnCursor col0 = readableTable.getReadableColumn(0).createCursor()) {
-				final ReadableStructValue val0 = (ReadableStructValue) col0.getValueAccess();
+				final ReadableStructValue val0 = (ReadableStructValue) col0.getValue();
 				final ReadableStringValue stringValue = (ReadableStringValue) val0.readableValueAt(0);
 				final ReadableDoubleValue doubleValue = (ReadableDoubleValue) val0.readableValueAt(1);
 				for (long i = 0; col0.canFwd(); i++) {

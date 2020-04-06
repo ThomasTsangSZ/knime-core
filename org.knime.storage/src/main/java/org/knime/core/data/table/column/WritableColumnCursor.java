@@ -7,5 +7,5 @@ public interface WritableColumnCursor extends AutoCloseable {
 
 	void fwd();
 
-	WritableValue getValueAccess();
+	WritableValue getValue();
 }

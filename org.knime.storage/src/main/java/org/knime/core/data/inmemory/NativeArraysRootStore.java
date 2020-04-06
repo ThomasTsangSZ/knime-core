@@ -83,10 +83,4 @@ class NativeArraysRootStore implements Store {
 			m_stores[i].close();
 		}
 	}
-
-	@Override
-	public void destroy() throws Exception {
-		close();
-		// delete all created files in case of writing.
-	}
 }
