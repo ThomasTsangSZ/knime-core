@@ -57,7 +57,7 @@ def runIntegratedWorkflowTests(String image){
                 withCredentials([usernamePassword(credentialsId: 'ARTIFACTORY_CREDENTIALS', passwordVariable: 'ARTIFACTORY_PASSWORD', usernameVariable: 'ARTIFACTORY_LOGIN')]) {
                     sh '''
                         export TEMP="${WORKSPACE}/tmp"
-                        rm -rf "${TEMP}"; mkdir "${TEMP}"
+                        mkdir "${TEMP}"
                         
                         XVFB=$(which Xvfb) || true
                         if [[ -x "$XVFB" ]]; then
@@ -67,10 +67,9 @@ def runIntegratedWorkflowTests(String image){
                         fi
 
                         mvn -e -X -Dmaven.test.failure.ignore=true -Dknime.p2.repo=${P2_REPO} clean verify -P test
-                        # rm -rf "${TEMP}"
-                        #if [[ -n "$XVFB_PID" ]]; then
-                            #kill $XVFB_PID
-                        #fi
+                        if [[ -n "$XVFB_PID" ]]; then
+                            kill $XVFB_PID
+                        fi
                     '''
                 }
             }
