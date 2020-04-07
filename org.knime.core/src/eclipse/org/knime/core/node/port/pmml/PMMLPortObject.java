@@ -98,8 +98,8 @@ import org.knime.core.data.xml.PMMLCellFactory;
 import org.knime.core.data.xml.PMMLValue;
 import org.knime.core.node.NodeLogger;
 import org.knime.core.node.port.PortObject;
-import org.knime.core.node.port.PortTypeRegistry;
 import org.knime.core.node.port.PortType;
+import org.knime.core.node.port.PortTypeRegistry;
 import org.knime.core.node.port.pmml.preproc.DerivedFieldMapper;
 import org.knime.core.pmml.PMMLFormatter;
 import org.knime.core.pmml.PMMLModelType;
@@ -653,8 +653,16 @@ public final class PMMLPortObject implements PortObject {
         // close to closeEntry(), we have to make sure that close is only
         // called once.
         // TODO: The document is read twice here. Could we "probe" into the file to check the version?
-        XmlObject xmlDoc = XmlObject.Factory.parse(
-                new NonClosableInputStream(is));
+
+        Thread current = Thread.currentThread();
+        ClassLoader oldLoader = current.getContextClassLoader();
+        XmlObject xmlDoc = null;
+        try {
+            current.setContextClassLoader(PMMLDocument.class.getClassLoader());
+            xmlDoc = XmlObject.Factory.parse(new NonClosableInputStream(is));
+        } finally {
+            current.setContextClassLoader(oldLoader);
+        }
         is.close();
         if (xmlDoc instanceof PMMLDocument) {
             m_pmmlDoc = (PMMLDocument)xmlDoc;
