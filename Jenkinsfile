@@ -15,15 +15,15 @@ properties([
 
 try {
     parallel (
-        'Tycho Build': {
-	        knimetools.defaultTychoBuild('org.knime.update.core')
-        },
-        'Testing: Linux': {
-             runIntegratedWorkflowTests('ubuntu18.04 && workflow-tests')
-         },
-        'Testing: Windows': {
-            runIntegratedWorkflowTests('windows && p2-director')
-        },
+        // 'Tycho Build': {
+	    //     knimetools.defaultTychoBuild('org.knime.update.core')
+        // },
+        // 'Testing: Linux': {
+        //      runIntegratedWorkflowTests('ubuntu18.04 && workflow-tests')
+        //  },
+        // 'Testing: Windows': {
+        //     runIntegratedWorkflowTests('windows && p2-director')
+        // },
         'Testing: MacOs': {
             runIntegratedWorkflowTests('macosx')
         },
@@ -65,7 +65,7 @@ def runIntegratedWorkflowTests(String image){
                             export DISPLAY=:$$
                         fi
 
-                        mvn -e -X -Dmaven.test.failure.ignore=true -Dknime.p2.repo=${P2_REPO} clean verify -P test
+                       # mvn -e -X -Dmaven.test.failure.ignore=true -Dknime.p2.repo=${P2_REPO} clean verify -P test
                         if [[ "$OSTYPE" == *"darwin"* ]]; then
                             if [[ -n "$XVFB_PID" ]]; then
                                 kill $XVFB_PID
