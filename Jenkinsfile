@@ -66,10 +66,8 @@ def runIntegratedWorkflowTests(String image){
                         fi
 
                         mvn -e -X -Dmaven.test.failure.ignore=true -Dknime.p2.repo=${P2_REPO} clean verify -P test
-                        if [[ "$OSTYPE" == *'darwin'* ]]; then
-                            if [[ -n "$XVFB_PID" ]]; then
-                                kill $XVFB_PID
-                            fi
+                        if [[ -n "$XVFB_PID" ]]; then
+                            kill $XVFB_PID
                         fi
                         exit 0
                     '''
