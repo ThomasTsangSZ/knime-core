@@ -70,10 +70,11 @@ def runIntegratedWorkflowTests(String image){
                             kill $XVFB_PID
                         fi
                     '''
-                    echo "done"
                 }
             }
-            // junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
+        }
+        stage('report test results'){
+            junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
         }
     }
 }
