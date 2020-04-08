@@ -72,7 +72,7 @@ def runIntegratedWorkflowTests(String image){
                     '''
                 }
             }
-            junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
+            // junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
         }
     }
 }
