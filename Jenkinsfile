@@ -15,18 +15,18 @@ properties([
 
 try {
     parallel (
-        // 'Tycho Build': {
-	    //     knimetools.defaultTychoBuild('org.knime.update.core')
-        // },
+        'Tycho Build': {
+	        knimetools.defaultTychoBuild('org.knime.update.core', 'macosx')
+        },
         // 'Testing: Linux': {
         //      runIntegratedWorkflowTests('ubuntu18.04 && workflow-tests')
         //  },
         // 'Testing: Windows': {
         //     runIntegratedWorkflowTests('windows && p2-director')
         // },
-        'Testing: MacOs': {
-            runIntegratedWorkflowTests('macosx')
-        },
+        // 'Testing: MacOs': {
+        //     runIntegratedWorkflowTests('macosx')
+        // },
      )
 
     workflowTests.runTests(
@@ -72,8 +72,7 @@ def runIntegratedWorkflowTests(String image){
                     '''
                 }
             }
-        }
-        stage('report test results'){
+
             junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
         }
     }
