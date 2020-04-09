@@ -15,18 +15,18 @@ properties([
 
 try {
     parallel (
-        'Tycho Build': {
-	        knimetools.defaultTychoBuild('org.knime.update.core', 'macosx')
-        },
+        // 'Tycho Build': {
+	    //     knimetools.defaultTychoBuild('org.knime.update.core')
+        // }
         // 'Testing: Linux': {
         //      runIntegratedWorkflowTests('ubuntu18.04 && workflow-tests')
         //  },
         // 'Testing: Windows': {
         //     runIntegratedWorkflowTests('windows && p2-director')
         // },
-        // 'Testing: MacOs': {
-        //     runIntegratedWorkflowTests('macosx')
-        // },
+        'Testing: MacOs': {
+            runIntegratedWorkflowTests('macosx')
+        },
      )
 
     workflowTests.runTests(
