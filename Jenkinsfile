@@ -71,9 +71,10 @@ def runIntegratedWorkflowTests(String image){
                             kill $XVFB_PID
                         fi
                     '''
-                    sleep 30
                 }
+                sleep 10
             }
+            sleep 30
 
             junit allowEmptyResults: true, testResults: '**/target/surefire-reports/TEST-*.xml'
         }
